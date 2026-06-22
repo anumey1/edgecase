@@ -41,8 +41,8 @@ class ArcSliverView(
     /** Outer arc width from screen edge (3× inner arc) */
     private val outerArcRadiusPx: Float = (27f * density)
 
-    /** Total view height (matches current sliver: 75dp) */
-    private val sliverHeightPx: Float = (75f * density)
+    /** Total view height (half previous: 38dp) */
+    private val sliverHeightPx: Float = (38f * density)
 
     // ── Arc geometry (configurable for off-center effect) ──
     /** Start angle in degrees for the arc sweep (100° = slightly below top) */
@@ -53,7 +53,7 @@ class ArcSliverView(
 
     // ── Paints ───────────────────────────────────────────
     private val innerArcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#2E8B57") // Serpent Emerald
+        color = Color.parseColor("#60C0C0C0") // Light transparent grey
         style = Paint.Style.FILL
     }
 

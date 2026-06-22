@@ -49,7 +49,7 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         style = Paint.Style.FILL
     }
     private val sliverCorePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#2E8B57") // Serpent Emerald
+        color = Color.parseColor("#60C0C0C0") // Light transparent grey
         style = Paint.Style.FILL
     }
     private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -140,9 +140,9 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         validTopY = mockupTop + restrictedHeight
         validBottomY = mockupBottom - restrictedHeight
 
-        // Scale sliver preview size based on mockup width
+        // Scale sliver preview size based on mockup width (half height)
         sliverPreviewWidth = mockupW * 0.04f
-        sliverPreviewHeight = mockupH * 0.09f
+        sliverPreviewHeight = mockupH * 0.045f
         mockupCornerRadius = mockupW * 0.04f
 
         recalcSliverPosition()

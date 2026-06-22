@@ -137,7 +137,7 @@ class SidebarService : Service() {
 
     private fun instantiateWindowParameters() {
         val sliverWidthPx = (27 * densityDpi).toInt()
-        val sliverHeightPx = (75 * densityDpi).toInt()
+        val sliverHeightPx = (38 * densityDpi).toInt()
 
         // Y position: map yBias [0,1] → vertical range [10%, 90%] of screen
         val restrictedTop = (screenHeight * 0.10f).toInt()
@@ -163,7 +163,8 @@ class SidebarService : Service() {
         }
 
         val trayWidthPx = (80 * densityDpi).toInt()
-        val trayHeightPx = sliverHeightPx * 4
+        val trayHeightPx = (sliverHeightPx * 7)
+        val trayYPx = sliverYPx + sliverHeightPx / 2 - trayHeightPx
         trayParams = WindowManager.LayoutParams(
             trayWidthPx,
             trayHeightPx,
@@ -178,8 +179,8 @@ class SidebarService : Service() {
             } else {
                 Gravity.START or Gravity.TOP
             }
-            // Tray Y matches sliver Y so they align vertically
-            y = sliverYPx
+            // Tray bottom aligns with sliver vertical center
+            y = trayYPx
         }
     }
 
