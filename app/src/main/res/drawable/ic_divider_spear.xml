@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="2dp"
+    android:viewportWidth="360"
+    android:viewportHeight="4">
+
+    <!-- Tarnished Silver spear: central diamond + tapered ends -->
+    <path
+        android:fillColor="@color/tarnished_silver"
+        android:pathData="M0,2 L8,0 L180,0 L180,4 L8,4 Z" />
+    <path
+        android:fillColor="@color/tarnished_silver"
+        android:pathData="M360,2 L352,0 L180,0 L180,4 L352,4 Z" />
+    <!-- Central gem/rivet -->
+    <path
+        android:fillColor="@color/serpent_emerald"
+        android:pathData="M176,0 L184,0 L180,4 Z" />
+</vector>

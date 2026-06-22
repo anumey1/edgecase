@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <!-- Tile background: translucent temple sandstone -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#33D4C4A8" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="8dp">
+
+        <!-- Drag handle area (left grip) -->
+        <ImageView
+            android:id="@+id/ivDragHandle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:alpha="0.5"
+            android:scaleType="fitCenter"
+            android:contentDescription="Drag to reorder" />
+
+        <!-- Order number -->
+        <TextView
+            android:id="@+id/tvOrderNumber"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:gravity="center"
+            android:textSize="13sp"
+            android:textColor="@color/serpent_emerald"
+            android:fontFamily="serif"
+            android:textStyle="bold"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp" />
+
+        <!-- App icon in silver ring -->
+        <FrameLayout
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/ic_silver_ring">
+
+            <ImageView
+                android:id="@+id/ivAltarIcon"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:contentDescription="App icon" />
+        </FrameLayout>
+
+        <!-- App name -->
+        <TextView
+            android:id="@+id/tvAltarName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/BodySerif"
+            android:fontFamily="serif"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <!-- Selected toggle checkbox -->
+        <CheckBox
+            android:id="@+id/cbAltarSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:buttonTint="@color/serpent_emerald" />
+
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Standard spacing -->
+    <dimen name="margin_standard">16dp</dimen>
+    <dimen name="margin_wide">24dp</dimen>
+    <dimen name="margin_narrow">8dp</dimen>
+    <dimen name="padding_standard">16dp</dimen>
+
+    <!-- Buttons -->
+    <dimen name="stone_button_height">56dp</dimen>
+    <dimen name="stone_button_elevation">8dp</dimen>
+    <dimen name="stone_button_pressed_translation">4dp</dimen>
+
+    <!-- Icons -->
+    <dimen name="app_icon_size">48dp</dimen>
+
+    <!-- Pillars -->
+    <dimen name="pillar_width">32dp</dimen>
+
+    <!-- Sliver -->
+    <dimen name="sliver_inner_arc_width">9dp</dimen>
+    <dimen name="sliver_outer_arc_width">27dp</dimen>
+    <dimen name="sliver_height">75dp</dimen>
+
+    <!-- Tray -->
+    <dimen name="tray_width">80dp</dimen>
+
+    <!-- Text -->
+    <dimen name="text_header">18sp</dimen>
+    <dimen name="text_body">16sp</dimen>
+    <dimen name="text_caption">14sp</dimen>
+</resources>

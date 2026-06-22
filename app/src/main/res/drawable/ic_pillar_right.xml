@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="640dp"
+    android:viewportWidth="64"
+    android:viewportHeight="1280">
+
+    <!-- Capital (top of column) -->
+    <path
+        android:fillColor="#3B5249"
+        android:pathData="M8,40 L56,40 L56,60 L52,60 L52,80 L12,80 L12,60 L8,60 Z" />
+    <!-- Column shaft -->
+    <path
+        android:fillColor="#1A3328"
+        android:pathData="M14,80 L50,80 L50,1160 L14,1160 Z" />
+    <!-- Shaft shadow/definition (reversed for right pillar) -->
+    <path
+        android:fillColor="#122A23"
+        android:pathData="M32,80 L50,80 L50,1160 L32,1160 Z" />
+    <!-- Fluting lines -->
+    <path
+        android:fillColor="#0F221B"
+        android:strokeWidth="1"
+        android:pathData="M22,80 L22,1160 M28,80 L28,1160 M36,80 L36,1160 M42,80 L42,1160" />
+    <!-- Base -->
+    <path
+        android:fillColor="#3B5249"
+        android:pathData="M10,1160 L54,1160 L54,1180 L50,1180 L50,1200 L14,1200 L14,1180 L10,1180 Z" />
+    <!-- Base shadow (reversed) -->
+    <path
+        android:fillColor="#2A3E34"
+        android:pathData="M32,1160 L54,1160 L50,1180 L50,1200 L32,1200 Z" />
+</vector>

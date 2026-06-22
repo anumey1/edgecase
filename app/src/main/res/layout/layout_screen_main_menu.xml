@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_stone_texture">
+
+    <!-- Left pillar -->
+    <ImageView
+        android:layout_width="@dimen/pillar_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="start|center_vertical"
+        android:src="@drawable/ic_pillar_left"
+        android:scaleType="fitXY"
+        android:alpha="0.5"
+        android:contentDescription="Left pillar" />
+
+    <!-- Right pillar -->
+    <ImageView
+        android:layout_width="@dimen/pillar_width"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        android:src="@drawable/ic_pillar_right"
+        android:scaleType="fitXY"
+        android:alpha="0.5"
+        android:contentDescription="Right pillar" />
+
+    <!-- Dust particle overlay container -->
+    <FrameLayout
+        android:id="@+id/dustContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false" />
+
+    <!-- Center content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="56dp"
+        android:paddingRight="56dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="32dp">
+
+        <!-- Header bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_dark_seaweed_panel"
+            android:padding="10dp"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="EDGECASE"
+                android:textAppearance="@style/EngravedHeader"
+                android:fontFamily="serif"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+        <!-- Buttons centered vertically in remaining space -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+        <Button
+            android:id="@+id/btnShortcuts"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/stone_button_height"
+            android:layout_marginBottom="@dimen/margin_wide"
+            android:background="@drawable/selector_stone_button"
+            android:elevation="@dimen/stone_button_elevation"
+            android:text="SHORTCUTS"
+            android:textAppearance="@style/StoneButtonText"
+            android:fontFamily="serif" />
+
+        <Button
+            android:id="@+id/btnPosition"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/stone_button_height"
+            android:layout_marginBottom="@dimen/margin_wide"
+            android:background="@drawable/selector_stone_button"
+            android:elevation="@dimen/stone_button_elevation"
+            android:text="POSITION"
+            android:textAppearance="@style/StoneButtonText"
+            android:fontFamily="serif" />
+
+        <Button
+            android:id="@+id/btnDummy"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/stone_button_height"
+            android:layout_marginBottom="@dimen/margin_wide"
+            android:background="@drawable/selector_stone_button"
+            android:elevation="@dimen/stone_button_elevation"
+            android:text="DUMMY"
+            android:textAppearance="@style/StoneButtonText"
+            android:fontFamily="serif" />
+
+        <!-- Spear divider -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:src="@drawable/ic_divider_spear"
+            android:scaleType="fitXY"
+            android:contentDescription="Divider" />
+
+        <Button
+            android:id="@+id/btnStartService"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/stone_button_height"
+            android:layout_marginBottom="@dimen/margin_wide"
+            android:background="@drawable/selector_stone_button"
+            android:elevation="@dimen/stone_button_elevation"
+            android:text="START EDGE SERVICE"
+            android:textAppearance="@style/StoneButtonText"
+            android:fontFamily="serif"
+            android:textSize="14sp"
+            android:letterSpacing="0.04" />
+
+        <Button
+            android:id="@+id/btnStopService"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/stone_button_height"
+            android:background="@drawable/selector_stone_button"
+            android:elevation="@dimen/stone_button_elevation"
+            android:text="STOP SERVICE"
+            android:textAppearance="@style/StoneButtonText"
+            android:fontFamily="serif" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- App version — bottom left -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:paddingStart="16dp"
+        android:paddingBottom="12dp"
+        android:text="v1.2.1"
+        android:textAppearance="@style/CaptionSerif"
+        android:alpha="0.6"
+        android:fontFamily="serif" />
+
+</FrameLayout>

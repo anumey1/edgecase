@@ -1,34 +1,60 @@
-# Gradle files
+### macOS ###
+.DS_Store
+**/.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+*.swp
+*~
+
+### Gradle ###
 .gradle/
 build/
+/app/build/
 
 # Local configuration file (sdk path, etc)
 local.properties
 
-# Log/OS Files
+### Log/OS Files ###
 *.log
 
-# Android Studio generated files and folders
+### Android Studio generated files and folders ###
 captures/
 .externalNativeBuild/
 .cxx/
 *.aab
 *.apk
+*.ap_
+*.dex
 output-metadata.json
+/navigation/
 
-# IntelliJ
+### IntelliJ / Android Studio ###
 *.iml
 .idea/
 misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
 
-# Keystore files
+### Keystore files ###
 *.jks
 *.keystore
 
-# Google Services (e.g. APIs or Firebase)
+### Google Services ###
 google-services.json
 
-# Android Profiling
+### Android Profiling ###
 *.hprof
+
+### Generated directories ###
+bin/
+gen/
+out/

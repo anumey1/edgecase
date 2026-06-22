@@ -5,29 +5,34 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:padding="12dp"
-    android:background="?attr/selectableItemBackground">
+    android:background="@color/dark_seaweed">
 
+    <!-- App icon -->
     <ImageView
-        android:id="@+id/imgAppIcon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:id="@+id/ivArchiveIcon"
+        android:layout_width="@dimen/app_icon_size"
+        android:layout_height="@dimen/app_icon_size"
         android:scaleType="fitCenter"
-        android:contentDescription="@string/app_name" />
+        android:contentDescription="App icon" />
 
+    <!-- App name -->
     <TextView
-        android:id="@+id/txtAppName"
+        android:id="@+id/tvArchiveName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
-        android:textSize="16sp"
+        android:textAppearance="@style/BodySerif"
+        android:fontFamily="serif"
         android:ellipsize="end"
         android:maxLines="1" />
 
+    <!-- Selection indicator — Serpent Emerald rune when checked -->
     <CheckBox
-        android:id="@+id/cbAppSelect"
+        android:id="@+id/cbArchiveSelect"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:buttonTint="@color/serpent_emerald" />
 
 </LinearLayout>

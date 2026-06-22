@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Hellenic Serpent Palette -->
+    <color name="abyssal_teal">#071A15</color>
+    <color name="dark_seaweed">#122A23</color>
+    <color name="faded_olive_teal">#3B5249</color>
+    <color name="temple_sandstone">#D4C4A8</color>
+    <color name="aged_marble">#F5EFE6</color>
+    <color name="serpent_emerald">#2E8B57</color>
+    <color name="tarnished_silver">#9AA0A6</color>
+    <color name="ethereal_pink">#4DFFC0CB</color>
+
+    <!-- Stone button shades -->
+    <color name="sandstone_bevel">#A39171</color>
+    <color name="sandstone_pressed">#BEB09A</color>
+    <color name="text_engraved">#071A15</color>
+
+    <!-- Panel backgrounds -->
+    <color name="panel_dark_seaweed_bg">#B3122A23</color>
+
+    <!-- Legacy colors kept for compatibility -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

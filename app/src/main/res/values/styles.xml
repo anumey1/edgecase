@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Engraved header: Augustus-like serif, all-caps, chiseled shadow -->
+    <style name="EngravedHeader" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/aged_marble</item>
+        <item name="android:shadowColor">#000000</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">1</item>
+        <item name="android:shadowRadius">1</item>
+    </style>
+
+    <!-- Engraved header for dark backgrounds (text color = dark teal for stone buttons) -->
+    <style name="EngravedHeaderDark" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/text_engraved</item>
+        <item name="android:shadowColor">#33FFFFFF</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">-1</item>
+        <item name="android:shadowRadius">1</item>
+    </style>
+
+    <!-- Body serif: Cinzel-like, title case, flat rendering -->
+    <style name="BodySerif" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textColor">@color/aged_marble</item>
+    </style>
+
+    <!-- Caption serif for metadata, secondary text -->
+    <style name="CaptionSerif" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textColor">@color/tarnished_silver</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+    </style>
+
+    <!-- Stone button text style -->
+    <style name="StoneButtonText" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/text_engraved</item>
+        <item name="android:textSize">@dimen/text_header</item>
+    </style>
+</resources>
