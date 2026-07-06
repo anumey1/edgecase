@@ -44,7 +44,7 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 
 ### Core Concept
 
-- **Sliver (Fangs)**: A single continuous shape rendered at the screen edge (27dp × 38dp overlay window). The right edge is a flat vertical line flush with the screen. The left-facing edge has two sharp fang protrusions (at 25% and 75% height) with a V-shaped central recess between them. Smooth quadratic curves connect the top and bottom to the screen edge. Filled with 50% opacity grey (#80808080) and outlined with an Ethereal Pink (#FFC0CB) glow that pulses alpha 20%–30%.
+- **Sliver (Fangs)**: A single continuous shape rendered at the screen edge (27dp × 38dp overlay window). The right edge is a flat vertical line flush with the screen. The left-facing edge has two sharp fang protrusions (at 20% and 80% height) with a V-shaped central recess between them. The fangs are straight angular lines — no curves, no glow. Filled with 50% opacity grey (#80808080).
 - **Tray**: An 80dp-wide scrollable panel that unfurls (scales in from the edge) when the user swipes the Sliver. Contains desaturated app icons (20% desaturation for ancient-theme look). Tapping an icon launches the app.
 - **Configuration**: A three-screen activity (Main Menu → Shortcuts → Positioning) for managing the shortcut list and sliver placement.
 
@@ -92,11 +92,10 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 │  │  ArcSliverView  │ ────→ │  TrayView                │ │
 │  │  (27×38dp)      │ swipe │  (80dp wide, scrollable) │ │
 │  │                 │       │                          │ │
-│  │  • Two fangs    │       │  • Meander border        │ │
+│  │  • Sharp fangs  │       │  • Meander border        │ │
 │  │  • Grey fill    │       │  • Desaturated icons     │ │
-│  │  • Pink glow    │       │  • Unfurl animation      │ │
-│  │  • Pulse anim   │       │  • Launch intent         │ │
-│  │  • Swipe detect │       │                          │ │
+│  │  • Swipe detect │       │  • Unfurl animation      │ │
+│  │                 │       │  • Launch intent         │ │
 │  └─────────────────┘       └──────────────────────────┘ │
 │                                                         │
 │  Hot-reload via Intents:                                │
@@ -549,16 +548,16 @@ Simple data class representing a launchable app with its display name, package i
 **Path:** `app/src/main/java/com/dicereligion/edgecase/ArcSliverView.kt`
 **Extends:** `View`
 
-**Purpose:** Custom View rendering the edge-sliver — two thin snake-fang shapes that emerge from the screen edge. Both fangs originate from the upper portion of the edge and curve inward + downward, like the upper fangs of a snake.
+**Purpose:** Custom View rendering the edge-sliver — a single continuous shape with two sharp angular fang protrusions on the inward-facing edge. The right edge is a flat vertical line flush with the screen. The path is built in `onSizeChanged` and uses only straight `lineTo` calls — no curves, no glow, no animation.
 
 **Visual Design:**
-- A single continuous Path with a flat right edge and two fang protrusions on the left
-- **Lower fang:** `quadTo(W×0.5, H, 0, H×0.75)` — smooth curve from bottom-right to a point at 75% height
-- **Central recess:** `lineTo(W×0.6, H×0.5)` — sharp diagonal inward to the vertex between fangs
-- **Upper fang:** `lineTo(0, H×0.25)` — sharp diagonal outward to a point at 25% height
-- **Closing curve:** `quadTo(W×0.5, 0, W, 0)` — smooth curve from upper point back to top-right
-- **Fill:** 50% opacity grey (#80808080)
-- **Glow:** Ethereal Pink (#FFC0CB) outline (2dp stroke, round caps) pulsing 20%–30% over 4s
+- **Flat upper anchor:** `(W, 0)` → `(W, H×0.166)` — straight down the right edge (top 16.6%)
+- **Top fang:** `(W, H×0.166)` → `(W×0.4, H×0.20)` → `(W×0.93, H×0.28)` — angular tooth pointing inward to 40% width, tip at 20% height, returning to edge at 28%
+- **Flat vertical gap:** `(W×0.93, H×0.28)` → `(W×0.93, H×0.72)` — straight vertical line at 93% width (44% of height)
+- **Bottom fang:** `(W×0.93, H×0.72)` → `(W×0.4, H×0.80)` → `(W, H×0.833)` — angular tooth pointing inward to 40% width, tip at 80% height, returning to edge at 83.3%
+- **Flat lower anchor:** `(W, H×0.833)` → `(W, H)` — straight down the right edge (bottom 16.7%)
+- **Fill:** 50% opacity grey (#80808080), `Paint.Style.FILL`
+- **No glow, no border, no pulse animation**
 - **View dimensions:** 27dp wide × 38dp tall
 
 **Swipe Detection:**
@@ -568,9 +567,8 @@ Simple data class representing a launchable app with its display name, package i
 - Direction: swiping INWARD from the edge (leftward for right-side sliver, rightward for left-side sliver)
 
 **Lifecycle:**
-- `onAttachedToWindow()`: starts pulse animation
-- `onDetachedFromWindow()`: cancels pulse animation
-- System gesture exclusion: sets `systemGestureExclusionRects` for the full view bounds (API 29+)
+- `onSizeChanged()`: rebuilds the fang path whenever the view is measured
+- System gesture exclusion: set via `SidebarService.assembleSliverView()` using `systemGestureExclusionRects` (API 29+)
 
 ---
 
@@ -584,7 +582,7 @@ Simple data class representing a launchable app with its display name, package i
 **Visual Components:**
 1. **Phone Mockup:** Dark marble slab (#1A2822) with rounded corners (4% of mockup width), bordered with Faded Olive Teal (#3B5249), 3px stroke
 2. **Restricted Zones:** Top 10% and bottom 10% crosshatched (Faded Olive Teal at ~30% opacity, 1.5px lines, 12px spacing) — sliver cannot be placed here
-3. **Sliver Preview:** Miniature dual-fang (grey fill, pink stroke), matched to current `sliverSide`
+3. **Sliver Preview:** Miniature fang path (grey #80808080 fill, no glow), identical geometry to ArcSliverView, translated to centre on the sliver position
 4. **Particle Trail:** Tarnished Silver particles (semi-transparent, alpha 120) that trail behind the sliver while dragging or snapping
 5. **Instruction Text:** "Drag the sliver to reposition" shown when idle and trail is empty
 
@@ -709,8 +707,8 @@ Horizontal LinearLayout, `dark_seaweed` background, 12dp padding:
 | `ic_divider_spear.xml` | vector | Tarnished Silver diamond-tapered spear (360×4 viewport) with Serpent Emerald central rivet |
 | `ic_silver_ring.xml` | shape (oval) | 52dp × 52dp oval, abyssal_teal fill, 2dp tarnished_silver stroke |
 | `ic_check_rune.xml` | vector | Serpent Emerald checkmark, 3dp strokes with round caps/joins, 24×24 viewport |
-| `ic_launcher_background.xml` | vector | Transparent background (was solid #071A15) for adaptive icon — so the icon fills the launcher shape without a dark border |
-| `ic_launcher_foreground.xml` | inset | 0dp inset wrapping `@drawable/icon_round` (no padding — icon fills the full 108dp viewport) |
+| `ic_launcher_background.xml` | vector | Transparent (#00000000) — icon fills the launcher shape without a dark border |
+| `ic_launcher_foreground.xml` | inset | 0dp inset wrapping `@drawable/icon_round` — icon fills the full 108dp viewport |
 | `icon_round.png` | PNG | 512×512 RGBA PNG, the app's circular icon, placed in drawable for adaptive icon foreground |
 
 ---
@@ -730,7 +728,7 @@ Horizontal LinearLayout, `dark_seaweed` background, 12dp padding:
 | `aged_marble` | #F5EFE6 | Primary text, dust particles |
 | `serpent_emerald` | #2E8B57 | Accent, checkmarks, active indicators |
 | `tarnished_silver` | #9AA0A6 | Secondary text, borders, meander, icon rings |
-| `ethereal_pink` | #4DFFC0CB | Outer arc glow (with dynamic alpha) |
+| `ethereal_pink` | #4DFFC0CB | Unused (was outer arc glow) |
 
 **Stone Button Shades:**
 
@@ -797,7 +795,7 @@ No custom theme attributes defined — relies entirely on AppCompat DayNight wit
 
 | File | Content |
 |---|---|
-| `mipmap-anydpi/ic_launcher.xml` | `<adaptive-icon>` with background = `@drawable/ic_launcher_background` (abyssal_teal solid), foreground = `@drawable/ic_launcher_foreground` (18dp-inset icon_round.png) |
+| `mipmap-anydpi/ic_launcher.xml` | `<adaptive-icon>` with background = `@drawable/ic_launcher_background` (transparent #00000000), foreground = `@drawable/ic_launcher_foreground` (0dp-inset icon_round.png) |
 | `mipmap-anydpi/ic_launcher_round.xml` | Identical to `ic_launcher.xml` |
 
 **Raster Fallbacks (pre-API 26):**
@@ -886,26 +884,25 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 | 13 | Foreground notification (EdgeCase Active, priority LOW) | ✅ Complete | `SidebarService.buildSystemNotification()` |
 | 14 | Edge sliver overlay (floating window, TYPE_APPLICATION_OVERLAY) | ✅ Complete | `SidebarService.assembleSliverView()` |
 | 15 | Fang-path rendering (two protrusions, central recess, #80808080 fill) | ✅ Complete | `ArcSliverView.kt` |
-| 16 | Ethereal Pink fang glow pulse animation (alpha 20%–30% over 4s) | ✅ Complete | `ArcSliverView.pulseAnimator` |
-| 17 | Swipe gesture detection (inward from edge) | ✅ Complete | `ArcSliverView.onTouchEvent()` |
+| 16 | Swipe gesture detection (inward from edge) | ✅ Complete | `ArcSliverView.onTouchEvent()` |
+| 17 | Desaturated shortcut icons in tray (20% desaturation) | ✅ Complete | `SidebarService.desaturateIcon()` |
 | 18 | Tray unfurl animation (scaleX 0→1 at edge pivot) | ✅ Complete | `SidebarService.transitionToExpandedTray()` |
-| 19 | Desaturated shortcut icons in tray (20% desaturation) | ✅ Complete | `SidebarService.desaturateIcon()` |
-| 20 | App launch from tray with haptic feedback | ✅ Complete | `SidebarService.populateShortcuts()` |
-| 21 | Positioning screen with draggable sliver preview on phone mockup | ✅ Complete | `PositioningView.kt` |
-| 22 | Restricted zones (top/bottom 10% crosshatched, cannot place sliver) | ✅ Complete | `PositioningView.drawCrosshatchZone()` |
-| 23 | Snap-to-edge animation with particle trail | ✅ Complete | `PositioningView.snapSliverTo()` |
-| 24 | Live position persistence (saved immediately on drag release) | ✅ Complete | `PositioningView.onPositionChanged` → prefs |
-| 25 | Left/right side support for sliver | ✅ Complete | `ArcSliverView.Side.LEFT/RIGHT` |
-| 26 | System gesture exclusion for sliver touch area (API 29+) | ✅ Complete | `ArcSliverView.systemGestureExclusionRects` |
-| 27 | Hot-reload shortcuts in running service | ✅ Complete | `ACTION_UPDATE_SHORTCUTS` intent |
-| 28 | Hot-reload position in running service | ✅ Complete | `ACTION_UPDATE_POSITION` intent |
-| 29 | Overlay permission check + redirect to settings | ✅ Complete | `MainActivity.checkAndRequestPermissions()` |
-| 30 | Battery optimization exemption request | ✅ Complete | `MainActivity.checkAndRequestPermissions()` |
-| 31 | Custom adaptive app icon (circular icon, abyssal_teal background) | ✅ Complete | See §6.4 |
-| 32 | Tray dismiss on outside touch | ✅ Complete | `SidebarService.trayView.setOnTouchListener()` |
-| 33 | Idempotent sliver/tray add/remove guards | ✅ Complete | `sliverAdded` flag + isAttachedToWindow checks |
-| 34 | Dirty-state tracking for discard prompts | ✅ Complete | `ShortcutStateManager.isDirty()` |
-| 35 | Sticky service restart on kill | ✅ Complete | `START_STICKY` return value |
+| 19 | App launch from tray with haptic feedback | ✅ Complete | `SidebarService.populateShortcuts()` |
+| 20 | Positioning screen with draggable sliver preview on phone mockup | ✅ Complete | `PositioningView.kt` |
+| 21 | Restricted zones (top/bottom 10% crosshatched, cannot place sliver) | ✅ Complete | `PositioningView.drawCrosshatchZone()` |
+| 22 | Snap-to-edge animation with particle trail | ✅ Complete | `PositioningView.snapSliverTo()` |
+| 23 | Live position persistence (saved immediately on drag release) | ✅ Complete | `PositioningView.onPositionChanged` → prefs |
+| 24 | Left/right side support for sliver | ✅ Complete | `ArcSliverView.Side.LEFT/RIGHT` |
+| 25 | System gesture exclusion for sliver touch area (API 29+) | ✅ Complete | `SidebarService.assembleSliverView()` |
+| 26 | Hot-reload shortcuts in running service | ✅ Complete | `ACTION_UPDATE_SHORTCUTS` intent |
+| 27 | Hot-reload position in running service | ✅ Complete | `ACTION_UPDATE_POSITION` intent |
+| 28 | Overlay permission check + redirect to settings | ✅ Complete | `MainActivity.checkAndRequestPermissions()` |
+| 29 | Battery optimization exemption request | ✅ Complete | `MainActivity.checkAndRequestPermissions()` |
+| 30 | Custom adaptive app icon (transparent background, 0dp inset) | ✅ Complete | See §6.4 |
+| 31 | Tray dismiss on outside touch | ✅ Complete | `SidebarService.trayView.setOnTouchListener()` |
+| 32 | Idempotent sliver/tray add/remove guards | ✅ Complete | `sliverAdded` flag + isAttachedToWindow checks |
+| 33 | Dirty-state tracking for discard prompts | ✅ Complete | `ShortcutStateManager.isDirty()` |
+| 34 | Sticky service restart on kill | ✅ Complete | `START_STICKY` return value |
 
 ### Planned / Stub Features
 
@@ -1018,7 +1015,7 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 4. **Dummy button:** The third main menu button ("DUMMY") does nothing useful — it's a stub for future functionality.
 
-5. **Tray height = sliver height × 7 (385dp):** This is a fixed ratio. On very short screens (or in landscape), the tray may be taller than the screen → clipped. No dynamic height calculation based on screen size.
+5. **Tray height = sliver height × 7 (266dp):** This is a fixed ratio. On very short screens (or in landscape), the tray may be taller than the screen → clipped. No dynamic height calculation based on screen size.
 
 6. **No landscape support:** The sliver overlay is designed for portrait mode. The Y-bias positioning and tray layout assume portrait orientation.
 
@@ -1054,8 +1051,8 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 | `MainActivity.kt` | 396 | Main UI, navigation, permissions, service control |
 | `SidebarService.kt` | 426 | Foreground service, overlay windows, tray management |
 | `ShortcutStateManager.kt` | 163 | Bipartite shortcut state, persistence, dirty tracking |
-| `ArcSliverView.kt` | 238 | Fang rendering (two thin fangs), pulse animation, swipe detection |
-| `PositioningView.kt` | 424 | Phone mockup, draggable fang sliver, snap animation, particles |
+| `ArcSliverView.kt` | 135 | Fang path rendering (straight-line geometry), swipe detection |
+| `PositioningView.kt` | 406 | Phone mockup, draggable fang sliver, snap animation, particles |
 | `DustParticleView.kt` | 104 | Particle burst effect for button presses |
 | `ActiveShortcutsAdapter.kt` | 60 | Altar RecyclerView adapter |
 | `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
@@ -1079,4 +1076,4 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 ---
 
-*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect thin fang sliver redesign (27×38dp, two grey fangs curving inward+downward, Ethereal Pink stroke pulse), transparent adaptive icon background, and updated line counts.*
+*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect: fang sliver redesign (angular straight-line path, no glow/border, #80808080 fill), transparent adaptive icon background, and updated line counts.*
