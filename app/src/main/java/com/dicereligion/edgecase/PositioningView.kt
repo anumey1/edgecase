@@ -45,11 +45,14 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         strokeWidth = 1.5f
     }
     private val sliverGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#4DFFC0CB") // Ethereal Pink
-        style = Paint.Style.FILL
+        color = Color.parseColor("#80FFC0CB") // Ethereal Pink stroke
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
     }
     private val sliverCorePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#60C0C0C0") // Light transparent grey
+        color = Color.parseColor("#80808080") // 50% opacity grey
         style = Paint.Style.FILL
     }
     private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -83,8 +86,8 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
     private var sliverPixelX: Float = 0f
 
     // ── Sliver drawing dimensions ──────────────────────
-    private var sliverPreviewWidth = 28f  // scaled width of preview arc
-    private var sliverPreviewHeight = 70f // scaled height of preview arc
+    private var sliverPreviewWidth = 28f  // scaled width of preview
+    private var sliverPreviewHeight = 38f // scaled height of preview
 
     // ── Drag state ─────────────────────────────────────
     private var isDragging = false
@@ -140,9 +143,9 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         validTopY = mockupTop + restrictedHeight
         validBottomY = mockupBottom - restrictedHeight
 
-        // Scale sliver preview size based on mockup width (half height)
+        // Scale sliver preview size based on mockup width
         sliverPreviewWidth = mockupW * 0.04f
-        sliverPreviewHeight = mockupH * 0.045f
+        sliverPreviewHeight = sliverPreviewWidth * 1.4f
         mockupCornerRadius = mockupW * 0.04f
 
         recalcSliverPosition()
@@ -203,34 +206,39 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
     }
 
     private fun drawSliverPreview(canvas: Canvas) {
-        val halfH = sliverPreviewHeight / 2f
-        val arcCenterX = sliverPixelX
-        val arcCenterY = sliverPixelY
+        val W = sliverPreviewWidth
+        val H = sliverPreviewHeight
+        val cx = sliverPixelX
+        val cy = sliverPixelY
 
-        // Outer glow arc
-        val outerRect: RectF
-        val innerRect: RectF
-        val startAngle: Float
-        val sweepAngle: Float = 160f
+        // Translate so the sliver is centred at (cx, cy)
+        canvas.save()
+        canvas.translate(cx - (if (sliverSide == ArcSliverView.Side.RIGHT) W else 0f), cy - H / 2f)
 
+        val path = android.graphics.Path()
         if (sliverSide == ArcSliverView.Side.RIGHT) {
-            outerRect = RectF(arcCenterX - 2 * sliverPreviewWidth, arcCenterY - halfH,
-                arcCenterX, arcCenterY + halfH)
-            innerRect = RectF(arcCenterX - 2 * (sliverPreviewWidth * 0.33f), arcCenterY - halfH,
-                arcCenterX, arcCenterY + halfH)
-            startAngle = 100f
+            path.moveTo(W, 0f)
+            path.lineTo(W, H * 0.166f)
+            path.lineTo(W * 0.4f, H * 0.20f)
+            path.lineTo(W * 0.93f, H * 0.28f)
+            path.lineTo(W * 0.93f, H * 0.72f)
+            path.lineTo(W * 0.4f, H * 0.80f)
+            path.lineTo(W, H * 0.833f)
+            path.lineTo(W, H)
         } else {
-            outerRect = RectF(arcCenterX, arcCenterY - halfH,
-                arcCenterX + 2 * sliverPreviewWidth, arcCenterY + halfH)
-            innerRect = RectF(arcCenterX, arcCenterY - halfH,
-                arcCenterX + 2 * (sliverPreviewWidth * 0.33f), arcCenterY + halfH)
-            startAngle = 280f
+            path.moveTo(0f, 0f)
+            path.lineTo(0f, H * 0.166f)
+            path.lineTo(W * 0.6f, H * 0.20f)
+            path.lineTo(W * 0.07f, H * 0.28f)
+            path.lineTo(W * 0.07f, H * 0.72f)
+            path.lineTo(W * 0.6f, H * 0.80f)
+            path.lineTo(0f, H * 0.833f)
+            path.lineTo(0f, H)
         }
+        path.close()
+        canvas.drawPath(path, sliverCorePaint)
 
-        // Draw outer glow
-        canvas.drawArc(outerRect, startAngle, sweepAngle, true, sliverGlowPaint)
-        // Draw inner core
-        canvas.drawArc(innerRect, startAngle, sweepAngle, true, sliverCorePaint)
+        canvas.restore()
     }
 
     // ── Touch handling ─────────────────────────────────

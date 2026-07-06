@@ -1,28 +1,22 @@
 package com.dicereligion.edgecase
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RectF
+import android.graphics.Path
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.abs
 
 /**
- * A custom edge-sliver View that renders a dual-layered semicircular arc:
- * - Inner arc: Serpent Emerald (#2E8B57), ~60% of original sliver width
- * - Outer arc: Ethereal Pink (#4DFFC0CB), 3× wider, pulses alpha 20%–30%
+ * Side-aligned sliver anchored to the screen edge. A single continuous
+ * shape with two fang-like protrusions on the inward-facing edge.
  *
- * The semicircle is slightly off-center (160° sweep instead of 180°)
- * giving it an asymmetric, organic arc profile. The flat edge of the
- * arc aligns with the screen edge. The arc bows inward toward the
- * center of the screen.
- *
- * @param context        Android context
- * @param side           Which screen edge this sliver sits on
- * @param onSwipeListener Callback invoked when a valid swipe gesture is detected
+ * The right edge is a flat vertical line flush with the screen edge.
+ * The left edge has two sharp fangs (at 25% and 75% height) with a
+ * V-shaped central recess between them, connected by smooth quadratic
+ * curves at the top and bottom.
  */
 class ArcSliverView(
     context: Context,
@@ -32,51 +26,13 @@ class ArcSliverView(
 
     enum class Side { LEFT, RIGHT }
 
-    // ── dp → px conversion ──────────────────────────────
-    private val density: Float = context.resources.displayMetrics.density
-
-    /** Inner arc width from screen edge (60% of original 15dp) */
-    private val innerArcRadiusPx: Float = (9f * density)
-
-    /** Outer arc width from screen edge (3× inner arc) */
-    private val outerArcRadiusPx: Float = (27f * density)
-
-    /** Total view height (half previous: 38dp) */
-    private val sliverHeightPx: Float = (38f * density)
-
-    // ── Arc geometry (configurable for off-center effect) ──
-    /** Start angle in degrees for the arc sweep (100° = slightly below top) */
-    private val arcStartAngle: Float = 100f
-
-    /** Sweep angle in degrees (160° instead of 180° for off-center look) */
-    private val arcSweepAngle: Float = 160f
+    // ── Path ─────────────────────────────────────────────
+    private val fangPath = Path()
 
     // ── Paints ───────────────────────────────────────────
-    private val innerArcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#60C0C0C0") // Light transparent grey
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#80808080") // 50% opacity grey
         style = Paint.Style.FILL
-    }
-
-    private val outerArcPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-    }
-
-    /** Current alpha fraction for the outer arc (pulses 0.20–0.30) */
-    private var outerArcAlphaFraction: Float = 0.30f
-
-    // ── Pulse animation ──────────────────────────────────
-    private val pulseAnimator: ValueAnimator = ValueAnimator.ofFloat(0.20f, 0.30f).apply {
-        duration = 4000L
-        repeatCount = ValueAnimator.INFINITE
-        repeatMode = ValueAnimator.REVERSE
-        addUpdateListener { anim ->
-            outerArcAlphaFraction = anim.animatedValue as Float
-            outerArcPaint.color = Color.argb(
-                (outerArcAlphaFraction * 255f).toInt(),
-                0xFF, 0xC0, 0xCB
-            )
-            invalidate()
-        }
     }
 
     // ── Touch / swipe tracking ──────────────────────────
@@ -85,73 +41,60 @@ class ArcSliverView(
     private var trackingSwipe = false
 
     companion object {
-        /** Minimum horizontal drag (px) to qualify as a swipe */
         const val SWIPE_THRESHOLD_X = 30f
-
-        /** Maximum vertical deviation (px) during a horizontal swipe */
         const val MAX_SWIPE_DEVIATION_Y = 150f
     }
 
     init {
-        // Ethereal Pink base color with dynamic alpha
-        outerArcPaint.color = Color.argb(
-            (outerArcAlphaFraction * 255f).toInt(),
-            0xFF, 0xC0, 0xCB
-        )
         setBackgroundColor(Color.TRANSPARENT)
     }
 
-    // ── Measurement ──────────────────────────────────────
+    // ── Sizing ───────────────────────────────────────────
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val w = resolveSize(outerArcRadiusPx.toInt(), widthMeasureSpec)
-        val h = resolveSize(sliverHeightPx.toInt(), heightMeasureSpec)
+        val density = resources.displayMetrics.density
+        val w = resolveSize((27f * density).toInt(), widthMeasureSpec)
+        val h = resolveSize((38f * density).toInt(), heightMeasureSpec)
         setMeasuredDimension(w, h)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        buildPath(w.toFloat(), h.toFloat())
+    }
+
+    /** Rebuilds the fang path using the current view dimensions. */
+    private fun buildPath(W: Float, H: Float) {
+        fangPath.reset()
+
+        if (side == Side.RIGHT) {
+            fangPath.moveTo(W, 0f)
+            fangPath.lineTo(W, H * 0.166f)               // flat upper anchor
+            fangPath.lineTo(W * 0.4f, H * 0.20f)          // top fang → tip (40% width)
+            fangPath.lineTo(W * 0.93f, H * 0.28f)         // top fang → recess entry
+            fangPath.lineTo(W * 0.93f, H * 0.72f)         // flat vertical gap (+30%)
+            fangPath.lineTo(W * 0.4f, H * 0.80f)          // bottom fang → tip (40% width)
+            fangPath.lineTo(W, H * 0.833f)                // bottom fang → flat anchor
+            fangPath.lineTo(W, H)                          // flat lower anchor
+        } else {
+            fangPath.moveTo(0f, 0f)
+            fangPath.lineTo(0f, H * 0.166f)               // flat upper anchor
+            fangPath.lineTo(W * 0.6f, H * 0.20f)           // top fang → tip (40% from left)
+            fangPath.lineTo(W * 0.07f, H * 0.28f)          // top fang → recess entry
+            fangPath.lineTo(W * 0.07f, H * 0.72f)          // flat vertical gap (+30%)
+            fangPath.lineTo(W * 0.6f, H * 0.80f)           // bottom fang → tip (40% from left)
+            fangPath.lineTo(0f, H * 0.833f)                // bottom fang → flat anchor
+            fangPath.lineTo(0f, H)                          // flat lower anchor
+        }
+
+        fangPath.close()
     }
 
     // ── Drawing ──────────────────────────────────────────
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
-        val viewW = width.toFloat()
-        val viewH = height.toFloat()
-
-        // Build the oval rect used for both arcs.
-        // The arc center is positioned at the screen-edge side of the view.
-        // For RIGHT side: oval's right edge = view right; arc bows left.
-        // For LEFT  side: oval's left edge  = view left;  arc bows right.
-        val innerOval: RectF
-        val outerOval: RectF
-
-        if (side == Side.RIGHT) {
-            // Arc center at (viewW, viewH/2) — right edge of view
-            innerOval = RectF(
-                viewW - 2f * innerArcRadiusPx, 0f,
-                viewW, viewH
-            )
-            outerOval = RectF(
-                viewW - 2f * outerArcRadiusPx, 0f,
-                viewW, viewH
-            )
-            // Draw outer first (behind), then inner (on top)
-            canvas.drawArc(outerOval, arcStartAngle, arcSweepAngle, true, outerArcPaint)
-            canvas.drawArc(innerOval, arcStartAngle, arcSweepAngle, true, innerArcPaint)
-        } else {
-            // Arc center at (0f, viewH/2) — left edge of view
-            innerOval = RectF(
-                0f, 0f,
-                2f * innerArcRadiusPx, viewH
-            )
-            outerOval = RectF(
-                0f, 0f,
-                2f * outerArcRadiusPx, viewH
-            )
-            // For left side the arc bows rightward: sweep from 280° through 0° to 80°
-            val leftStartAngle = arcStartAngle + 180f // mirror: 100° → 280°
-            canvas.drawArc(outerOval, leftStartAngle, arcSweepAngle, true, outerArcPaint)
-            canvas.drawArc(innerOval, leftStartAngle, arcSweepAngle, true, innerArcPaint)
-        }
+        canvas.drawPath(fangPath, fillPaint)
     }
 
     // ── Touch / swipe detection ──────────────────────────
@@ -168,40 +111,25 @@ class ArcSliverView(
                 if (!trackingSwipe) return false
                 val rawX = event.rawX
                 val rawY = event.rawY
-
-                // Determine swipe direction based on which side the sliver is on
                 val swipeDeltaX = if (side == Side.RIGHT) {
-                    startRawX - rawX  // positive when swiping LEFT (inward from right edge)
+                    startRawX - rawX
                 } else {
-                    rawX - startRawX  // positive when swiping RIGHT (inward from left edge)
+                    rawX - startRawX
                 }
                 val deltaY = abs(rawY - startRawY)
-
                 if (swipeDeltaX > SWIPE_THRESHOLD_X && deltaY < MAX_SWIPE_DEVIATION_Y) {
                     trackingSwipe = false
                     onSwipeListener?.invoke()
                     return true
                 }
-                return deltaY < MAX_SWIPE_DEVIATION_Y // keep tracking if Y is within bounds
+                return deltaY < MAX_SWIPE_DEVIATION_Y
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 trackingSwipe = false
-                // Consume the event to prevent it falling through
                 return true
             }
         }
         return super.onTouchEvent(event)
     }
 
-    // ── Lifecycle ────────────────────────────────────────
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        pulseAnimator.start()
-    }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        pulseAnimator.cancel()
-    }
 }

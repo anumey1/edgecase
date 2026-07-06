@@ -17,10 +17,9 @@
     <!-- Pillars -->
     <dimen name="pillar_width">32dp</dimen>
 
-    <!-- Sliver -->
-    <dimen name="sliver_inner_arc_width">9dp</dimen>
-    <dimen name="sliver_outer_arc_width">27dp</dimen>
-    <dimen name="sliver_height">75dp</dimen>
+    <!-- Sliver (Fang) -->
+    <dimen name="sliver_fang_width">27dp</dimen>
+    <dimen name="sliver_fang_height">38dp</dimen>
 
     <!-- Tray -->
     <dimen name="tray_width">80dp</dimen>
