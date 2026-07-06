@@ -4,7 +4,7 @@
 > **Project Root:** `/Users/anumey/Work/Android/EdgeCase`
 > **Package:** `com.dicereligion.edgecase`
 > **App Name:** EdgeCase
-> **Version:** 1.2.1 (versionCode 1)
+> **Version:** 1.0 (versionCode 1, UI label displays "v1.2.1")
 
 ---
 
@@ -44,7 +44,7 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 
 ### Core Concept
 
-- **Sliver**: A dual-layered semicircular arc rendered at the screen edge (27dp × 75dp overlay window). The inner arc is Serpent Emerald (#2E8B57), the outer arc is Ethereal Pink (#4DFFC0CB) with a pulsing alpha animation.
+- **Sliver**: A dual-layered semicircular arc rendered at the screen edge (27dp × 38dp overlay window). The inner arc is light transparent grey (#60C0C0C0), the outer arc is Ethereal Pink (#FFC0CB) with a pulsing alpha animation (20%–30% opacity, producing the #4DFFC0CB hex value from colors.xml).
 - **Tray**: An 80dp-wide scrollable panel that unfurls (scales in from the edge) when the user swipes the Sliver. Contains desaturated app icons (20% desaturation for ancient-theme look). Tapping an icon launches the app.
 - **Configuration**: A three-screen activity (Main Menu → Shortcuts → Positioning) for managing the shortcut list and sliver placement.
 
@@ -90,12 +90,13 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 │                                                         │
 │  ┌─────────────────┐       ┌──────────────────────────┐ │
 │  │  ArcSliverView  │ ────→ │  TrayView                │ │
-│  │  (27×75dp)      │ swipe │  (80dp wide, scrollable) │ │
+│  │  (27×38dp)      │ swipe │  (80dp wide, scrollable) │ │
 │  │                 │       │                          │ │
 │  │  • Inner arc    │       │  • Meander border        │ │
-│  │  • Outer arc    │       │  • Desaturated icons     │ │
-│  │  • Pulse anim   │       │  • Unfurl animation      │ │
-│  │  • Swipe detect │       │  • Launch intent         │ │
+│  │  (grey #60C0C0C0)│      │  • Desaturated icons     │ │
+│  │  • Outer arc    │       │  • Unfurl animation      │ │
+│  │  • Pulse anim   │       │  • Launch intent         │ │
+│  │  • Swipe detect │       │                          │ │
 │  └─────────────────┘       └──────────────────────────┘ │
 │                                                         │
 │  Hot-reload via Intents:                                │
@@ -373,13 +374,13 @@ private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING }
 - Type: `TYPE_APPLICATION_OVERLAY`
 - Flags: `FLAG_NOT_FOCUSABLE`, `FLAG_LAYOUT_IN_SCREEN`, `FLAG_LAYOUT_NO_LIMITS`, `FLAG_WATCH_OUTSIDE_TOUCH`
 - Format: `TRANSLUCENT`
-- Size: 27dp × 75dp
+- Size: 27dp × 38dp
 - Gravity: `END|TOP` (right) or `START|TOP` (left)
 - Y position: mapped from `yBias` [0,1] → vertical range [10%, 90%] of screen
 
 **Overlay Window Parameters (Tray):**
 - Same type/flags/format
-- Size: 80dp wide, height = sliver height × 4
+- Size: 80dp wide, height = sliver height × 7
 - Same gravity and Y as sliver
 
 **Tray Layout Structure:**
@@ -551,8 +552,8 @@ Simple data class representing a launchable app with its display name, package i
 **Purpose:** Custom View rendering the edge-sliver — a dual-layered semicircular arc that serves as the swipe target for revealing the shortcut tray.
 
 **Visual Design:**
-- **Inner Arc:** Serpent Emerald (#2E8B57), 9dp wide (60% of original sliver width)
-- **Outer Arc:** Ethereal Pink (#4DFFC0CB), 27dp wide (3× inner arc), alpha pulses between 20%–30% over a 4-second infinite animation
+- **Inner Arc:** Light transparent grey (#60C0C0C0), 9dp wide (60% of original sliver width)
+- **Outer Arc:** Ethereal Pink (#FFC0CB), 27dp wide (3× inner arc), alpha pulses between 20%–30% over a 4-second infinite animation (producing the #4DFFC0CB static hex from colors.xml)
 - **Sweep:** 160° (off-center, starts at 100° for RIGHT side, 280° for LEFT side)
 - **Arc center:** anchored to the screen-edge side of the view
 
@@ -588,7 +589,7 @@ Drawing Geometry (LEFT side): mirrored — oval anchored at `x = 0`, start angle
 **Visual Components:**
 1. **Phone Mockup:** Dark marble slab (#1A2822) with rounded corners (4% of mockup width), bordered with Faded Olive Teal (#3B5249), 3px stroke
 2. **Restricted Zones:** Top 10% and bottom 10% crosshatched (Faded Olive Teal at ~30% opacity, 1.5px lines, 12px spacing) — sliver cannot be placed here
-3. **Sliver Preview:** Miniature dual-arc (Ethereal Pink outer, Serpent Emerald inner), matched to current `sliverSide`
+3. **Sliver Preview:** Miniature dual-arc (Ethereal Pink outer, grey #60C0C0C0 inner), matched to current `sliverSide`
 4. **Particle Trail:** Tarnished Silver particles (semi-transparent, alpha 120) that trail behind the sliver while dragging or snapping
 5. **Instruction Text:** "Drag the sliver to reposition" shown when idle and trail is empty
 
@@ -732,7 +733,7 @@ Horizontal LinearLayout, `dark_seaweed` background, 12dp padding:
 | `faded_olive_teal` | #3B5249 | Borders, strokes, pillar capitals |
 | `temple_sandstone` | #D4C4A8 | Stone button body |
 | `aged_marble` | #F5EFE6 | Primary text, dust particles |
-| `serpent_emerald` | #2E8B57 | Accent, checkmarks, inner arc, active indicators |
+| `serpent_emerald` | #2E8B57 | Accent, checkmarks, active indicators |
 | `tarnished_silver` | #9AA0A6 | Secondary text, borders, meander, icon rings |
 | `ethereal_pink` | #4DFFC0CB | Outer arc glow (with dynamic alpha) |
 
@@ -764,7 +765,7 @@ Horizontal LinearLayout, `dark_seaweed` background, 12dp padding:
 | `pillar_width` | 32dp | Decorative pillar width |
 | `sliver_inner_arc_width` | 9dp | Inner arc width |
 | `sliver_outer_arc_width` | 27dp | Outer arc width (3× inner) |
-| `sliver_height` | 75dp | Sliver overlay height |
+| `sliver_height` | 75dp | Sliver overlay height (unused; actual runtime height is 38dp hardcoded in SidebarService) |
 | `tray_width` | 80dp | Tray overlay width |
 | `text_header` | 18sp | Header text |
 | `text_body` | 16sp | Body text |
@@ -890,7 +891,7 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 | 12 | Persistent foreground service (SidebarService) | ✅ Complete | `SidebarService.kt` |
 | 13 | Foreground notification (EdgeCase Active, priority LOW) | ✅ Complete | `SidebarService.buildSystemNotification()` |
 | 14 | Edge sliver overlay (floating window, TYPE_APPLICATION_OVERLAY) | ✅ Complete | `SidebarService.assembleSliverView()` |
-| 15 | Dual-layered arc rendering (inner Serpent Emerald, outer Ethereal Pink) | ✅ Complete | `ArcSliverView.kt` |
+| 15 | Dual-layered arc rendering (inner grey #60C0C0C0, outer Ethereal Pink) | ✅ Complete | `ArcSliverView.kt` |
 | 16 | Ethereal Pink outer arc pulse animation (alpha 20%–30% over 4s) | ✅ Complete | `ArcSliverView.pulseAnimator` |
 | 17 | Swipe gesture detection (inward from edge) | ✅ Complete | `ArcSliverView.onTouchEvent()` |
 | 18 | Tray unfurl animation (scaleX 0→1 at edge pivot) | ✅ Complete | `SidebarService.transitionToExpandedTray()` |
@@ -1023,7 +1024,7 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 4. **Dummy button:** The third main menu button ("DUMMY") does nothing useful — it's a stub for future functionality.
 
-5. **Tray height = sliver height × 4:** This is a fixed ratio. On very short screens (or in landscape), the tray may be taller than the screen → clipped. No dynamic height calculation based on screen size.
+5. **Tray height = sliver height × 7:** This is a fixed ratio. On very short screens (or in landscape), the tray may be taller than the screen → clipped. No dynamic height calculation based on screen size.
 
 6. **No landscape support:** The sliver overlay is designed for portrait mode. The Y-bias positioning and tray layout assume portrait orientation.
 
@@ -1056,16 +1057,16 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 | File | Lines | Purpose |
 |---|---|---|
-| `MainActivity.kt` | ~300 | Main UI, navigation, permissions, service control |
-| `SidebarService.kt` | ~340 | Foreground service, overlay windows, tray management |
-| `ShortcutStateManager.kt` | ~150 | Bipartite shortcut state, persistence, dirty tracking |
-| `ArcSliverView.kt` | ~170 | Dual-arc rendering, pulse animation, swipe detection |
-| `PositioningView.kt` | ~330 | Phone mockup, draggable sliver, snap animation, particles |
-| `DustParticleView.kt` | ~90 | Particle burst effect for button presses |
-| `ActiveShortcutsAdapter.kt` | ~65 | Altar RecyclerView adapter |
-| `AvailableAppsAdapter.kt` | ~55 | Archives RecyclerView adapter |
-| `ShortcutDragCallback.kt` | ~55 | Drag-to-reorder ItemTouchHelper |
-| `AppInfoData.kt` | ~10 | Data class for installed app info |
+| `MainActivity.kt` | 396 | Main UI, navigation, permissions, service control |
+| `SidebarService.kt` | 426 | Foreground service, overlay windows, tray management |
+| `ShortcutStateManager.kt` | 163 | Bipartite shortcut state, persistence, dirty tracking |
+| `ArcSliverView.kt` | 207 | Dual-arc rendering, pulse animation, swipe detection |
+| `PositioningView.kt` | 398 | Phone mockup, draggable sliver, snap animation, particles |
+| `DustParticleView.kt` | 104 | Particle burst effect for button presses |
+| `ActiveShortcutsAdapter.kt` | 60 | Altar RecyclerView adapter |
+| `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
+| `ShortcutDragCallback.kt` | 68 | Drag-to-reorder ItemTouchHelper |
+| `AppInfoData.kt` | 9 | Data class for installed app info |
 
 ### Color Hex Quick Reference
 
@@ -1084,4 +1085,4 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 ---
 
-*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-06-20 with version display (v1.2.1) on home screen. All code, resources, and configurations in this document reflect the exact state of the repository at that time.*
+*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect post-restructuring code changes (sliver height halved to 38dp, inner arc recolored to grey, tray ratio adjusted to ×7). All code, resources, and configurations in this document now reflect the exact state of the repository as of the latest commit (152763f).*
