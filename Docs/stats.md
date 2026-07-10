@@ -1,10 +1,16 @@
 # EdgeCase — Project Status & Blueprint
 
-> **Last Updated:** 2026-07-06
+> **Last Updated:** 2026-07-10
 > **Project Root:** `/Users/anumey/Work/Android/EdgeCase`
 > **Package:** `com.dicereligion.edgecase`
 > **App Name:** EdgeCase
-> **Version:** 1.0 (versionCode 1, UI label displays "v1.2.1")
+> **Version:** 1.3.5 (versionCode 2, UI label displays "v1.3.5")
+>
+> **Recent change (2026-07-10):** Added the **Sliver Customize** feature — a popup on the Position screen
+> that lets the user edit the sliver's opacity, color (default grey or a custom hue), the eight fang-geometry
+> knobs, and its width/height, with a live preview and persistence. The fang geometry was refactored into a
+> single shared builder (`SliverShape`) + config object (`SliverConfig`), and the live-overlay hot-reload was
+> made in-place to fix a stale-overlay bug. See §5.11–5.15, §7 (items 35–43), and §8.
 
 ---
 
@@ -25,6 +31,11 @@
    - [5.8 ArcSliverView.kt](#58-arcsliverviewkt)
    - [5.9 PositioningView.kt](#59-positioningviewkt)
    - [5.10 DustParticleView.kt](#510-dustparticleviewkt)
+   - [5.11 SliverConfig.kt](#511-sliverconfigkt)
+   - [5.12 SliverShape.kt](#512-slivershapekt)
+   - [5.13 SliverCustomizeDialog.kt](#513-slivercustomizedialogkt)
+   - [5.14 SliverPreviewView.kt](#514-sliverpreviewviewkt)
+   - [5.15 LabeledSeekBar.kt](#515-labeledseekbarkt)
 6. [Resources — Complete Reference](#6-resources--complete-reference)
    - [6.1 Layouts](#61-layouts)
    - [6.2 Drawables](#62-drawables)
@@ -44,9 +55,9 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 
 ### Core Concept
 
-- **Sliver (Fangs)**: A single continuous shape rendered at the screen edge (27dp × 38dp overlay window). The right edge is a flat vertical line flush with the screen. The left-facing edge has two sharp fang protrusions (at 20% and 80% height) with a V-shaped central recess between them. The fangs are straight angular lines — no curves, no glow. Filled with 50% opacity grey (#80808080).
+- **Sliver (Fangs)**: A single continuous shape rendered at the screen edge. The spine (screen-edge side) is a flat vertical line; the inward-facing edge has two sharp fang protrusions with a central recess/gums between them. **As of v1.3.5 the sliver is fully user-customizable** — color (default grey `#808080` or a custom hue), opacity, the eight fang-geometry knobs, and its size (default 27dp × 38dp) — all persisted and applied to the live overlay. Defaults reproduce the original 50%-grey angular shape. See the `SliverConfig`/`SliverShape` model (§5.11–5.12) and `Docs/SliverAnatomy.md` for the knob spec.
 - **Tray**: An 80dp-wide scrollable panel that unfurls (scales in from the edge) when the user swipes the Sliver. Contains desaturated app icons (20% desaturation for ancient-theme look). Tapping an icon launches the app.
-- **Configuration**: A three-screen activity (Main Menu → Shortcuts → Positioning) for managing the shortcut list and sliver placement.
+- **Configuration**: A three-screen activity (Main Menu → Shortcuts → Positioning) for managing the shortcut list and sliver placement. The Positioning screen also hosts a **Customize** popup for the sliver's appearance/geometry.
 
 ---
 
@@ -100,9 +111,14 @@ EdgeCase is an Android edge-launcher application themed with a **Hellenic Serpen
 │                                                         │
 │  Hot-reload via Intents:                                │
 │  • ACTION_UPDATE_SHORTCUTS → refreshTrayUiElements()    │
-│  • ACTION_UPDATE_POSITION  → reinitializeSliverForPos() │
+│  • ACTION_UPDATE_POSITION  → applySliverUpdate()        │
+│  • ACTION_UPDATE_STYLE     → applySliverUpdate()        │
+│    (in-place: recolor + updateViewLayout, no recreate)  │
 └─────────────────────────────────────────────────────────┘
 ```
+
+The Sliver's appearance/geometry comes from a `SliverConfig` (loaded from prefs). Both `ArcSliverView` (live)
+and the two previews (`PositioningView`, `SliverPreviewView`) render via the single builder `SliverShape.buildPath`.
 
 ### Data Model
 
@@ -127,17 +143,47 @@ ShortcutStateManager
 | `saved_shortcuts` | Set<String> | Legacy set of selected package names |
 | `sliver_side` | String | `"left"` or `"right"` |
 | `sliver_y_bias` | Float | 0.0–1.0, vertical position within valid zone |
+| `sliver_opacity` | Float | 0.0–1.0 overall sliver transparency |
+| `sliver_color_mode` | String | `"DEFAULT"` (grey) or `"CUSTOM"` (hue) |
+| `sliver_color_hue` | Float | 0–360 hue (used when mode = CUSTOM) |
+| `sliver_t1_thickness` / `sliver_t2_thickness` | Float | top/bottom fang thickness (fraction) |
+| `sliver_t1_length` / `sliver_t2_length` | Float | top/bottom fang inward length (fraction) |
+| `sliver_t1_tipy` / `sliver_t2_tipy` | Float | top/bottom fang tip vertical position (angle) |
+| `sliver_gums_depth` | Float | gums/bridge depth (fraction) |
+| `sliver_gap` | Float | gap between the fangs (fraction) |
+| `sliver_width_dp` / `sliver_height_dp` | Float | sliver size in dp (defaults 27 / 38) |
+
+The 13 `sliver_*` appearance/geometry keys are read/written through the `SliverConfig` model (§5.11).
+
+### Sliver Config Data Model
+
+```
+SliverConfig  (persisted in EdgeCasePrefs; defaults reproduce the original look)
+├── opacity: Float                     (0..1, default 0.5)
+├── colorMode: ColorMode {DEFAULT|CUSTOM}
+├── customHue: Float                   (0..360, default 210)
+├── tooth1Thickness / tooth2Thickness  (default 0.114 / 0.113)
+├── tooth1Length / tooth2Length        (default 0.60 / 0.60)
+├── tooth1TipY / tooth2TipY            (default 0.20 / 0.80)
+├── gumsDepth                          (default 0.07)
+├── gap                                (default 0.44)
+└── widthDp / heightDp                 (default 27 / 38)
+    • baseColor()  → grey or HSV(hue,1,1)
+    • fillColor()  → baseColor with alpha = opacity·255
+```
 
 ### Inter-Component Communication
 
 ```
 MainActivity ──startService(intent)──→ SidebarService
                   ↑                    ↑
-                  │ ACTION_UPDATE_SHORTCUTS / ACTION_UPDATE_POSITION
+                  │ ACTION_UPDATE_SHORTCUTS / ACTION_UPDATE_POSITION / ACTION_UPDATE_STYLE
                   └────────────────────┘
 ```
 
-Both use `startService()` with action-bearing Intents. The service processes them in `onStartCommand()`.
+All use `startService()` with action-bearing Intents. The service processes them in `onStartCommand()`.
+`ACTION_UPDATE_STYLE` (sent when the Customize dialog is applied) and `ACTION_UPDATE_POSITION` both route to
+`applySliverUpdate()`, which updates the existing overlay view in place.
 
 ---
 
@@ -170,10 +216,15 @@ EdgeCase/
             │   ├── AvailableAppsAdapter.kt
             │   ├── DustParticleView.kt
             │   ├── MainActivity.kt
+            │   ├── LabeledSeekBar.kt              # Reusable label+slider+value row (Customize dialog)
             │   ├── PositioningView.kt
             │   ├── ShortcutDragCallback.kt
             │   ├── ShortcutStateManager.kt
-            │   └── SidebarService.kt
+            │   ├── SidebarService.kt
+            │   ├── SliverConfig.kt                # Sliver appearance/geometry model + prefs I/O
+            │   ├── SliverCustomizeDialog.kt       # "Customize Sliver" popup controller
+            │   ├── SliverPreviewView.kt           # Live sliver preview inside the dialog
+            │   └── SliverShape.kt                 # Shared parametric fang-path builder
             │
             └── res/
                 ├── drawable/
@@ -194,6 +245,7 @@ EdgeCase/
                 │
                 ├── layout/
                 │   ├── activity_main.xml
+                │   ├── dialog_customize_sliver.xml   # Customize Sliver popup content
                 │   ├── layout_item_available_app.xml
                 │   ├── layout_item_shortcut_tile.xml
                 │   ├── layout_screen_main_menu.xml
@@ -300,7 +352,8 @@ plugins {
 - Manages permissions flow for overlay & battery optimization
 - Controls foreground service start/stop
 - Initializes bipartite Shortcuts screen (Altar + Archives)
-- Initializes Positioning screen with live sliver preview
+- Initializes Positioning screen with live sliver preview (applies saved `SliverConfig` to the preview)
+- Opens the **Customize Sliver** dialog and, on Apply, refreshes the preview + hot-reloads the overlay (`ACTION_UPDATE_STYLE`)
 - Persists and reloads shortcut state to/from SharedPreferences
 
 **Key State:**
@@ -339,7 +392,12 @@ private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING }
 | `btnStopService` | Stop SidebarService |
 | `btnBackToMenu` | Trigger onBackPressed (with dirty check) |
 | `btnSaveShortcuts` | Commit shortcuts, notify service |
+| `btnCustomizeSliver` | Open the Customize Sliver dialog (`openCustomizeSliverDialog()`) |
 | `btnBackToMenuFromPosition` | Return to main menu |
+
+**Customize hook (`openCustomizeSliverDialog()`):** loads the current `SliverConfig`, shows
+`SliverCustomizeDialog`; on Apply it applies the returned config to `positioningView` and sends
+`ACTION_UPDATE_STYLE` to the service, then toasts "Sliver updated".
 
 **Stone Button Behavior (`applyStoneButtonBehavior`):**
 - `ACTION_DOWN`: animate translationY down by `stone_button_pressed_translation` (4dp), trigger haptic (30ms, amplitude 255), burst 6 dust particles
@@ -368,12 +426,17 @@ private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING }
 | `NOTIFICATION_ID` | `9182` |
 | `ACTION_UPDATE_SHORTCUTS` | `"com.dicereligion.edgecase.UPDATE_SHORTCUTS"` |
 | `ACTION_UPDATE_POSITION` | `"com.dicereligion.edgecase.UPDATE_POSITION"` |
+| `ACTION_UPDATE_STYLE` | `"com.dicereligion.edgecase.UPDATE_STYLE"` |
+
+**Sliver config:** the service holds a `config: SliverConfig` (loaded from prefs in `onCreate` and again in
+`applySliverUpdate()`). It drives the overlay size, the fang geometry (via `ArcSliverView` + `SliverShape`),
+and the fill color/opacity.
 
 **Overlay Window Parameters (Sliver):**
 - Type: `TYPE_APPLICATION_OVERLAY`
 - Flags: `FLAG_NOT_FOCUSABLE`, `FLAG_LAYOUT_IN_SCREEN`, `FLAG_LAYOUT_NO_LIMITS`, `FLAG_WATCH_OUTSIDE_TOUCH`
 - Format: `TRANSLUCENT`
-- Size: 27dp × 38dp
+- Size: `config.widthDp × config.heightDp` dp (default 27 × 38)
 - Gravity: `END|TOP` (right) or `START|TOP` (left)
 - Y position: mapped from `yBias` [0,1] → vertical range [10%, 90%] of screen
 
@@ -402,6 +465,13 @@ LinearLayout (horizontal, root)
 **State Transitions:**
 - `transitionToExpandedTray()`: Remove sliver window → scale-in animation on tray (scaleX 0→1 over 250ms with DecelerateInterpolator, pivot at edge) → add tray window → haptic burst
 - `transitionToSliverState()`: Remove tray window → add sliver window back
+
+**In-place update (`applySliverUpdate()`):** Handles both `ACTION_UPDATE_POSITION` and `ACTION_UPDATE_STYLE`.
+Reloads position + `SliverConfig`, recomputes window params, then updates the **existing** sliver view via
+`ArcSliverView.applyConfig(config, side)` + `windowManager.updateViewLayout(...)` — it does **not** destroy and
+recreate the overlay. This replaced the older `reinitializeSliverForPosition()` (remove-then-add), which had a
+race that could leave a stale sliver window on screen (see §7 item 43 / §10). The tray is rebuilt so its
+size/side match.
 
 **Desaturation Filter:**
 ```kotlin
@@ -548,17 +618,15 @@ Simple data class representing a launchable app with its display name, package i
 **Path:** `app/src/main/java/com/dicereligion/edgecase/ArcSliverView.kt`
 **Extends:** `View`
 
-**Purpose:** Custom View rendering the edge-sliver — a single continuous shape with two sharp angular fang protrusions on the inward-facing edge. The right edge is a flat vertical line flush with the screen. The path is built in `onSizeChanged` and uses only straight `lineTo` calls — no curves, no glow, no animation.
+**Purpose:** Custom View rendering the edge-sliver — a single continuous shape with two sharp angular fang protrusions on the inward-facing edge. **As of v1.3.5 it is config-driven:** it takes a `SliverConfig` (constructor param), builds its path via the shared `SliverShape.buildPath(...)` (no longer hardcoded here), and fills with `config.fillColor()` (color × opacity). Size comes from `config.widthDp/heightDp`. Still straight `lineTo` geometry — no curves, no glow.
 
-**Visual Design:**
-- **Flat upper anchor:** `(W, 0)` → `(W, H×0.166)` — straight down the right edge (top 16.6%)
-- **Top fang:** `(W, H×0.166)` → `(W×0.4, H×0.20)` → `(W×0.93, H×0.28)` — angular tooth pointing inward to 40% width, tip at 20% height, returning to edge at 28%
-- **Flat vertical gap:** `(W×0.93, H×0.28)` → `(W×0.93, H×0.72)` — straight vertical line at 93% width (44% of height)
-- **Bottom fang:** `(W×0.93, H×0.72)` → `(W×0.4, H×0.80)` → `(W, H×0.833)` — angular tooth pointing inward to 40% width, tip at 80% height, returning to edge at 83.3%
-- **Flat lower anchor:** `(W, H×0.833)` → `(W, H)` — straight down the right edge (bottom 16.7%)
-- **Fill:** 50% opacity grey (#80808080), `Paint.Style.FILL`
-- **No glow, no border, no pulse animation**
-- **View dimensions:** 27dp wide × 38dp tall
+**Visual Design (built by `SliverShape` from the config knobs — defaults reproduce the original shape):**
+- **Spine:** flat line on the screen-edge side (`u = 0`), full height.
+- **Top fang / gums / bottom fang:** two inward tips with a central gums bridge; the eight fang knobs
+  (thickness ×2, length ×2, tipY ×2, gums depth, gap) place the 8 path vertices. See `Docs/SliverAnatomy.md`.
+- **Fill:** `config.fillColor()` — default is 50% grey (`#808080` @ opacity 0.5 = `#80808080`); custom is a hue.
+- **No glow, no border, no pulse animation.**
+- **View dimensions:** `config.widthDp × config.heightDp` (default 27dp × 38dp).
 
 **Swipe Detection:**
 - Tracks `rawX`/`rawY` (screen coordinates)
@@ -567,7 +635,8 @@ Simple data class representing a launchable app with its display name, package i
 - Direction: swiping INWARD from the edge (leftward for right-side sliver, rightward for left-side sliver)
 
 **Lifecycle:**
-- `onSizeChanged()`: rebuilds the fang path whenever the view is measured
+- `onSizeChanged()`: rebuilds the fang path (via `SliverShape`) whenever the view is measured
+- `applyConfig(newConfig, newSide)`: updates appearance/geometry in place — recolors the paint, rebuilds the path at the current size, `requestLayout()` + `invalidate()`. Used by the service's in-place hot-reload.
 - System gesture exclusion: set via `SidebarService.assembleSliverView()` using `systemGestureExclusionRects` (API 29+)
 
 ---
@@ -582,7 +651,7 @@ Simple data class representing a launchable app with its display name, package i
 **Visual Components:**
 1. **Phone Mockup:** Dark marble slab (#1A2822) with rounded corners (4% of mockup width), bordered with Faded Olive Teal (#3B5249), 3px stroke
 2. **Restricted Zones:** Top 10% and bottom 10% crosshatched (Faded Olive Teal at ~30% opacity, 1.5px lines, 12px spacing) — sliver cannot be placed here
-3. **Sliver Preview:** Miniature fang path (grey #80808080 fill, no glow), identical geometry to ArcSliverView, translated to centre on the sliver position
+3. **Sliver Preview:** Miniature fang path built by the shared `SliverShape.buildPath(...)` and filled with `sliverConfig.fillColor()`, so it mirrors the live sliver's color/opacity/geometry. `setSliverConfig(cfg)` updates it (called on screen init with the saved config, and after Customize → Apply); the preview's width/height reflect the config's aspect
 4. **Particle Trail:** Tarnished Silver particles (semi-transparent, alpha 120) that trail behind the sliver while dragging or snapping
 5. **Instruction Text:** "Drag the sliver to reposition" shown when idle and trail is empty
 
@@ -634,6 +703,91 @@ Simple data class representing a launchable app with its display name, package i
 
 ---
 
+### 5.11 `SliverConfig.kt`
+
+**Path:** `app/src/main/java/com/dicereligion/edgecase/SliverConfig.kt`
+**Type:** `data class`
+
+**Purpose:** The single model for the sliver's user-editable appearance/geometry, persisted in `EdgeCasePrefs`.
+Every default reproduces the original hardcoded look, so nothing changes visually until the user edits something.
+
+**Fields & defaults:** `opacity` (0.5), `colorMode` (`DEFAULT`/`CUSTOM`), `customHue` (210),
+`tooth1/2Thickness` (0.114/0.113), `tooth1/2Length` (0.60), `tooth1/2TipY` (0.20/0.80), `gumsDepth` (0.07),
+`gap` (0.44), `widthDp`/`heightDp` (27/38). Geometry values use the normalized fang model in `Docs/SliverAnatomy.md`.
+
+**Helpers:**
+- `baseColor()` → opaque grey `#808080` (DEFAULT) or `Color.HSVToColor(hue,1,1)` (CUSTOM)
+- `fillColor()` → base color with alpha = `opacity·255` (so opacity 0 = fully transparent)
+- `save(context)` and companion `load(context)` — read/write the 13 `sliver_*` prefs keys
+- data-class `copy()` — used by the dialog for a discardable working copy
+
+---
+
+### 5.12 `SliverShape.kt`
+
+**Path:** `app/src/main/java/com/dicereligion/edgecase/SliverShape.kt`
+**Type:** `object` (singleton)
+
+**Purpose:** The single source of truth for the fang path. `buildPath(path, w, h, side, cfg)` computes the 8
+`(u,v)` vertices from the config knobs and writes them into `path`. All renderers (`ArcSliverView` live overlay,
+`PositioningView` and `SliverPreviewView` previews) call this — eliminating the former four hardcoded L/R copies.
+
+**Model:** `u` = inward depth (0 = flat spine at the screen edge → 1 = deepest inward reach), `v` = vertical
+(0 top → 1 bottom). Per side: `RIGHT → x = w·(1−u)`, `LEFT → x = w·u`, both `y = h·v`. Vertices:
+`v3/v4 = 0.5 ∓ gap/2` (gums span), `v1 = v3 − tooth1Thickness`, `v6 = v4 + tooth2Thickness`, tips at
+`(length, tipY)`, gums wall at `u = gumsDepth`. All coordinates are coerced into `[0,1]` with preserved order,
+so no knob combination can invert the shape.
+
+---
+
+### 5.13 `SliverCustomizeDialog.kt`
+
+**Path:** `app/src/main/java/com/dicereligion/edgecase/SliverCustomizeDialog.kt`
+
+**Purpose:** Controller for the **Customize Sliver** popup (an AppCompat `AlertDialog` hosting
+`dialog_customize_sliver.xml`, sized to 92% of screen width). Edits a working copy of `SliverConfig` with a
+live preview.
+
+**Structure & controls:**
+- Live `SliverPreviewView` at top (mirrors the saved edge side).
+- **Opacity** slider (0–100%).
+- **Color**: radio toggle *Default grey* / *Custom*; Custom reveals a **rainbow hue** `SeekBar`
+  (track painted with a `GradientDrawable` hue spectrum) + a live swatch.
+- **Fang geometry** sliders (`LabeledSeekBar`): top/bottom thickness, top/bottom length, top/bottom angle
+  (tipY), gums depth, gap. Ranges are clamped (e.g. thickness 0.02–0.35, length 0.10–0.95, tipY1 0.02–0.48 /
+  tipY2 0.52–0.98, gums 0–0.60, gap 0.05–0.90).
+- **Size**: two numeric `EditText` for width (8–160dp) / height (12–240dp).
+- **Footer**: Reset / Cancel / Apply.
+
+Every control writes into the working config and calls `preview.setConfig(...)`. **Apply** persists via
+`working.save(context)` and calls back `onApplied(working)` (MainActivity refreshes the preview + sends
+`ACTION_UPDATE_STYLE`). **Reset** restores defaults (persist only on Apply). **Cancel** discards.
+
+---
+
+### 5.14 `SliverPreviewView.kt`
+
+**Path:** `app/src/main/java/com/dicereligion/edgecase/SliverPreviewView.kt`
+**Extends:** `View`
+
+**Purpose:** A static, scaled preview of the sliver fang for the Customize dialog. Draws `SliverShape.buildPath`
+centered and scaled to fit (preserving the config's H/W aspect), filled with `config.fillColor()`, mirroring the
+saved edge `side`. `setConfig(cfg)` updates it (invalidate) for instant feedback while sliders move.
+
+---
+
+### 5.15 `LabeledSeekBar.kt`
+
+**Path:** `app/src/main/java/com/dicereligion/edgecase/LabeledSeekBar.kt`
+**Extends:** `LinearLayout` (compound view, declared in XML)
+
+**Purpose:** A reusable control row — `label | ——slider—— | value` — used for every slider in the Customize
+dialog. `configure(label, min, max, value, formatter, onChange)` maps the SeekBar's `0..1000` progress onto a
+float `[min,max]` and reports user-driven changes; `setValue()` updates without firing the callback (for Reset).
+`seek()` exposes the underlying `SeekBar` (used to paint the hue-spectrum track).
+
+---
+
 ## 6. Resources — Complete Reference
 
 ### 6.1 Layouts
@@ -656,7 +810,7 @@ Themed with `bg_stone_texture` background. Contains:
   4. Spear divider (`ic_divider_spear`) between dummy and service buttons
   5. `btnStartService` — "START EDGE SERVICE" (14sp, letterSpacing 0.04)
   6. `btnStopService` — "STOP SERVICE"
-- Version label: `TextView` at bottom-left (layout_gravity `start|bottom`), "v1.2.1", CaptionSerif style, tarnished_silver color, 0.6 alpha
+- Version label: `TextView` at bottom-left (layout_gravity `start|bottom`), "v1.3.5", CaptionSerif style, tarnished_silver color, 0.6 alpha
 
 #### `layout_screen_shortcuts_container.xml`
 Themed with `bg_stone_texture` background, left/right pillars at 0.5 alpha. Contains:
@@ -674,7 +828,16 @@ Themed with `bg_stone_texture` background, left/right pillars at 0.5 alpha. Cont
 Themed with `bg_stone_texture` background, left/right pillars. Contains:
 - Header: "SLIVER POSITION" engraved text
 - `PositioningView` (custom view, id=`positioningView`, layout_weight=1)
-- Bottom bar: `tvPositionInfo` (tarnished_silver, CaptionSerif size) + `btnBackToMenuFromPosition` (120dp wide)
+- Footer (vertical): `tvPositionInfo` (full-width readout) on top, then an action row with two equal-weight
+  stone buttons — `btnCustomizeSliver` ("CUSTOMIZE") on the left and `btnBackToMenuFromPosition` ("BACK") on
+  the right (restructured from the old single-row info + 120dp Back to fit the new button)
+
+#### `dialog_customize_sliver.xml` (Customize Sliver popup)
+Stone-textured vertical panel (used by `SliverCustomizeDialog`). Contains: an "CUSTOMIZE SLIVER" engraved
+title; a framed `SliverPreviewView` (110dp) live preview; a 320dp `ScrollView` with an **APPEARANCE** section
+(opacity `LabeledSeekBar`, a Default/Custom color `RadioGroup`, and a hue `LabeledSeekBar` + swatch shown when
+Custom), a **FANG GEOMETRY** section (eight `LabeledSeekBar`s), and a **SIZE (DP)** row (width/height
+`EditText`s); and a footer with RESET / CANCEL / APPLY stone buttons. Section dividers use `ic_divider_spear`.
 
 #### `layout_item_shortcut_tile.xml` (Altar item row)
 `FrameLayout` with translucent temple sandstone (#33D4C4A8) tile background. Contains horizontal LinearLayout:
@@ -765,7 +928,8 @@ Horizontal LinearLayout, `dark_seaweed` background, 12dp padding:
 
 #### Strings (`strings.xml`)
 
-Only one string: `app_name` = `"EdgeCase"`
+Only one string: `app_name` = `"EdgeCase"`. All UI labels (including the Customize dialog's title, control
+labels, and buttons) are inline literals in the layouts/code, consistent with the rest of the app.
 
 #### Styles (`styles.xml`)
 
@@ -903,12 +1067,22 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 | 32 | Idempotent sliver/tray add/remove guards | ✅ Complete | `sliverAdded` flag + isAttachedToWindow checks |
 | 33 | Dirty-state tracking for discard prompts | ✅ Complete | `ShortcutStateManager.isDirty()` |
 | 34 | Sticky service restart on kill | ✅ Complete | `START_STICKY` return value |
+| 35 | **Customize Sliver** dialog on the Position screen | ✅ Complete — 2026-07-10 | `SliverCustomizeDialog.kt`, `dialog_customize_sliver.xml` |
+| 36 | Configurable sliver **opacity** (0–100%) | ✅ Complete — 2026-07-10 | `SliverConfig.opacity` / `fillColor()` |
+| 37 | Configurable sliver **color** (default grey or custom hue via rainbow slider) | ✅ Complete — 2026-07-10 | `SliverConfig.colorMode/customHue`, `SliverCustomizeDialog` |
+| 38 | Configurable **fang geometry** (per-fang thickness / length / angle, gums depth, gap) | ✅ Complete — 2026-07-10 | `SliverConfig` + `SliverShape` |
+| 39 | Configurable sliver **size** (width/height dp) | ✅ Complete — 2026-07-10 | `SliverConfig.widthDp/heightDp` |
+| 40 | **Live preview** in the dialog + on the Position screen | ✅ Complete — 2026-07-10 | `SliverPreviewView`, `PositioningView.setSliverConfig()` |
+| 41 | Sliver style persistence (13 `sliver_*` prefs keys) | ✅ Complete — 2026-07-10 | `SliverConfig.save/load` |
+| 42 | Hot-reload sliver style in running service | ✅ Complete — 2026-07-10 | `ACTION_UPDATE_STYLE` → `applySliverUpdate()` |
+| 43 | Single-source fang geometry builder (removed 4× hardcoded path duplication) | ✅ Complete — 2026-07-10 | `SliverShape.buildPath()` |
+| 44 | In-place overlay update (fixes stale-sliver / opacity-0 ghost bug) | ✅ Complete — 2026-07-10 | `SidebarService.applySliverUpdate()` + `ArcSliverView.applyConfig()` |
 
 ### Planned / Stub Features
 
 | # | Feature | Status |
 |---|---|---|
-| 0 | Version display on home screen (bottom-left, v1.2.1) | ✅ Complete — added 2026-06-20 |
+| 0 | Version display on home screen (bottom-left, now shows v1.3.5) | ✅ Complete — added 2026-06-20 |
 | 1 | Dummy button (third menu option) | 🔶 Stub — shows Toast "Dummy — nothing here yet" |
 | 2 | Monochrome themed icon support (Android 13+) | ❌ Removed — incompatible with raster PNG foreground |
 
@@ -927,6 +1101,10 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 │  saved_shortcuts: Set<String>        │
 │  sliver_side: "left" | "right"       │
 │  sliver_y_bias: Float (0.0–1.0)     │
+│  sliver_opacity / _color_mode / _hue │
+│  sliver_t1/t2_thickness/length/tipy  │
+│  sliver_gums_depth / _gap            │
+│  sliver_width_dp / _height_dp        │
 └──────┬───────────────┬───────────────┘
        │               │
        ▼               ▼
@@ -968,16 +1146,24 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 3. User drags sliver preview on mockup → particle trail follows
 4. On release → snap animation to nearest edge → `onPositionChanged` callback fires
 5. Callback writes new side and yBias to prefs immediately
-6. Sends `ACTION_UPDATE_POSITION` intent to service → service calls `reinitializeSliverForPosition()` which removes and rebuilds the sliver overlay at the new position
+6. Sends `ACTION_UPDATE_POSITION` intent to service → service calls `applySliverUpdate()`, which updates the existing sliver overlay **in place** (no destroy/recreate)
+
+### Sliver Customization Flow
+
+1. Position screen → **CUSTOMIZE** → `MainActivity.openCustomizeSliverDialog()` loads the current `SliverConfig` and shows `SliverCustomizeDialog`
+2. The dialog edits a **working copy**; every slider/field/color change updates the working config and the live `SliverPreviewView`
+3. **Apply:** `working.save(context)` writes the 13 `sliver_*` keys; the callback applies the config to the Position screen's `PositioningView` preview and sends `ACTION_UPDATE_STYLE` to the service
+4. Service `applySliverUpdate()` reloads the config and updates the live overlay in place (recolor + `updateViewLayout`)
+5. **Cancel** discards the working copy; **Reset** restores defaults in the dialog (persisted only if Apply is then pressed)
 
 ### Service Lifecycle
 
 1. User taps "START EDGE SERVICE" → `MainActivity.checkAndRequestPermissions()` → `startEdgeService()` → `startForegroundService(intent)`
 2. `SidebarService.onCreate()`:
-   - Loads position from prefs
+   - Loads position **and `SliverConfig`** from prefs
    - Builds foreground notification
-   - Creates window parameters (TYPE_APPLICATION_OVERLAY)
-   - Assembles sliver view and tray view
+   - Creates window parameters (TYPE_APPLICATION_OVERLAY; size from `config.widthDp/heightDp`)
+   - Assembles sliver view (passing `config`) and tray view
    - Adds sliver to window if overlay permission granted
 3. Swipe on sliver → `transitionToExpandedTray()` (remove sliver, add tray with animation)
 4. Tap tray icon → launch app → `transitionToSliverState()` (remove tray, restore sliver)
@@ -1034,9 +1220,9 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 - Add landscape orientation support with adaptive tray sizing
 - Create `values-night/` resources for a light theme variant
 - Add monochrome vector drawable for Android 13+ themed icons
-- Implement backup rules for `EdgeCasePrefs`
+- Implement backup rules for `EdgeCasePrefs` (now includes the 13 `sliver_*` style keys)
 - Add onboarding flow for first-time users (explain swipe gesture)
-- Add configurable sliver size and tray width
+- ~~Add configurable sliver size~~ — **done** (v1.3.5 Customize dialog: size, color, opacity, fang geometry); tray width still fixed
 - Add custom action shortcuts (not just app launches)
 - Support for widget pinning in the tray
 
@@ -1048,15 +1234,20 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 | File | Lines | Purpose |
 |---|---|---|
-| `MainActivity.kt` | 396 | Main UI, navigation, permissions, service control |
-| `SidebarService.kt` | 426 | Foreground service, overlay windows, tray management |
+| `SidebarService.kt` | 448 | Foreground service, overlay windows, tray, in-place style update |
+| `MainActivity.kt` | 419 | Main UI, navigation, permissions, service control, Customize hook |
+| `PositioningView.kt` | 411 | Phone mockup, draggable fang sliver, snap animation, particles, config preview |
+| `SliverCustomizeDialog.kt` | 206 | "Customize Sliver" popup controller |
 | `ShortcutStateManager.kt` | 163 | Bipartite shortcut state, persistence, dirty tracking |
-| `ArcSliverView.kt` | 135 | Fang path rendering (straight-line geometry), swipe detection |
-| `PositioningView.kt` | 406 | Phone mockup, draggable fang sliver, snap animation, particles |
+| `ArcSliverView.kt` | 124 | Config-driven fang rendering (via SliverShape), swipe detection, `applyConfig` |
+| `SliverConfig.kt` | 119 | Sliver appearance/geometry model + prefs I/O |
 | `DustParticleView.kt` | 104 | Particle burst effect for button presses |
-| `ActiveShortcutsAdapter.kt` | 60 | Altar RecyclerView adapter |
-| `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
+| `LabeledSeekBar.kt` | 94 | Reusable label+slider+value control row |
 | `ShortcutDragCallback.kt` | 68 | Drag-to-reorder ItemTouchHelper |
+| `ActiveShortcutsAdapter.kt` | 60 | Altar RecyclerView adapter |
+| `SliverPreviewView.kt` | 53 | Live sliver preview for the Customize dialog |
+| `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
+| `SliverShape.kt` | 50 | Shared parametric fang-path builder |
 | `AppInfoData.kt` | 9 | Data class for installed app info |
 
 ### Color Hex Quick Reference
@@ -1076,4 +1267,14 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 ---
 
-*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect: fang sliver redesign (angular straight-line path, no glow/border, #80808080 fill), transparent adaptive icon background, and updated line counts.*
+*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect: fang sliver redesign (angular straight-line path, no glow/border, #80808080 fill), transparent adaptive icon background, and updated line counts. Updated 2026-07-10 (v1.3.5) to reflect: the **Sliver Customize** feature (opacity, color/hue, per-fang geometry, size — via `SliverConfig` + `SliverCustomizeDialog`), the shared `SliverShape` path builder replacing four hardcoded copies, `ACTION_UPDATE_STYLE` hot-reload, the in-place overlay update (`applySliverUpdate` / `ArcSliverView.applyConfig`) that fixed the stale-sliver / 0%-opacity ghost bug, five new source files, `dialog_customize_sliver.xml`, the 13 new `sliver_*` prefs keys, and updated line counts.*
+
+---
+
+## Appendix B: Related Documents
+
+| Document | Purpose |
+|---|---|
+| `Docs/Dimensions.md` | Stable ID/dimension addressing for every page/element (incl. the `POSITION.btnCustomize` button and `DIALOG.customizeSliver`); §6 covers the sliver anatomy + tuning knobs |
+| `Docs/SliverAnatomy.md` | Deep-dive on the fang geometry: named parts, vertices, tuning knobs, and how they map to `SliverConfig`/`SliverShape` |
+| `Docs/Publisher.md` | Google Play publication roadmap / pre-launch checklist |

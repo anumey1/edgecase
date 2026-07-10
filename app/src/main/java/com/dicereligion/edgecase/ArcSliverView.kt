@@ -21,6 +21,7 @@ import kotlin.math.abs
 class ArcSliverView(
     context: Context,
     var side: Side = Side.RIGHT,
+    var config: SliverConfig = SliverConfig(),
     private val onSwipeListener: (() -> Unit)? = null
 ) : View(context) {
 
@@ -31,7 +32,7 @@ class ArcSliverView(
 
     // ── Paints ───────────────────────────────────────────
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80808080") // 50% opacity grey
+        color = config.fillColor()
         style = Paint.Style.FILL
     }
 
@@ -53,8 +54,8 @@ class ArcSliverView(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val density = resources.displayMetrics.density
-        val w = resolveSize((27f * density).toInt(), widthMeasureSpec)
-        val h = resolveSize((38f * density).toInt(), heightMeasureSpec)
+        val w = resolveSize((config.widthDp * density).toInt(), widthMeasureSpec)
+        val h = resolveSize((config.heightDp * density).toInt(), heightMeasureSpec)
         setMeasuredDimension(w, h)
     }
 
@@ -63,31 +64,19 @@ class ArcSliverView(
         buildPath(w.toFloat(), h.toFloat())
     }
 
-    /** Rebuilds the fang path using the current view dimensions. */
+    /** Rebuilds the fang path using the current view dimensions and [config]. */
     private fun buildPath(W: Float, H: Float) {
-        fangPath.reset()
+        SliverShape.buildPath(fangPath, W, H, side, config)
+    }
 
-        if (side == Side.RIGHT) {
-            fangPath.moveTo(W, 0f)
-            fangPath.lineTo(W, H * 0.166f)               // flat upper anchor
-            fangPath.lineTo(W * 0.4f, H * 0.20f)          // top fang → tip (40% width)
-            fangPath.lineTo(W * 0.93f, H * 0.28f)         // top fang → recess entry
-            fangPath.lineTo(W * 0.93f, H * 0.72f)         // flat vertical gap (+30%)
-            fangPath.lineTo(W * 0.4f, H * 0.80f)          // bottom fang → tip (40% width)
-            fangPath.lineTo(W, H * 0.833f)                // bottom fang → flat anchor
-            fangPath.lineTo(W, H)                          // flat lower anchor
-        } else {
-            fangPath.moveTo(0f, 0f)
-            fangPath.lineTo(0f, H * 0.166f)               // flat upper anchor
-            fangPath.lineTo(W * 0.6f, H * 0.20f)           // top fang → tip (40% from left)
-            fangPath.lineTo(W * 0.07f, H * 0.28f)          // top fang → recess entry
-            fangPath.lineTo(W * 0.07f, H * 0.72f)          // flat vertical gap (+30%)
-            fangPath.lineTo(W * 0.6f, H * 0.80f)           // bottom fang → tip (40% from left)
-            fangPath.lineTo(0f, H * 0.833f)                // bottom fang → flat anchor
-            fangPath.lineTo(0f, H)                          // flat lower anchor
-        }
-
-        fangPath.close()
+    /** Update appearance/geometry in place (no view recreation), then re-measure and redraw. */
+    fun applyConfig(newConfig: SliverConfig, newSide: Side) {
+        config = newConfig
+        side = newSide
+        fillPaint.color = config.fillColor()
+        if (width > 0 && height > 0) buildPath(width.toFloat(), height.toFloat())
+        requestLayout()
+        invalidate()
     }
 
     // ── Drawing ──────────────────────────────────────────

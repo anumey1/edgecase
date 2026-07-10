@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
@@ -89,6 +90,14 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
     private var sliverPreviewWidth = 28f  // scaled width of preview
     private var sliverPreviewHeight = 38f // scaled height of preview
 
+    /** Reusable path for the preview fang (built via [SliverShape]). */
+    private val previewPath = Path()
+    /** Current sliver appearance/geometry — drives the preview's shape, color, and aspect. */
+    var sliverConfig: SliverConfig = SliverConfig()
+        private set
+    /** Cached mockup width so preview size can be recomputed when the config changes. */
+    private var mockupWpx = 0f
+
     // ── Drag state ─────────────────────────────────────
     private var isDragging = false
     private var dragOffsetY = 0f
@@ -143,12 +152,27 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         validTopY = mockupTop + restrictedHeight
         validBottomY = mockupBottom - restrictedHeight
 
-        // Scale sliver preview size based on mockup width
-        sliverPreviewWidth = mockupW * 0.04f
-        sliverPreviewHeight = sliverPreviewWidth * 1.4f
+        // Scale sliver preview size based on mockup width + the current config aspect
+        mockupWpx = mockupW
+        recalcPreviewSize()
         mockupCornerRadius = mockupW * 0.04f
 
         recalcSliverPosition()
+    }
+
+    /** Recompute the on-screen preview size so width/height edits change its aspect. */
+    private fun recalcPreviewSize() {
+        val previewScale = (mockupWpx * 0.04f) / SliverConfig.DEF_WIDTH_DP
+        sliverPreviewWidth = previewScale * sliverConfig.widthDp
+        sliverPreviewHeight = previewScale * sliverConfig.heightDp
+    }
+
+    /** Apply a new sliver appearance/geometry; refreshes the preview immediately. */
+    fun setSliverConfig(cfg: SliverConfig) {
+        sliverConfig = cfg
+        recalcPreviewSize()
+        recalcSliverPosition()
+        invalidate()
     }
 
     private fun recalcSliverPosition() {
@@ -215,28 +239,9 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         canvas.save()
         canvas.translate(cx - (if (sliverSide == ArcSliverView.Side.RIGHT) W else 0f), cy - H / 2f)
 
-        val path = android.graphics.Path()
-        if (sliverSide == ArcSliverView.Side.RIGHT) {
-            path.moveTo(W, 0f)
-            path.lineTo(W, H * 0.166f)
-            path.lineTo(W * 0.4f, H * 0.20f)
-            path.lineTo(W * 0.93f, H * 0.28f)
-            path.lineTo(W * 0.93f, H * 0.72f)
-            path.lineTo(W * 0.4f, H * 0.80f)
-            path.lineTo(W, H * 0.833f)
-            path.lineTo(W, H)
-        } else {
-            path.moveTo(0f, 0f)
-            path.lineTo(0f, H * 0.166f)
-            path.lineTo(W * 0.6f, H * 0.20f)
-            path.lineTo(W * 0.07f, H * 0.28f)
-            path.lineTo(W * 0.07f, H * 0.72f)
-            path.lineTo(W * 0.6f, H * 0.80f)
-            path.lineTo(0f, H * 0.833f)
-            path.lineTo(0f, H)
-        }
-        path.close()
-        canvas.drawPath(path, sliverCorePaint)
+        SliverShape.buildPath(previewPath, W, H, sliverSide, sliverConfig)
+        sliverCorePaint.color = sliverConfig.fillColor()
+        canvas.drawPath(previewPath, sliverCorePaint)
 
         canvas.restore()
     }

@@ -31,6 +31,7 @@ class SidebarService : Service() {
     companion object {
         const val ACTION_UPDATE_SHORTCUTS = "com.dicereligion.edgecase.UPDATE_SHORTCUTS"
         const val ACTION_UPDATE_POSITION = "com.dicereligion.edgecase.UPDATE_POSITION"
+        const val ACTION_UPDATE_STYLE = "com.dicereligion.edgecase.UPDATE_STYLE"
         private const val CHANNEL_ID = "EdgeCaseEngineChannel"
         private const val NOTIFICATION_ID = 9182
     }
@@ -43,6 +44,7 @@ class SidebarService : Service() {
     private var densityDpi: Float = 1.0f
     private var currentSide: ArcSliverView.Side = ArcSliverView.Side.RIGHT
     private var currentYBias: Float = 0.5f
+    private var config: SliverConfig = SliverConfig()
     private var screenHeight: Int = 0
     private var vibrator: Vibrator? = null
     private var sliverAdded = false
@@ -66,8 +68,9 @@ class SidebarService : Service() {
             resources.displayMetrics.heightPixels
         }
 
-        // Load saved position before building views
+        // Load saved position + style before building views
         loadPositionFromPrefs()
+        config = SliverConfig.load(this)
 
         // Haptics engine
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -93,7 +96,8 @@ class SidebarService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_UPDATE_SHORTCUTS -> refreshTrayUiElements()
-            ACTION_UPDATE_POSITION -> reinitializeSliverForPosition()
+            ACTION_UPDATE_POSITION -> applySliverUpdate()
+            ACTION_UPDATE_STYLE -> applySliverUpdate()
         }
         return START_STICKY
     }
@@ -136,8 +140,8 @@ class SidebarService : Service() {
     // ──────────────────────────────────────────────
 
     private fun instantiateWindowParameters() {
-        val sliverWidthPx = (27 * densityDpi).toInt()
-        val sliverHeightPx = (38 * densityDpi).toInt()
+        val sliverWidthPx = (config.widthDp * densityDpi).toInt()
+        val sliverHeightPx = (config.heightDp * densityDpi).toInt()
 
         // Y position: map yBias [0,1] → vertical range [10%, 90%] of screen
         val restrictedTop = (screenHeight * 0.10f).toInt()
@@ -189,7 +193,7 @@ class SidebarService : Service() {
     // ──────────────────────────────────────────────
 
     private fun assembleSliverView() {
-        sliverView = ArcSliverView(this, currentSide) {
+        sliverView = ArcSliverView(this, currentSide, config) {
             transitionToExpandedTray()
         }.apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -220,24 +224,42 @@ class SidebarService : Service() {
         currentYBias = prefs.getFloat("sliver_y_bias", 0.5f).coerceIn(0f, 1f)
     }
 
-    /** Re-read position prefs and rebuild the sliver overlay at the new position. */
-    private fun reinitializeSliverForPosition() {
+    /**
+     * Re-read position + style prefs and update the single sliver overlay **in place**.
+     *
+     * We deliberately do NOT destroy/recreate the sliver window here: recreating and re-adding it left a
+     * race where the previous window (still showing the old/default appearance) was not removed before the
+     * new one was added, leaving a stale sliver underneath. Updating the existing view via
+     * [ArcSliverView.applyConfig] + [WindowManager.updateViewLayout] keeps exactly one sliver on screen.
+     */
+    private fun applySliverUpdate() {
         loadPositionFromPrefs()
-
-        // Remove any sliver currently showing (guard against duplicates)
-        if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
-            windowManager.removeView(sliverView)
-            sliverAdded = false
-        }
-        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
-            windowManager.removeView(trayView)
-        }
-
+        config = SliverConfig.load(this)
         instantiateWindowParameters()
-        assembleSliverView()
-        assembleTrayView()
 
-        addSliverIfNeeded()
+        if (::sliverView.isInitialized) {
+            (sliverView as? ArcSliverView)?.applyConfig(config, currentSide)
+            if (sliverView.isAttachedToWindow) {
+                try {
+                    windowManager.updateViewLayout(sliverView, sliverParams)
+                } catch (_: Exception) {
+                }
+            } else {
+                addSliverIfNeeded()
+            }
+        } else {
+            assembleSliverView()
+            addSliverIfNeeded()
+        }
+
+        // Rebuild the tray so its size/side/position match the update (only shown on swipe).
+        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
+            try {
+                windowManager.removeView(trayView)
+            } catch (_: Exception) {
+            }
+        }
+        assembleTrayView()
     }
 
     // ──────────────────────────────────────────────

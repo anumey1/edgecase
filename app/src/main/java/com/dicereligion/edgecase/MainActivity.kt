@@ -174,8 +174,28 @@ class MainActivity : AppCompatActivity() {
             saveShortcuts()
         }
         // Positioning screen
+        applyStoneButtonBehavior(findViewById<Button>(R.id.btnCustomizeSliver)).setOnClickListener {
+            openCustomizeSliverDialog()
+        }
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnBackToMenuFromPosition)).setOnClickListener {
             showScreen(Screen.MAIN_MENU)
+        }
+    }
+
+    // ──────────────────────────────────────────────────
+    // Customize sliver dialog
+    // ──────────────────────────────────────────────────
+
+    private fun openCustomizeSliverDialog() {
+        val current = SliverConfig.load(this)
+        SliverCustomizeDialog.show(this, current) { applied ->
+            // Reflect on the positioning preview and hot-reload the running overlay.
+            positioningView?.setSliverConfig(applied)
+            val intent = Intent(this, SidebarService::class.java).apply {
+                action = SidebarService.ACTION_UPDATE_STYLE
+            }
+            startService(intent)
+            Toast.makeText(this, "Sliver updated", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -282,6 +302,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun initPositioningScreen() {
         positioningView = findViewById(R.id.positioningView)
+
+        // Apply saved sliver appearance/geometry to the preview
+        positioningView?.setSliverConfig(SliverConfig.load(this))
 
         // Load saved position from SharedPreferences
         val prefs = getSharedPreferences("EdgeCasePrefs", Context.MODE_PRIVATE)

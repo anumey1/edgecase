@@ -3,10 +3,15 @@
 > **Document Type:** Take-to-Market / Pre-Publication Checklist
 > **App:** EdgeCase
 > **Package:** `com.dicereligion.edgecase`
-> **Current Version (Code):** 1 (1.0)
-> **Current UI Version Label:** v1.2.1
+> **Current Version (Code):** 2 (1.3.5)
+> **Current UI Version Label:** v1.3.5
 > **Status:** Code-complete, pre-publication engineering required
-> **Last Updated:** 2026-07-06
+> **Last Updated:** 2026-07-10
+>
+> **Note (2026-07-10):** Since the last update the app gained the **Sliver Customize** feature (color, opacity,
+> fang geometry, and size — persisted in 13 new `sliver_*` SharedPreferences keys under `EdgeCasePrefs`). This
+> is relevant to the **Backup Rules** item below (those keys should be included/considered) and adds no new
+> permissions. See `Docs/stats.md` §5.11–5.15 and §7.
 
 ---
 
@@ -231,7 +236,7 @@ defaultConfig {
 }
 ```
 
-> The current code has `versionCode = 1` and `versionName = "1.0"` but the main menu UI displays `v1.2.1` — this inconsistency should be resolved. Update the label in `layout_screen_main_menu.xml` to match `versionName` or read it programmatically:
+> As of 2026-07-10 the code is `versionCode = 2`, `versionName = "1.3.5"`, and the UI label shows `v1.3.5`, so the label now matches `versionName` (the earlier mismatch is resolved). It is still hardcoded in `layout_screen_main_menu.xml`; to avoid future drift, read it programmatically instead:
 
 ```kotlin
 // In MainActivity onCreate — set version dynamically
@@ -849,7 +854,7 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ### 🟡 Important — Complete Before Submission
 
-- [ ] **Resolve version inconsistency:** Current code shows `v1.2.1` in the UI label, but `versionName = "1.0"` and `versionCode = 1`. Align these. (Section 2.6)
+- [x] **Resolve version inconsistency:** UI label (`v1.3.5`) now matches `versionName = "1.3.5"` (`versionCode = 2`). Consider reading the label programmatically to prevent future drift. (Section 2.6)
 - [ ] **Create feature graphic** (1024×500 PNG) (Section 6.1)
 - [ ] **Capture 4-8 store screenshots** (Section 6.2)
 - [ ] **Write short description** (≤80 characters) (Section 6.3)

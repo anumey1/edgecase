@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_stone_texture"
+    android:padding="16dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="CUSTOMIZE SLIVER"
+        android:textAppearance="@style/EngravedHeader"
+        android:fontFamily="serif"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Live preview -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="110dp"
+        android:background="@drawable/bg_dark_seaweed_panel"
+        android:layout_marginBottom="12dp">
+
+        <com.dicereligion.edgecase.SliverPreviewView
+            android:id="@+id/sliverPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- Scrollable controls -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:scrollbars="vertical"
+        android:fadeScrollbars="false">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ── Appearance ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APPEARANCE"
+                android:textAppearance="@style/CaptionSerif"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:fontFamily="serif"
+                android:layout_marginBottom="4dp" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowOpacity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- Color mode -->
+            <RadioGroup
+                android:id="@+id/rgColorMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <RadioButton
+                    android:id="@+id/rbColorDefault"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Default grey"
+                    android:textColor="@color/aged_marble"
+                    android:buttonTint="@color/serpent_emerald" />
+
+                <RadioButton
+                    android:id="@+id/rbColorCustom"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Custom"
+                    android:textColor="@color/aged_marble"
+                    android:buttonTint="@color/serpent_emerald" />
+            </RadioGroup>
+
+            <!-- Hue picker (shown when Custom) -->
+            <LinearLayout
+                android:id="@+id/hueContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
+
+                <com.dicereligion.edgecase.LabeledSeekBar
+                    android:id="@+id/rowHue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <View
+                    android:id="@+id/colorSwatch"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/ic_silver_ring" />
+            </LinearLayout>
+
+            <!-- Spear divider -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/ic_divider_spear"
+                android:scaleType="fitXY"
+                android:contentDescription="Divider" />
+
+            <!-- ── Geometry ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FANG GEOMETRY"
+                android:textAppearance="@style/CaptionSerif"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:fontFamily="serif"
+                android:layout_marginBottom="4dp" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT1Thickness"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT2Thickness"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT1Length"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT2Length"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT1TipY"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowT2TipY"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowGums"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <com.dicereligion.edgecase.LabeledSeekBar
+                android:id="@+id/rowGap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <!-- Spear divider -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/ic_divider_spear"
+                android:scaleType="fitXY"
+                android:contentDescription="Divider" />
+
+            <!-- ── Size ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SIZE (DP)"
+                android:textAppearance="@style/CaptionSerif"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:fontFamily="serif"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Width"
+                    android:textColor="@color/aged_marble"
+                    android:fontFamily="serif"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/etWidth"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:textColor="@color/aged_marble"
+                    android:textColorHint="@color/tarnished_silver"
+                    android:importantForAutofill="no" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Height"
+                    android:textColor="@color/aged_marble"
+                    android:fontFamily="serif"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/etHeight"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:textColor="@color/aged_marble"
+                    android:textColorHint="@color/tarnished_silver"
+                    android:importantForAutofill="no" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Footer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="12dp">
+
+        <Button
+            android:id="@+id/btnResetSliver"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_stone_button"
+            android:text="RESET"
+            android:textAppearance="@style/StoneButtonText"
+            android:textSize="13sp"
+            android:fontFamily="serif" />
+
+        <Button
+            android:id="@+id/btnCancelSliver"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/selector_stone_button"
+            android:text="CANCEL"
+            android:textAppearance="@style/StoneButtonText"
+            android:textSize="13sp"
+            android:fontFamily="serif" />
+
+        <Button
+            android:id="@+id/btnApplySliver"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/selector_stone_button"
+            android:text="APPLY"
+            android:textAppearance="@style/StoneButtonText"
+            android:textSize="13sp"
+            android:fontFamily="serif" />
+    </LinearLayout>
+
+</LinearLayout>
