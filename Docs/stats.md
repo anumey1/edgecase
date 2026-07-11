@@ -1,12 +1,21 @@
 # EdgeCase — Project Status & Blueprint
 
-> **Last Updated:** 2026-07-10
+> **Last Updated:** 2026-07-11
 > **Project Root:** `/Users/anumey/Work/Android/EdgeCase`
 > **Package:** `com.dicereligion.edgecase`
 > **App Name:** EdgeCase
 > **Version:** 1.3.5 (versionCode 2, UI label displays "v1.3.5")
 >
-> **Recent change (2026-07-10):** Added the **Sliver Customize** feature — a popup on the Position screen
+> **Recent change (2026-07-11):** Authored **`Docs/NewTheme.md`** — the complete blueprint for the
+> planned **v1.4.0 "Obsidian Serpent" overhaul**: unified blocky-Greek temple headers, animated
+> obsidian-crack/emerald-pulse background (`ObsidianCrackView`), cracked-limestone slab buttons,
+> serpent-coiled pillars, app-wide de-rounding, plus four functional UI changes (expanded
+> positioning canvas + BACK/CUSTOMIZE swap, a draggable sliver-tracking arrow, a twin-fang
+> divider, and predictive-back gesture migration). **No code has been implemented yet** — this
+> document still describes the v1.3.5 codebase as built. See §10 (new limitation #11) and
+> Appendix B.
+>
+> **Previous change (2026-07-10):** Added the **Sliver Customize** feature — a popup on the Position screen
 > that lets the user edit the sliver's opacity, color (default grey or a custom hue), the eight fang-geometry
 > knobs, and its width/height, with a live preview and persistence. The fang geometry was refactored into a
 > single shared builder (`SliverShape`) + config object (`SliverConfig`), and the live-overlay hot-reload was
@@ -1213,8 +1222,11 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 10. **No backup configuration:** `backup_rules.xml` and `data_extraction_rules.xml` are stock templates — no specific backup rules are defined for the app's SharedPreferences.
 
+11. **Back swipe gesture does not navigate the in-app screens:** `MainActivity` handles back via a legacy `onBackPressed()` override (`MainActivity.kt:114`). The app targets SDK 36, where **predictive back is enabled by default** and the system back *gesture* is delivered through the `OnBackInvoked`/`OnBackPressedDispatcher` path — which never invokes the legacy override. Only the on-screen BACK buttons (which call `onBackPressed()` directly) work. Diagnosed 2026-07-11; the fix (migration to `OnBackPressedCallback`, enabled only on sub-screens) is fully specified in `Docs/NewTheme.md` §12.4 and scheduled for v1.4.0 Phase 6.
+
 ### Potential Future Enhancements
 
+- **v1.4.0 "Obsidian Serpent" theme overhaul — planned & fully specified in `Docs/NewTheme.md` (2026-07-11).** Scope: unified temple-lintel headers with bundled blocky-Greek fonts (ring removed from Shortcuts header), animated obsidian/emerald-crack background, cracked-limestone slab buttons with double blocky borders, serpentine pillars, zero-rounded-corner audit, twin-fang divider, expanded positioning canvas with BACK/CUSTOMIZE swap, sliver-tracking arrow, predictive-back migration (fixes limitation #11), and 16 further creative proposals. 7-phase implementation plan; 13 new + 14 modified files.
 - Implement the Dummy button functionality
 - Add app-specific deep links or dynamic shortcuts in the tray
 - Add landscape orientation support with adaptive tray sizing
@@ -1267,7 +1279,7 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 
 ---
 
-*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect: fang sliver redesign (angular straight-line path, no glow/border, #80808080 fill), transparent adaptive icon background, and updated line counts. Updated 2026-07-10 (v1.3.5) to reflect: the **Sliver Customize** feature (opacity, color/hue, per-fang geometry, size — via `SliverConfig` + `SliverCustomizeDialog`), the shared `SliverShape` path builder replacing four hardcoded copies, `ACTION_UPDATE_STYLE` hot-reload, the in-place overlay update (`applySliverUpdate` / `ArcSliverView.applyConfig`) that fixed the stale-sliver / 0%-opacity ghost bug, five new source files, `dialog_customize_sliver.xml`, the 13 new `sliver_*` prefs keys, and updated line counts.*
+*Document generated from complete source tree analysis on 2026-06-20. Updated 2026-07-06 to reflect: fang sliver redesign (angular straight-line path, no glow/border, #80808080 fill), transparent adaptive icon background, and updated line counts. Updated 2026-07-10 (v1.3.5) to reflect: the **Sliver Customize** feature (opacity, color/hue, per-fang geometry, size — via `SliverConfig` + `SliverCustomizeDialog`), the shared `SliverShape` path builder replacing four hardcoded copies, `ACTION_UPDATE_STYLE` hot-reload, the in-place overlay update (`applySliverUpdate` / `ArcSliverView.applyConfig`) that fixed the stale-sliver / 0%-opacity ghost bug, five new source files, `dialog_customize_sliver.xml`, the 13 new `sliver_*` prefs keys, and updated line counts. Updated 2026-07-11 to record: the `Docs/NewTheme.md` v1.4.0 "Obsidian Serpent" overhaul blueprint (planning only — no source changes), and the newly diagnosed back-gesture limitation (#11).*
 
 ---
 
@@ -1278,3 +1290,4 @@ Stock file with commented-out examples; no custom rules active. Minification is 
 | `Docs/Dimensions.md` | Stable ID/dimension addressing for every page/element (incl. the `POSITION.btnCustomize` button and `DIALOG.customizeSliver`); §6 covers the sliver anatomy + tuning knobs |
 | `Docs/SliverAnatomy.md` | Deep-dive on the fang geometry: named parts, vertices, tuning knobs, and how they map to `SliverConfig`/`SliverShape` |
 | `Docs/Publisher.md` | Google Play publication roadmap / pre-launch checklist |
+| `Docs/NewTheme.md` | **v1.4.0 "Obsidian Serpent" overhaul blueprint** (2026-07-11, not yet implemented): full theme & style guide — palette, typography, temple headers, `ObsidianCrackView` background, slab buttons, serpent pillars, de-rounding audit — plus §12 functional UI changes (positioning canvas, tracking arrow, twin-fang divider, back-gesture fix), file manifest, phased plan, QA checklist |
