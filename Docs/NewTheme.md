@@ -4,10 +4,12 @@
 > **Created:** 2026-07-11
 > **Target version:** v1.4.0 (theme overhaul release)
 > **Scope:** Complete visual overhaul of every screen, drawable, style, and decorative element —
-> **plus four functional UI changes (§12):** expanded positioning canvas + footer button swap,
-> a draggable sliver-tracking arrow, the twin-fang divider, and back-gesture navigation.
-> **Non-scope:** No other behavioral change — every button ID, callback, prefs key, service
-> action, and screen flow stays exactly as documented in `Docs/stats.md`.
+> **plus five functional UI changes (§12):** expanded positioning canvas + footer button swap,
+> a draggable sliver-tracking arrow, the twin-fang divider, back-gesture navigation, and
+> decoupled app-drawer (tray) dimensions with manual width/height controls.
+> **Non-scope:** No other behavioral change — every button ID, callback, service action, and
+> screen flow stays exactly as documented in `Docs/stats.md`; the prefs schema gains only the
+> two §12.5 drawer keys (`tray_width_dp`, `tray_height_dp`).
 >
 > **Decisions locked (2026-07-12):** the open points from the first review are now resolved and
 > folded in below — Greek-glyph title (§4.3), **bundled fonts sourced** into `res/font/` with OFL
@@ -18,6 +20,13 @@
 > and the former "phase 2" items (gem checkboxes, square dialog background, legacy-style migration)
 > pulled into scope (§10.5, §10.2, §14). Search "**Decision (2026-07-12)**" for each inline note.
 > The title's Greek Ξ/Λ coverage is resolved with **GFS Neohellenic Bold** (§4.3).
+>
+> **Amended (2026-07-13):** added **§12.5 — decoupled app-drawer (tray) dimensions.** Fixes the
+> v1.3.5 coupling where resizing the sliver silently resized the shortcuts drawer
+> (`trayHeightPx = sliverHeightPx × 7`, hardcoded 80dp width): the drawer gets its own
+> `tray_width_dp`/`tray_height_dp` prefs and a **divider-separated APP DRAWER (DP) section in the
+> Customize popup**. `SidebarService.kt` and `SliverConfig.kt` leave the untouched list (§13.3)
+> for this one change — tray sizing only. §13, §14 (Phase 6), §15 and §16 updated to match.
 
 ---
 
@@ -34,7 +43,7 @@
 9. [De-rounding the rest of the app](#9-de-rounding-the-rest-of-the-app)
 10. [Secondary elements — panels, dividers, checkboxes, tiles](#10-secondary-elements)
 11. [Creative Suggestions — going further (§5 of the brief)](#11-creative-suggestions)
-12. [Functional UI Changes — canvas, tracking arrow, divider, back gesture](#12-functional-ui-changes)
+12. [Functional UI Changes — canvas, tracking arrow, divider, back gesture, drawer size](#12-functional-ui-changes)
 13. [Architecture & File Manifest](#13-architecture--file-manifest)
 14. [Implementation Plan — phased, ordered, checklisted](#14-implementation-plan)
 15. [Performance Budget & Android APIs used](#15-performance-budget--android-apis)
@@ -1354,8 +1363,9 @@ The brief's item 5 — ranked by impact-per-effort. Each is scoped enough to bec
 
 ## 12. Functional UI Changes
 
-> Added 2026-07-11 (second brief, same day). Unlike §§3–10 these four items **change runtime
-> behavior**, not just skin. Each is independent and lands in Phase 6 of the plan (§14).
+> Added 2026-07-11 (second brief, same day); §12.5 added 2026-07-13 (third brief). Unlike
+> §§3–10 these five items **change runtime behavior**, not just skin. Each is independent and
+> lands in Phase 6 of the plan (§14).
 
 ### 12.1 Expanded Positioning canvas + footer button swap
 
@@ -1583,6 +1593,139 @@ back path in the app.
 shortcuts clean → menu; shortcuts dirty → discard dialog ("Keep Editing" stays); positioning →
 menu}.
 
+### 12.5 Decoupled app-drawer (tray) dimensions
+
+> Added 2026-07-13 (third brief). The sliver and the shortcuts drawer are different things —
+> their sizes must not be coupled.
+
+**Problem.** `SidebarService.instantiateWindowParameters()` sizes the drawer *from the sliver*:
+`trayHeightPx = sliverHeightPx * 7`, with the width hardcoded to 80dp
+(SidebarService.kt:169–170); `transitionToExpandedTray()` repeats the hardcoded 80dp for the
+unfurl pivot (SidebarService.kt:398). This was harmless while the sliver was a fixed 27×38dp —
+but v1.3.5 made `SliverConfig.heightDp` user-editable, so **resizing the sliver in the Customize
+dialog now silently resizes the drawer** (e.g. sliver height 38→76dp ⇒ drawer 266→532dp).
+`stats.md` records the ×7 formula as limitation #5 but plans no fix.
+
+**Goal.**
+(a) The drawer's dimensions never derive from the sliver's — editing sliver Width/Height leaves
+    the drawer pixel-identical.
+(b) The user sets the drawer's width/height **manually, in the same Customize popup, in its own
+    section separated by a divider line**.
+(c) Defaults and migration reproduce today's drawer exactly — nothing changes visually until the
+    user edits the new fields (the `SliverConfig` philosophy).
+
+**Data model — `SliverConfig.kt`.** Two new fields + two new prefs keys. The `EdgeCasePrefs`
+style schema grows 13 → 15 keys; the new keys are deliberately named `tray_*`, not `sliver_*` —
+they are not sliver properties:
+
+```kotlin
+// New fields (defaults reproduce the current drawer at default sliver size)
+var trayWidthDp: Float = DEF_TRAY_WIDTH_DP,     // 80f  — the old hardcoded width
+var trayHeightDp: Float = DEF_TRAY_HEIGHT_DP    // 266f — the old 38dp × 7 formula at defaults
+
+// companion object additions
+const val DEF_TRAY_WIDTH_DP = 80f
+const val DEF_TRAY_HEIGHT_DP = 266f             // = DEF_HEIGHT_DP × 7
+private const val K_TRAY_WIDTH = "tray_width_dp"
+private const val K_TRAY_HEIGHT = "tray_height_dp"
+
+// save(): two more putFloat lines
+.putFloat(K_TRAY_WIDTH, trayWidthDp)
+.putFloat(K_TRAY_HEIGHT, trayHeightDp)
+```
+
+**Migration rule in `load()`** — the one subtle line. A user who already enlarged the sliver has
+a ×7-scaled drawer *today*; seeding the new key from the flat 266dp default would shrink their
+drawer at update time. So the first load seeds from the legacy formula; after the first Apply the
+key exists and the coupling is severed forever:
+
+```kotlin
+trayWidthDp = p.getFloat(K_TRAY_WIDTH, DEF_TRAY_WIDTH_DP),
+trayHeightDp = if (p.contains(K_TRAY_HEIGHT)) p.getFloat(K_TRAY_HEIGHT, DEF_TRAY_HEIGHT_DP)
+               else p.getFloat(K_HEIGHT, DEF_HEIGHT_DP) * 7f   // legacy ×7 seed, one time
+```
+
+(The dialog's **Reset** restores 80 × 266 like every other field — Reset means "factory
+defaults", not "legacy formula".)
+
+**Service — `SidebarService.kt`** (moves out of the §13.3 untouched list; tray sizing only):
+
+```kotlin
+// instantiateWindowParameters() — replace the two hardcoded lines (169–170)
+val trayWidthPx = (config.trayWidthDp * densityDpi).toInt()
+val trayHeightPx = (config.trayHeightDp * densityDpi).toInt()
+// and clamp the tray's top edge (171): a tall manual drawer must not float off-screen
+val trayYPx = (sliverYPx + sliverHeightPx / 2 - trayHeightPx).coerceAtLeast(0)
+
+// transitionToExpandedTray() — the unfurl pivot (398) repeats the hardcoded 80dp; re-source it:
+val trayWidthPx = (config.trayWidthDp * densityDpi).toInt()
+```
+
+Bottom-anchor semantics are preserved (drawer bottom still aligns with the sliver's vertical
+center); only the top-edge clamp is new. It turns stats.md limitation #5 ("tray taller than
+screen → clipped") from a latent bug into defined behavior, now that the height is
+user-reachable.
+
+**Hot-reload: free.** Apply already sends `ACTION_UPDATE_STYLE` → `applySliverUpdate()` reloads
+the config, recomputes window params, and rebuilds the tray (SidebarService.kt:255–262). No new
+action, no new handler.
+
+**Dialog layout — `dialog_customize_sliver.xml`.** New section after **SIZE (DP)**, separated by
+its own divider (`ic_divider_fangs` @ 12dp per §10.4 — or `ic_divider_spear` if this lands
+before Phase 5's swap; the §10.4 swap table catches it either way):
+
+```
+        ────────── divider ──────────
+        APP DRAWER (DP)                       ← section caption (CaptionChiseled after Phase 5)
+        Width  [  80 ]    Height [ 266 ]      ← two EditTexts, mirrors the SIZE (DP) row
+```
+
+Copy the existing SIZE (DP) block verbatim (divider + caption + horizontal label/EditText row,
+dialog_customize_sliver.xml:171–238) with: caption text `APP DRAWER (DP)`, IDs
+`@+id/etTrayWidth` / `@+id/etTrayHeight`, same `numberDecimal` input type, `maxLength=5`, and
+colors.
+
+**Dialog controller — `SliverCustomizeDialog.kt`.** Mirrors the sliver-size wiring exactly:
+
+```kotlin
+private val etTrayWidth = view.findViewById<EditText>(R.id.etTrayWidth)
+private val etTrayHeight = view.findViewById<EditText>(R.id.etTrayHeight)
+
+// build(): live watchers + authoritative parse on Apply (same pattern as etWidth/etHeight)
+etTrayWidth.addTextChangedListener(traySizeWatcher(isWidth = true))
+etTrayHeight.addTextChangedListener(traySizeWatcher(isWidth = false))
+// in btnApplySliver's listener, before working.save(context):
+working.trayWidthDp = parseDp(etTrayWidth, working.trayWidthDp, 64f, 200f)
+working.trayHeightDp = parseDp(etTrayHeight, working.trayHeightDp, 100f, 640f)
+
+// bindControls(): + two setText(fmtDp(...)) lines, so Reset repopulates the fields
+// copyInto(): + trayWidthDp / trayHeightDp (Reset support)
+```
+
+`traySizeWatcher` is a clone of `sizeWatcher` writing to the tray fields with the ranges below —
+and **without** the trailing `refresh()` call (see behavior notes).
+
+**Ranges** (clamped in both the watcher and the Apply parse, like the sliver's 8–160 / 12–240):
+
+| Field | Min | Max | Default | Rationale |
+|---|---|---|---|---|
+| `trayWidthDp` | 64 | 200 | 80 | min = 48dp icon + 12dp meander border + padding; max ≈ half a narrow screen |
+| `trayHeightDp` | 100 | 640 | 266 | min ≈ two icon rows; max < shortest supported portrait screen height |
+
+**Behavior notes.**
+- The drawer fields deliberately do **not** call `refresh()`: `SliverPreviewView` renders the
+  sliver only — nothing in the dialog previews the drawer. They are values-only fields, like a
+  settings form.
+- Editing the sliver's Width/Height (the existing SIZE section) now affects **only** the sliver
+  — the acceptance criterion for this whole item.
+- Icons stay 48dp in a single column; a wider drawer is simply a wider panel. (A multi-column
+  icon grid at large widths is a possible future enhancement — out of scope.)
+
+**Test matrix:** {fresh install, legacy install with an already-enlarged sliver} ×
+{sliver resize → drawer unchanged; drawer resize → Apply → swipe shows new size; service
+restart → size persists; Reset → 80×266 (only after Apply); height 640 on a short screen → top
+clamps to the screen edge, no crash}.
+
 ---
 
 ## 13. Architecture & File Manifest
@@ -1611,7 +1754,7 @@ menu}.
 > multiple files and row 12 (`eb_garamond`) was dropped, so the concrete new-file total is **≈14**.
 > **File to delete:** `ic_silver_ring.xml` once unreferenced (A1, §9).
 
-### 13.2 MODIFIED files (14)
+### 13.2 MODIFIED files (14 + 2 via §12.5)
 
 | Path | Changes |
 |---|---|
@@ -1626,18 +1769,25 @@ menu}.
 | `res/layout/layout_screen_main_menu.xml` | header→include; ObsidianCrackView first child; bg attr removed; pillar swap (§8.4); button style swaps (§7.5); version label (§10.6); divider → `ic_divider_fangs` @ 20dp (§10.4) |
 | `res/layout/layout_screen_shortcuts_container.xml` | same set **+ delete the `ic_silver_ring` header ImageView**; captions → `CaptionChiseled`; divider → `ic_divider_fangs` @ 14dp (§10.4) |
 | `res/layout/layout_screen_positioning_container.xml` | same set + expanded-canvas padding/margins & BACK/CUSTOMIZE swap (§12.1) |
-| `res/layout/dialog_customize_sliver.xml` | section dividers → `ic_divider_fangs` @ 12dp (§10.4); **remove `ic_silver_ring` from `colorSwatch` (A1)**; root bg → `bg_temple_panel` (**now in scope, B11**); button text → `SlabButtonText` (§7.5) |
+| `res/layout/dialog_customize_sliver.xml` | section dividers → `ic_divider_fangs` @ 12dp (§10.4); **remove `ic_silver_ring` from `colorSwatch` (A1)**; root bg → `bg_temple_panel` (**now in scope, B11**); button text → `SlabButtonText` (§7.5); **+ divider-separated APP DRAWER (DP) section — `etTrayWidth`/`etTrayHeight` (§12.5)** |
 | `res/layout/layout_item_shortcut_tile.xml` | ring → socket (§10.3); `cbAltarSelect` → gem checkbox (§10.5, B11); **keep `serif` on `tvAltarName` (A2)** |
 | `res/layout/layout_item_available_app.xml` | `cbArchiveSelect` → gem checkbox (§10.5, B11); **keep `serif` on `tvArchiveName` (A2)** — otherwise unchanged |
 | `MainActivity.kt` | scoped header-title assignment (§5.5); discard-dialog square bg (§9); back-gesture migration to `OnBackPressedDispatcher` (§12.4); microcopy (#5) is a Phase-7 opt-in (not core) |
 | `PositioningView.kt` | `mockupCornerRadius = 0f` (both assignments, §9); fit-inside mockup sizing + instruction-text relocation (§12.1); tracking arrow (§12.2) |
-| `SliverCustomizeDialog.kt` | window bg → `bg_temple_panel`; hue-track `cornerRadius = 0f` (§9); `updateSwatch()` already sets the swatch color at runtime, so the removed `ic_silver_ring` needs no code change (A1) |
+| `SliverCustomizeDialog.kt` | window bg → `bg_temple_panel`; hue-track `cornerRadius = 0f` (§9); `updateSwatch()` already sets the swatch color at runtime, so the removed `ic_silver_ring` needs no code change (A1); drawer-size wiring — `traySizeWatcher`, Apply parse, `bindControls`, `copyInto` (§12.5) |
+| `SliverConfig.kt` (**§12.5 — was untouched**) | + `trayWidthDp`/`trayHeightDp` fields, `tray_width_dp`/`tray_height_dp` prefs keys, legacy ×7 seeding in `load()` |
+| `SidebarService.kt` (**§12.5 — was untouched**) | tray window size sourced from config (2 sites: `instantiateWindowParameters`, unfurl pivot) + tray-Y top clamp — nothing else |
 
 ### 13.3 Untouched (guaranteed)
 
-`SidebarService.kt` (phase 1), `ArcSliverView.kt`, `SliverShape.kt`, `SliverConfig.kt`,
-`SliverPreviewView.kt`, `LabeledSeekBar.kt`, `ShortcutStateManager.kt`, all adapters, drag
-callback, `DustParticleView.kt`, manifest, gradle files, prefs schema, all IDs and callbacks.
+`ArcSliverView.kt`, `SliverShape.kt`, `SliverPreviewView.kt`, `LabeledSeekBar.kt`,
+`ShortcutStateManager.kt`, all adapters, drag callback, `DustParticleView.kt`, manifest, gradle
+files, all IDs and callbacks.
+
+> **Amended 2026-07-13:** `SidebarService.kt` and `SliverConfig.kt` left this list for §12.5 —
+> tray sizing only, no other service/config behavior changes — and the prefs schema gains
+> exactly two keys (`tray_width_dp`, `tray_height_dp`). Everything else above remains
+> guaranteed.
 
 ### 13.4 Framework/API inventory (everything this theme touches)
 
@@ -1700,7 +1850,7 @@ Ordered so the app **builds and runs after every phase**.
 - [ ] Version label → `ΕΚΔ. 1.4.0` in `CaptionChiseled` (§10.6, B8).
 - [ ] Commit: `Square the temple`.
 
-### Phase 6 — Functional UI changes *(§12; ~3–4 h)*
+### Phase 6 — Functional UI changes *(§12; ~4–5 h)*
 - [ ] Positioning canvas expansion + BACK/CUSTOMIZE swap (§12.1) — verify mockup spans
       pillar-to-pillar and header-to-footer; drag/snap/persistence unaffected.
 - [ ] Tracking arrow (§12.2) — verify: drag from arrow works, 20dp gap holds at min/max fang
@@ -1708,8 +1858,11 @@ Ordered so the app **builds and runs after every phase**.
 - [ ] Twin-fang divider (§10.4) — swap in all consuming layouts; delete `ic_divider_spear.xml`
       when unreferenced.
 - [ ] Back-gesture migration (§12.4) — run the full test matrix (gesture + 3-button nav).
+- [ ] Drawer decoupling + manual size (§12.5) — verify: sliver resize no longer moves the
+      drawer; APP DRAWER fields apply, hot-reload, and persist across service restart; a legacy
+      install seeds the ×7 height exactly once; 640dp height clamps on a short screen.
 - [ ] One commit per item. Commits: `Expanded positioning canvas`, `Sliver tracking arrow`,
-      `Twin-fang divider`, `Predictive back migration`.
+      `Twin-fang divider`, `Predictive back migration`, `Decoupled drawer sizing`.
 
 ### Phase 7 — Tier-1 creative picks *(scope by appetite)*
 - [ ] Recommended minimum: #5 microcopy (30 min) + #1 Serpent's Eye (2–3 h) + #3 tray scales (1–2 h).
@@ -1729,7 +1882,7 @@ Kotlin behavioral changes beyond cosmetic assignments, so reverts cannot strand 
 | Memory | 1 ARGB_8888 screen-size bitmap ≈ 1080×2400×4 ≈ 9.9 MB | Acceptable; single instance per *visible* screen; recycled on resize |
 | Animator count | 1 per visible `ObsidianCrackView` (= 1 at any time) | visibility-gated start/stop |
 | Overdraw | Obsidian view + content ≈ 2× worst case | Removed the old layer-list bg; pillars are narrow columns |
-| Battery | ambient 60fps invalidate on config screens ONLY (never in the overlay service) | The sliver/tray overlay is untouched — the always-on surface stays static |
+| Battery | ambient 60fps invalidate on config screens ONLY (never in the overlay service) | No animation is added to the overlay — §12.5 only re-sources the tray's static dimensions; the always-on surface stays static |
 | Cold start | +2 font TTFs (~300 KB) | negligible |
 | APK size | +fonts +vectors ≈ 400 KB | negligible |
 
@@ -1758,6 +1911,10 @@ allocation (reuse `gemPath`), no animation in `SidebarService` surfaces in this 
       length + size configs; flips flank on side change; dragging the arrow moves the sliver
       identically to dragging the sliver (§12.2).
 - [ ] Twin-fang divider: fangs point down, symmetric about center, ≈40dp inner gap (§10.4).
+- [ ] Drawer decoupling (§12.5): editing sliver Width/Height leaves the drawer pixel-identical;
+      APP DRAWER fields resize the drawer after Apply (swipe to verify) and persist across
+      service restart; drawer top never leaves the screen at max height; a pre-update install
+      with an enlarged sliver keeps its old (×7) drawer size on first launch.
 - [ ] Instruction text renders inside the bottom crosshatch zone, not clipped (§12.1).
 - [ ] Add/remove/reorder/save shortcuts; empty-state text shows.
 - [ ] Positioning drag + snap + persistence; Customize dialog all controls; Apply hot-reloads overlay.
@@ -1786,3 +1943,13 @@ file deletable (§9, A1); the `fontFamily="serif"` sweep scoped to buttons only,
 (§7.5, A2); former phase-2 items (gem checkboxes, square dialog bg, square-gem thumb, legacy-style
 migration) pulled into Phase 5 (§10.5, §10.2, §14). The title's Greek Ξ/Λ coverage is resolved with
 **GFS Neohellenic Bold** (`gfs_neohellenic.ttf`, §4.3); Caesar Dressing was dropped as Latin-only.*
+
+*Amended 2026-07-13 — added §12.5 (decoupled app-drawer dimensions, third brief): the tray's
+`sliverHeightPx × 7` height and hardcoded 80dp width are replaced by two user-set prefs
+(`tray_width_dp` / `tray_height_dp`, with a one-time legacy ×7 seeding in `SliverConfig.load()`),
+edited in a new divider-separated **APP DRAWER (DP)** section of the Customize dialog
+(`etTrayWidth`/`etTrayHeight`). `SidebarService.kt` and `SliverConfig.kt` move from §13.3
+(untouched) into the §13.2 modified set — tray sizing only. Phase 6 (§14), §13, §15 and §16
+updated. On implementation, also update `stats.md`: the prefs-key table (§2), tray window
+parameters (§5.2), the Customize dialog reference (§5.13, §6.1), feature inventory (§7), the
+customization flow (§8), and limitation #5.*
