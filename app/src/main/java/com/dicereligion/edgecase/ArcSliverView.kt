@@ -13,10 +13,11 @@ import kotlin.math.abs
  * Side-aligned sliver anchored to the screen edge. A single continuous
  * shape with two fang-like protrusions on the inward-facing edge.
  *
- * The right edge is a flat vertical line flush with the screen edge.
- * The left edge has two sharp fangs (at 25% and 75% height) with a
- * V-shaped central recess between them, connected by smooth quadratic
- * curves at the top and bottom.
+ * The spine (screen-edge side) is a flat vertical line flush with the edge;
+ * the inward-facing edge has two sharp fangs with a central gums/recess.
+ * The geometry is config-driven: the fang path is built from [config]'s knobs
+ * by [SliverShape.buildPath] using straight `lineTo` segments (no curves),
+ * and filled with [SliverConfig.fillColor]. See `Docs/SliverAnatomy.md`.
  */
 class ArcSliverView(
     context: Context,

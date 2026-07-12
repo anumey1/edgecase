@@ -74,11 +74,6 @@ class ShortcutStateManager(context: Context, allInstalledApps: List<AppInfoData>
         return altarItems.any { it.packageName == pkg && it.isSelected }
     }
 
-    /** Whether [pkg] exists in the Altar at all (selected or not). */
-    fun isInAltar(pkg: String): Boolean {
-        return altarItems.any { it.packageName == pkg }
-    }
-
     /** True if the current selected state differs from what was committed. */
     fun isDirty(): Boolean {
         val currentSelection = altarItems.filter { it.isSelected }.map { it.packageName }

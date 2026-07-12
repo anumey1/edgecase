@@ -45,15 +45,8 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         style = Paint.Style.STROKE
         strokeWidth = 1.5f
     }
-    private val sliverGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80FFC0CB") // Ethereal Pink stroke
-        style = Paint.Style.STROKE
-        strokeWidth = 1.5f
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-    }
+    // Fill color is set per-frame from sliverConfig.fillColor() in drawSliverPreview().
     private val sliverCorePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#80808080") // 50% opacity grey
         style = Paint.Style.FILL
     }
     private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
