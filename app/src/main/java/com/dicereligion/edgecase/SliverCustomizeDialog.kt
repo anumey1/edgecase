@@ -34,6 +34,8 @@ class SliverCustomizeDialog private constructor(
     private val colorSwatch = view.findViewById<View>(R.id.colorSwatch)
     private val etWidth = view.findViewById<EditText>(R.id.etWidth)
     private val etHeight = view.findViewById<EditText>(R.id.etHeight)
+    private val etTrayWidth = view.findViewById<EditText>(R.id.etTrayWidth)
+    private val etTrayHeight = view.findViewById<EditText>(R.id.etTrayHeight)
 
     private var binding = false
 
@@ -56,6 +58,8 @@ class SliverCustomizeDialog private constructor(
 
         etWidth.addTextChangedListener(sizeWatcher(isWidth = true))
         etHeight.addTextChangedListener(sizeWatcher(isWidth = false))
+        etTrayWidth.addTextChangedListener(traySizeWatcher(isWidth = true))
+        etTrayHeight.addTextChangedListener(traySizeWatcher(isWidth = false))
 
         view.findViewById<Button>(R.id.btnResetSliver).setOnClickListener {
             val defaults = SliverConfig()
@@ -67,12 +71,16 @@ class SliverCustomizeDialog private constructor(
         view.findViewById<Button>(R.id.btnApplySliver).setOnClickListener {
             working.widthDp = parseDp(etWidth, working.widthDp, 8f, 160f)
             working.heightDp = parseDp(etHeight, working.heightDp, 12f, 240f)
+            working.trayWidthDp = parseDp(etTrayWidth, working.trayWidthDp, 64f, 200f)
+            working.trayHeightDp = parseDp(etTrayHeight, working.trayHeightDp, 100f, 640f)
             working.save(context)
             onApplied(working)
             dialog.dismiss()
         }
 
         dialog.show()
+        // Square temple-panel window background — no rounded system dialog frame (§9/§10.2)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_temple_panel)
         dialog.window?.setLayout(
             (context.resources.displayMetrics.widthPixels * 0.92f).toInt(),
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -119,6 +127,8 @@ class SliverCustomizeDialog private constructor(
         )
         etWidth.setText(fmtDp(working.widthDp))
         etHeight.setText(fmtDp(working.heightDp))
+        etTrayWidth.setText(fmtDp(working.trayWidthDp))
+        etTrayHeight.setText(fmtDp(working.trayHeightDp))
 
         updateColorSection()
         binding = false
@@ -151,7 +161,7 @@ class SliverCustomizeDialog private constructor(
     private fun paintHueTrack() {
         val stops = IntArray(13) { i -> Color.HSVToColor(floatArrayOf(i * 30f, 1f, 1f)) }
         val g = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, stops)
-        g.cornerRadius = 8f * context.resources.displayMetrics.density
+        g.cornerRadius = 0f
         rowHue.seek().apply {
             progressDrawable = ColorDrawable(Color.TRANSPARENT)
             background = g
@@ -166,6 +176,19 @@ class SliverCustomizeDialog private constructor(
             if (isWidth) working.widthDp = v.coerceIn(8f, 160f)
             else working.heightDp = v.coerceIn(12f, 240f)
             refresh()
+        }
+
+        override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+        override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+    }
+
+    /** Drawer-size watcher. Values-only: no refresh() — the preview renders the sliver, not the drawer (§12.5). */
+    private fun traySizeWatcher(isWidth: Boolean) = object : TextWatcher {
+        override fun afterTextChanged(s: Editable?) {
+            if (binding) return
+            val v = s?.toString()?.toFloatOrNull() ?: return
+            if (isWidth) working.trayWidthDp = v.coerceIn(64f, 200f)
+            else working.trayHeightDp = v.coerceIn(100f, 640f)
         }
 
         override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -195,6 +218,8 @@ class SliverCustomizeDialog private constructor(
         dst.gap = src.gap
         dst.widthDp = src.widthDp
         dst.heightDp = src.heightDp
+        dst.trayWidthDp = src.trayWidthDp
+        dst.trayHeightDp = src.trayHeightDp
     }
 
     companion object {

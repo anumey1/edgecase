@@ -45,4 +45,46 @@
         <item name="android:textColor">@color/text_engraved</item>
         <item name="android:textSize">@dimen/text_header</item>
     </style>
+
+    <!-- ══════════ OBSIDIAN SERPENT — v1.4.0 additions ══════════ -->
+
+    <!-- Monumental display: the temple-pediment inscription -->
+    <style name="TitleMonolith" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">@font/gfs_neohellenic</item>
+        <item name="android:textAllCaps">true</item>
+        <!-- gfs_neohellenic.ttf is already the Bold weight; avoid synthetic (faux) bold -->
+        <item name="android:textStyle">normal</item>
+        <item name="android:letterSpacing">0.18</item>
+        <item name="android:textColor">@color/aged_marble</item>
+        <!-- Emerald under-glow shadow: the inscription is lit by the gems below -->
+        <item name="android:shadowColor">#802E8B57</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">3</item>
+        <item name="android:shadowRadius">6</item>
+    </style>
+
+    <!-- Button lettering: Roman-inscription capitals at maximum weight -->
+    <style name="SlabButtonText" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">@font/cinzel_black</item>
+        <item name="android:textAllCaps">true</item>
+        <!-- cinzel_black.ttf is already weight 900; avoid synthetic (faux) bold -->
+        <item name="android:textStyle">normal</item>
+        <item name="android:letterSpacing">0.10</item>
+        <item name="android:textColor">@color/text_engraved</item>
+        <item name="android:textSize">@dimen/text_header</item>
+        <!-- Engraved: light catch below the incision -->
+        <item name="android:shadowColor">#66FFFFFF</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">1</item>
+        <item name="android:shadowRadius">0.5</item>
+    </style>
+
+    <!-- Section captions ("CURRENT SHORTCUTS", "AVAILABLE APPS") -->
+    <style name="CaptionChiseled" parent="TextAppearance.AppCompat">
+        <item name="android:fontFamily">@font/cinzel_black</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textColor">@color/tarnished_silver</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+    </style>
 </resources>

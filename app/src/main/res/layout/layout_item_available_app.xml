@@ -33,6 +33,6 @@
         android:id="@+id/cbArchiveSelect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:buttonTint="@color/serpent_emerald" />
+        android:button="@drawable/selector_gem_checkbox" />
 
 </LinearLayout>

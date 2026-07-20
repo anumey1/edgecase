@@ -18,6 +18,39 @@
     <!-- Panel backgrounds -->
     <color name="panel_dark_seaweed_bg">#B3122A23</color>
 
+    <!-- ══════════ OBSIDIAN SERPENT — v1.4.0 additions ══════════ -->
+
+    <!-- Obsidian family (backgrounds) -->
+    <color name="obsidian_black">#07090B</color>        <!-- deepest base, replaces flat abyssal_teal as root bg -->
+    <color name="obsidian_sheen">#101816</color>        <!-- subtle facet highlight on the glass -->
+    <color name="obsidian_facet">#0C1210</color>        <!-- mid-tone facet fill -->
+    <color name="crack_void">#020403</color>            <!-- the crack line itself (darker than base) -->
+
+    <!-- Emerald glow ramp (dark → hot) -->
+    <color name="emerald_deep">#1D5C3F</color>          <!-- gem body, unlit -->
+    <color name="emerald_gem">#2E8B57</color>           <!-- = serpent_emerald; gem body, lit -->
+    <color name="emerald_bright">#50C878</color>        <!-- classic 'emerald' — glow mid -->
+    <color name="emerald_core">#A9F5C8</color>          <!-- hottest pixel at pulse peak -->
+    <color name="emerald_glow_faint">#332E8B57</color>  <!-- 20% serpent_emerald, ambient crack underglow -->
+
+    <!-- Limestone family (buttons) -->
+    <color name="limestone_body">#CEBFA3</color>        <!-- slightly dustier than temple_sandstone -->
+    <color name="limestone_highlight">#EFE6D2</color>   <!-- inner chisel line (light) -->
+    <color name="limestone_border">#5E523C</color>      <!-- outer blocky border (dark) -->
+    <color name="limestone_crack">#8A7A5E</color>       <!-- crack strokes on the slab face -->
+    <color name="limestone_shadow">#9F8F72</color>      <!-- bottom bevel (replaces sandstone_bevel use on new buttons) -->
+    <color name="limestone_pressed">#B3A588</color>     <!-- pressed body -->
+
+    <!-- Structure -->
+    <color name="pillar_stone_dark">#152521</color>     <!-- pillar shaft shadow side -->
+    <color name="pillar_stone">#1E332C</color>          <!-- pillar shaft lit side -->
+    <color name="pillar_capital">#42594F</color>        <!-- capital & base slabs -->
+    <color name="serpent_scale_dark">#1B4D35</color>    <!-- coiled serpent body -->
+    <color name="serpent_scale_light">#2E7D53</color>   <!-- serpent belly/highlight -->
+
+    <!-- Bronze accent (used sparingly: divider rivets, mason's marks) -->
+    <color name="aged_bronze">#8C7853</color>
+
     <!-- Legacy colors kept for compatibility -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>

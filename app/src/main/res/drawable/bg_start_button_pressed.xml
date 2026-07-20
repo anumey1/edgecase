@@ -1,30 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Start pressed: the emerald shine dims as the slab sinks -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 1. Outer blocky border -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_border" />
+            <solid android:color="@color/emerald_deep" />
         </shape>
     </item>
-    <!-- 2. Inner light chisel line -->
+    <!-- inner line goes dark-emerald when pressed -->
     <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_highlight" />
+            <solid android:color="#245C40" />
         </shape>
     </item>
-    <!-- 3. Limestone body -->
     <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_body" />
+            <solid android:color="#8C9E76" />
         </shape>
     </item>
-    <!-- 4. Bottom bevel: darker strip, under-lit stone weight -->
-    <item android:left="4dp" android:top="48dp" android:right="4dp" android:bottom="4dp">
-        <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_shadow" />
-        </shape>
-    </item>
-    <!-- 5. Crack texture across the face -->
     <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp"
         android:drawable="@drawable/ic_texture_cracks" />
 </layer-list>

@@ -11,11 +11,13 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -40,6 +42,10 @@ class MainActivity : AppCompatActivity() {
 
     // ── Dust particles (Phase 6) ───────────────────────
     private var dustView: DustParticleView? = null
+    private var crackView: CrackFlashView? = null
+
+    // ── Serpent's Eyes service indicator (Phase 7 #1) — one on each flank ────
+    private val serviceEyes = mutableListOf<ServiceEyeView>()
 
     // ── Haptics ─────────────────────────────────────────
     private var vibrator: Vibrator? = null
@@ -53,6 +59,27 @@ class MainActivity : AppCompatActivity() {
         screenShortcuts = findViewById(R.id.screenShortcuts)
         screenPositioning = findViewById(R.id.screenPositioning)
 
+        // Per-screen temple-lintel titles (§5.5). The same tvTempleTitle id exists in each
+        // included header, so it MUST be resolved scoped to each screen, never on the Activity.
+        // The main-menu copy keeps its default "ΞDGΞCΛSΞ" @ header_title_size — no code needed.
+        screenShortcuts.findViewById<TextView>(R.id.tvTempleTitle)?.apply {
+            text = "SHORTCUTS"
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.header_title_size_sub))
+        }
+        screenPositioning.findViewById<TextView>(R.id.tvTempleTitle)?.apply {
+            text = "SLIVER POSITION"
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.header_title_size_sub))
+        }
+
+        // Serpent's Eyes live only in the main-menu lintel — one on each flank (Phase 7 #1)
+        serviceEyes.clear()
+        listOf(R.id.serviceEyeLeft, R.id.serviceEyeRight).forEach { id ->
+            screenMainMenu.findViewById<ServiceEyeView>(id)?.also {
+                it.visibility = View.VISIBLE
+                serviceEyes.add(it)
+            }
+        }
+
         // Haptics engine
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -61,6 +88,9 @@ class MainActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+
+        // Predictive-back navigation (§12.4)
+        onBackPressedDispatcher.addCallback(this, backCallback)
 
         // Wire main menu buttons
         wireMainMenuButtons()
@@ -77,8 +107,23 @@ class MainActivity : AppCompatActivity() {
         val dustContainer = findViewById<android.widget.FrameLayout>(R.id.dustContainer)
         dustContainer?.addView(dustView)
 
+        // Crack-flash overlay, on top of the dust (Phase 7 #2)
+        crackView = CrackFlashView(this).apply {
+            layoutParams = android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        dustContainer?.addView(crackView)
+
         // Show main menu
         showScreen(Screen.MAIN_MENU)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Sync the Serpent's Eyes with the actual service state (Phase 7 #1)
+        serviceEyes.forEach { it.setRunning(SidebarService.isRunning) }
     }
 
     // ──────────────────────────────────────────────────
@@ -109,19 +154,23 @@ class MainActivity : AppCompatActivity() {
             initPositioningScreen()
             positioningInitialized = true
         }
+
+        // Enable back interception only on sub-screens (§12.4)
+        backCallback.isEnabled = (screen != Screen.MAIN_MENU)
     }
 
-    override fun onBackPressed() {
-        when (currentScreen) {
-            Screen.MAIN_MENU -> super.onBackPressed()
-            Screen.SHORTCUTS -> {
-                if (stateManager?.isDirty() == true) {
-                    showDiscardDialog()
-                } else {
-                    showScreen(Screen.MAIN_MENU)
-                }
+    // Predictive-back-compatible navigation (§12.4). Disabled on the main menu so the system
+    // handles back natively there (OS predictive back-to-home); enabled on sub-screens so both
+    // the gesture and 3-button back route through the same dirty-check logic.
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            when (currentScreen) {
+                Screen.SHORTCUTS ->
+                    if (stateManager?.isDirty() == true) showDiscardDialog()
+                    else showScreen(Screen.MAIN_MENU)
+                Screen.POSITIONING -> showScreen(Screen.MAIN_MENU)
+                Screen.MAIN_MENU -> Unit   // unreachable: callback is disabled on the menu
             }
-            Screen.POSITIONING -> showScreen(Screen.MAIN_MENU)
         }
     }
 
@@ -130,16 +179,19 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────
 
     private fun showDiscardDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Discard Changes?")
-            .setMessage("You have unsaved changes to your shortcuts. Discard them?")
-            .setPositiveButton("Discard") { _, _ ->
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("ABANDON THE UNCARVED?")
+            .setMessage("Your offerings are not yet carved in stone. Abandon them?")
+            .setPositiveButton("ABANDON") { _, _ ->
                 stateManager?.discard()
                 refreshAdapters()
                 showScreen(Screen.MAIN_MENU)
             }
-            .setNegativeButton("Keep Editing", null)
-            .show()
+            .setNegativeButton("KEEP CARVING", null)
+            .create()
+        // Square temple-panel window background — no rounded system dialog frame (§9)
+        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_temple_panel)
+        dialog.show()
     }
 
     // ──────────────────────────────────────────────────
@@ -158,17 +210,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnStartService)).setOnClickListener {
-            if (checkAndRequestPermissions()) startEdgeService()
+            if (checkAndRequestPermissions()) {
+                startEdgeService()
+                serviceEyes.forEach { it.setRunning(true) }   // the eyes open (Phase 7 #1)
+            }
         }
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnStopService)).setOnClickListener {
             stopService(Intent(this, SidebarService::class.java))
+            serviceEyes.forEach { it.setRunning(false) }      // the eyes close
         }
     }
 
     private fun wireSubScreenButtons() {
         // Shortcuts screen
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnBackToMenu)).setOnClickListener {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
         }
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnSaveShortcuts)).setOnClickListener {
             saveShortcuts()
@@ -195,7 +251,7 @@ class MainActivity : AppCompatActivity() {
                 action = SidebarService.ACTION_UPDATE_STYLE
             }
             startService(intent)
-            Toast.makeText(this, "Sliver updated", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "THE FANG IS FORGED", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -213,6 +269,12 @@ class MainActivity : AppCompatActivity() {
                         .start()
                     triggerHaptic(30, 255)
                     dustView?.burst(6)
+                    // Fracture the slab at the touch point (Phase 7 #2)
+                    crackView?.let { cv ->
+                        val loc = IntArray(2)
+                        cv.getLocationOnScreen(loc)
+                        cv.crackAt(event.rawX - loc[0], event.rawY - loc[1])
+                    }
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     v.animate()
@@ -356,7 +418,7 @@ class MainActivity : AppCompatActivity() {
         }
         startService(updateIntent)
 
-        Toast.makeText(this, "Shortcuts saved", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "CARVED IN STONE", Toast.LENGTH_SHORT).show()
     }
 
     // ──────────────────────────────────────────────────

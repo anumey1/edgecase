@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Start: a limestone slab tinged with emerald — green chisel shine + sage-green body (§ user request) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 1. Outer blocky border -->
+    <!-- 1. Outer blocky border — emerald -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_border" />
+            <solid android:color="@color/emerald_deep" />
         </shape>
     </item>
-    <!-- 2. Inner light chisel line -->
+    <!-- 2. Inner chisel line — bright emerald "shine" -->
     <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_highlight" />
+            <solid android:color="@color/emerald_bright" />
         </shape>
     </item>
-    <!-- 3. Limestone body -->
+    <!-- 3. Sage-limestone body, lit from below (subtle emerald tinge) -->
     <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_body" />
+            <gradient
+                android:angle="90"
+                android:startColor="#93A67F"
+                android:endColor="#BED0A6" />
         </shape>
     </item>
-    <!-- 4. Bottom bevel: darker strip, under-lit stone weight -->
+    <!-- 4. Bottom bevel: darker green stone weight -->
     <item android:left="4dp" android:top="48dp" android:right="4dp" android:bottom="4dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/limestone_shadow" />
+            <solid android:color="#7E9068" />
         </shape>
     </item>
     <!-- 5. Crack texture across the face -->

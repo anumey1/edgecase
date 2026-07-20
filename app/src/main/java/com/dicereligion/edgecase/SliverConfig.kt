@@ -25,7 +25,10 @@ data class SliverConfig(
     var gumsDepth: Float = DEF_GUMS_DEPTH,
     var gap: Float = DEF_GAP,
     var widthDp: Float = DEF_WIDTH_DP,
-    var heightDp: Float = DEF_HEIGHT_DP
+    var heightDp: Float = DEF_HEIGHT_DP,
+    // Drawer (tray) dimensions — deliberately NOT sliver properties (§12.5).
+    var trayWidthDp: Float = DEF_TRAY_WIDTH_DP,
+    var trayHeightDp: Float = DEF_TRAY_HEIGHT_DP
 ) {
     enum class ColorMode { DEFAULT, CUSTOM }
 
@@ -57,6 +60,8 @@ data class SliverConfig(
             .putFloat(K_GAP, gap)
             .putFloat(K_WIDTH, widthDp)
             .putFloat(K_HEIGHT, heightDp)
+            .putFloat(K_TRAY_WIDTH, trayWidthDp)
+            .putFloat(K_TRAY_HEIGHT, trayHeightDp)
             .apply()
     }
 
@@ -77,6 +82,8 @@ data class SliverConfig(
         const val DEF_GAP = 0.44f
         const val DEF_WIDTH_DP = 27f
         const val DEF_HEIGHT_DP = 38f
+        const val DEF_TRAY_WIDTH_DP = 80f              // the old hardcoded drawer width
+        const val DEF_TRAY_HEIGHT_DP = 266f            // = DEF_HEIGHT_DP × 7 at defaults
 
         private const val K_OPACITY = "sliver_opacity"
         private const val K_COLOR_MODE = "sliver_color_mode"
@@ -91,6 +98,8 @@ data class SliverConfig(
         private const val K_GAP = "sliver_gap"
         private const val K_WIDTH = "sliver_width_dp"
         private const val K_HEIGHT = "sliver_height_dp"
+        private const val K_TRAY_WIDTH = "tray_width_dp"
+        private const val K_TRAY_HEIGHT = "tray_height_dp"
 
         fun load(context: Context): SliverConfig {
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -112,7 +121,13 @@ data class SliverConfig(
                 gumsDepth = p.getFloat(K_GUMS, DEF_GUMS_DEPTH),
                 gap = p.getFloat(K_GAP, DEF_GAP),
                 widthDp = p.getFloat(K_WIDTH, DEF_WIDTH_DP),
-                heightDp = p.getFloat(K_HEIGHT, DEF_HEIGHT_DP)
+                heightDp = p.getFloat(K_HEIGHT, DEF_HEIGHT_DP),
+                trayWidthDp = p.getFloat(K_TRAY_WIDTH, DEF_TRAY_WIDTH_DP),
+                // First load seeds the drawer height from the legacy ×7 formula so an install that
+                // already enlarged its sliver keeps today's drawer; after the first Apply the key
+                // exists and the coupling is severed forever (§12.5).
+                trayHeightDp = if (p.contains(K_TRAY_HEIGHT)) p.getFloat(K_TRAY_HEIGHT, DEF_TRAY_HEIGHT_DP)
+                               else p.getFloat(K_HEIGHT, DEF_HEIGHT_DP) * 7f
             )
         }
     }

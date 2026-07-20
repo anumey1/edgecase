@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="56dp"
+    android:viewportWidth="360"
+    android:viewportHeight="56">
+
+    <!-- Primary crack: enters top-left third, exits right edge -->
+    <path
+        android:strokeColor="#668A7A5E"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M74,0 L79,9 L71,15 L83,26 L78,34 L92,41 L88,50 L96,56" />
+    <!-- Splinter off the primary -->
+    <path
+        android:strokeColor="#4D8A7A5E"
+        android:strokeWidth="0.8"
+        android:fillColor="#00000000"
+        android:pathData="M83,26 L97,22 L108,25" />
+    <!-- Secondary crack: right side, shallower -->
+    <path
+        android:strokeColor="#598A7A5E"
+        android:strokeWidth="1"
+        android:fillColor="#00000000"
+        android:pathData="M266,56 L262,47 L271,40 L263,31 L272,20 L268,12 L277,4 L274,0" />
+    <!-- Hairline crossing crack, low alpha -->
+    <path
+        android:strokeColor="#338A7A5E"
+        android:strokeWidth="0.7"
+        android:fillColor="#00000000"
+        android:pathData="M0,38 L28,34 L44,39 L69,33 M170,8 L188,14 L204,10 L221,16" />
+    <!-- Chips: tiny triangular losses at edges -->
+    <path
+        android:fillColor="#409F8F72"
+        android:pathData="M0,0 L10,0 L0,7 Z M360,56 L348,56 L360,49 Z M198,56 L206,56 L202,50 Z" />
+    <!-- Weathering pocks -->
+    <path
+        android:fillColor="#269F8F72"
+        android:pathData="M140,20 l2.5,0 0,2.5 -2.5,0 Z M52,44 l2,0 0,2 -2,0 Z
+                          M310,15 l2.5,0 0,2.5 -2.5,0 Z M240,38 l2,0 0,2 -2,0 Z" />
+</vector>

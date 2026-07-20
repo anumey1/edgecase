@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="20dp"
+    android:viewportWidth="360"
+    android:viewportHeight="20">
+
+    <!-- Lintel line (full width, 3 units thick) -->
+    <path android:fillColor="#9AA0A6"
+        android:pathData="M0,2 L360,2 L360,5 L0,5 Z" />
+    <!-- Blocky bronze end studs -->
+    <path android:fillColor="#8C7853"
+        android:pathData="M0,0 L6,0 L6,7 L0,7 Z M354,0 L360,0 L360,7 L354,7 Z" />
+
+    <!-- LEFT FANG: 12 wide × 14 deep, inner edge at x=160 -->
+    <path android:fillColor="#2E8B57"
+        android:pathData="M148,5 L160,5 L154,19 Z" />
+    <!-- RIGHT FANG: inner edge at x=200 → inner gap = 40 units ≈ 40dp -->
+    <path android:fillColor="#2E8B57"
+        android:pathData="M200,5 L212,5 L206,19 Z" />
+    <!-- Venom glint at each tip -->
+    <path android:fillColor="#A9F5C8"
+        android:pathData="M153,15 L155,15 L154,17.5 Z M205,15 L207,15 L206,17.5 Z" />
+</vector>

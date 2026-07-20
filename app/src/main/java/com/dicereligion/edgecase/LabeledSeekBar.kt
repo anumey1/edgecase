@@ -39,6 +39,7 @@ class LabeledSeekBar(context: Context, attrs: AttributeSet? = null) : LinearLayo
             width = (104 * d).toInt()
         }
         seekBar.max = STEPS
+        seekBar.thumb = context.getDrawable(R.drawable.ic_gem_thumb)   // square-gem thumb (§9, B11)
         valueView.apply {
             setTextColor(Color.parseColor("#9AA0A6")) // tarnished silver
             textSize = 12f

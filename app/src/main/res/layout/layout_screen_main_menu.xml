@@ -2,26 +2,33 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_stone_texture">
+    android:background="@color/obsidian_black">
+
+    <!-- Living background: fractured obsidian + pulsing emerald gems (§6.4) -->
+    <com.dicereligion.edgecase.ObsidianCrackView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no" />
 
     <!-- Left pillar -->
     <ImageView
-        android:layout_width="@dimen/pillar_width"
+        android:layout_width="@dimen/pillar_width_new"
         android:layout_height="match_parent"
         android:layout_gravity="start|center_vertical"
-        android:src="@drawable/ic_pillar_left"
+        android:src="@drawable/ic_pillar_serpent_left"
         android:scaleType="fitXY"
-        android:alpha="0.5"
+        android:alpha="0.85"
         android:contentDescription="Left pillar" />
 
     <!-- Right pillar -->
     <ImageView
-        android:layout_width="@dimen/pillar_width"
+        android:layout_width="@dimen/pillar_width_new"
         android:layout_height="match_parent"
         android:layout_gravity="end|center_vertical"
-        android:src="@drawable/ic_pillar_right"
+        android:src="@drawable/ic_pillar_serpent_left"
+        android:scaleX="-1"
         android:scaleType="fitXY"
-        android:alpha="0.5"
+        android:alpha="0.85"
         android:contentDescription="Right pillar" />
 
     <!-- Dust particle overlay container -->
@@ -41,26 +48,13 @@
         android:paddingTop="12dp"
         android:paddingBottom="32dp">
 
-        <!-- Header bar -->
-        <LinearLayout
+        <!-- Header bar — shared temple lintel (§5.2); main menu keeps default title -->
+        <include
+            android:id="@+id/templeHeader"
+            layout="@layout/layout_temple_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_dark_seaweed_panel"
-            android:padding="10dp"
-            android:layout_marginBottom="20dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="EDGECASE"
-                android:textAppearance="@style/EngravedHeader"
-                android:fontFamily="serif"
-                android:textSize="18sp" />
-
-        </LinearLayout>
+            android:layout_marginBottom="12dp" />
 
         <!-- Buttons centered vertically in remaining space -->
         <LinearLayout
@@ -78,8 +72,7 @@
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="SHORTCUTS"
-            android:textAppearance="@style/StoneButtonText"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText" />
 
         <Button
             android:id="@+id/btnPosition"
@@ -89,8 +82,7 @@
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="POSITION"
-            android:textAppearance="@style/StoneButtonText"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText" />
 
         <Button
             android:id="@+id/btnDummy"
@@ -100,16 +92,15 @@
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="DUMMY"
-            android:textAppearance="@style/StoneButtonText"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText" />
 
         <!-- Spear divider -->
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="8dp"
+            android:layout_height="20dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
-            android:src="@drawable/ic_divider_spear"
+            android:src="@drawable/ic_divider_fangs"
             android:scaleType="fitXY"
             android:contentDescription="Divider" />
 
@@ -118,23 +109,24 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/stone_button_height"
             android:layout_marginBottom="@dimen/margin_wide"
-            android:background="@drawable/selector_stone_button"
+            android:background="@drawable/selector_start_button"
             android:elevation="@dimen/stone_button_elevation"
-            android:text="START EDGE SERVICE"
-            android:textAppearance="@style/StoneButtonText"
-            android:fontFamily="serif"
-            android:textSize="14sp"
-            android:letterSpacing="0.04" />
+            android:text="Start"
+            android:textAppearance="@style/SlabButtonText" />
 
         <Button
             android:id="@+id/btnStopService"
             android:layout_width="match_parent"
             android:layout_height="@dimen/stone_button_height"
-            android:background="@drawable/selector_stone_button"
+            android:background="@drawable/selector_stop_button"
             android:elevation="@dimen/stone_button_elevation"
-            android:text="STOP SERVICE"
-            android:textAppearance="@style/StoneButtonText"
-            android:fontFamily="serif" />
+            android:text="Stop"
+            android:textAppearance="@style/SlabButtonText"
+            android:textColor="@color/aged_marble"
+            android:shadowColor="#802E8B57"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="8" />
 
         </LinearLayout>
 
@@ -147,9 +139,8 @@
         android:layout_gravity="start|bottom"
         android:paddingStart="16dp"
         android:paddingBottom="12dp"
-        android:text="v1.3.5"
-        android:textAppearance="@style/CaptionSerif"
-        android:alpha="0.6"
-        android:fontFamily="serif" />
+        android:text="ΕΚΔ. 1.4.0"
+        android:textAppearance="@style/CaptionChiseled"
+        android:alpha="0.6" />
 
 </FrameLayout>

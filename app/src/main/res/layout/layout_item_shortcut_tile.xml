@@ -43,13 +43,13 @@
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp" />
 
-        <!-- App icon in silver ring -->
+        <!-- App icon in square gem socket -->
         <FrameLayout
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="12dp"
-            android:background="@drawable/ic_silver_ring">
+            android:background="@drawable/bg_icon_socket">
 
             <ImageView
                 android:id="@+id/ivAltarIcon"
@@ -77,7 +77,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:buttonTint="@color/serpent_emerald" />
+            android:button="@drawable/selector_gem_checkbox" />
 
     </LinearLayout>
 

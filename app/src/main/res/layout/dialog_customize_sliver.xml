@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_stone_texture"
+    android:background="@drawable/bg_temple_panel"
     android:padding="16dp">
 
     <!-- Title -->
@@ -11,8 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="CUSTOMIZE SLIVER"
-        android:textAppearance="@style/EngravedHeader"
-        android:fontFamily="serif"
+        android:textAppearance="@style/TitleMonolith"
         android:textSize="16sp"
         android:layout_marginBottom="12dp" />
 
@@ -46,10 +45,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="APPEARANCE"
-                android:textAppearance="@style/CaptionSerif"
+                android:textAppearance="@style/CaptionChiseled"
                 android:textAllCaps="true"
                 android:letterSpacing="0.1"
-                android:fontFamily="serif"
                 android:layout_marginBottom="4dp" />
 
             <com.dicereligion.edgecase.LabeledSeekBar
@@ -103,17 +101,16 @@
                     android:id="@+id/colorSwatch"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:layout_marginStart="8dp"
-                    android:background="@drawable/ic_silver_ring" />
+                    android:layout_marginStart="8dp" />
             </LinearLayout>
 
             <!-- Spear divider -->
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="6dp"
+                android:layout_height="12dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
-                android:src="@drawable/ic_divider_spear"
+                android:src="@drawable/ic_divider_fangs"
                 android:scaleType="fitXY"
                 android:contentDescription="Divider" />
 
@@ -122,10 +119,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="FANG GEOMETRY"
-                android:textAppearance="@style/CaptionSerif"
+                android:textAppearance="@style/CaptionChiseled"
                 android:textAllCaps="true"
                 android:letterSpacing="0.1"
-                android:fontFamily="serif"
                 android:layout_marginBottom="4dp" />
 
             <com.dicereligion.edgecase.LabeledSeekBar
@@ -171,10 +167,10 @@
             <!-- Spear divider -->
             <ImageView
                 android:layout_width="match_parent"
-                android:layout_height="6dp"
+                android:layout_height="12dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
-                android:src="@drawable/ic_divider_spear"
+                android:src="@drawable/ic_divider_fangs"
                 android:scaleType="fitXY"
                 android:contentDescription="Divider" />
 
@@ -183,10 +179,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="SIZE (DP)"
-                android:textAppearance="@style/CaptionSerif"
+                android:textAppearance="@style/CaptionChiseled"
                 android:textAllCaps="true"
                 android:letterSpacing="0.1"
-                android:fontFamily="serif"
                 android:layout_marginBottom="4dp" />
 
             <LinearLayout
@@ -237,6 +232,74 @@
                     android:importantForAutofill="no" />
             </LinearLayout>
 
+            <!-- Twin-fang divider -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="12dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/ic_divider_fangs"
+                android:scaleType="fitXY"
+                android:contentDescription="Divider" />
+
+            <!-- ── App drawer (tray) size (§12.5) ── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="APP DRAWER (DP)"
+                android:textAppearance="@style/CaptionChiseled"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="4dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Width"
+                    android:textColor="@color/aged_marble"
+                    android:fontFamily="serif"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/etTrayWidth"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:textColor="@color/aged_marble"
+                    android:textColorHint="@color/tarnished_silver"
+                    android:importantForAutofill="no" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Height"
+                    android:textColor="@color/aged_marble"
+                    android:fontFamily="serif"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/etTrayHeight"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:inputType="numberDecimal"
+                    android:maxLength="5"
+                    android:textColor="@color/aged_marble"
+                    android:textColorHint="@color/tarnished_silver"
+                    android:importantForAutofill="no" />
+            </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 
@@ -256,9 +319,8 @@
             android:layout_marginEnd="8dp"
             android:background="@drawable/selector_stone_button"
             android:text="RESET"
-            android:textAppearance="@style/StoneButtonText"
-            android:textSize="13sp"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText"
+            android:textSize="13sp" />
 
         <Button
             android:id="@+id/btnCancelSliver"
@@ -268,9 +330,8 @@
             android:layout_marginEnd="8dp"
             android:background="@drawable/selector_stone_button"
             android:text="CANCEL"
-            android:textAppearance="@style/StoneButtonText"
-            android:textSize="13sp"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText"
+            android:textSize="13sp" />
 
         <Button
             android:id="@+id/btnApplySliver"
@@ -279,9 +340,8 @@
             android:layout_weight="1"
             android:background="@drawable/selector_stone_button"
             android:text="APPLY"
-            android:textAppearance="@style/StoneButtonText"
-            android:textSize="13sp"
-            android:fontFamily="serif" />
+            android:textAppearance="@style/SlabButtonText"
+            android:textSize="13sp" />
     </LinearLayout>
 
 </LinearLayout>

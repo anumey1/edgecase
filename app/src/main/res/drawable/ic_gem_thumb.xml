@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Emerald-cut octagon gem used as the SeekBar thumb (§9/§10.5, B11) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+
+    <!-- Dark rim so the gem reads against any track -->
+    <path android:fillColor="#071A15"
+        android:pathData="M7,2 L13,2 L18,7 L18,13 L13,18 L7,18 L2,13 L2,7 Z" />
+    <!-- Gem body -->
+    <path android:fillColor="@color/emerald_gem"
+        android:pathData="M7.5,3 L12.5,3 L17,7.5 L17,12.5 L12.5,17 L7.5,17 L3,12.5 L3,7.5 Z" />
+    <!-- Facet highlight -->
+    <path android:strokeColor="@color/emerald_bright" android:strokeWidth="0.7" android:fillColor="#00000000"
+        android:pathData="M7.5,3 L12.5,3 L17,7.5 L17,12.5 L12.5,17 L7.5,17 L3,12.5 L3,7.5 Z" />
+    <!-- Hot core -->
+    <path android:fillColor="@color/emerald_core"
+        android:pathData="M8.5,8.5 L11.5,8.5 L11.5,11.5 L8.5,11.5 Z" />
+</vector>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Doric serpent column: a subtle snake wraps the shaft (straight-edged diagonal bands, so it
+     shears cleanly rather than distorting under fitXY), with a few small eyes + fangs here and
+     there instead of a cartoonish head (reworked per user feedback). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="640dp"
+    android:viewportWidth="80"
+    android:viewportHeight="1280">
+
+    <!-- ══ CAPITAL ══ -->
+    <path android:fillColor="#42594F" android:pathData="M4,28 L76,28 L76,44 L4,44 Z" />
+    <path android:fillColor="#3B5249" android:pathData="M10,44 L70,44 L66,62 L14,62 Z" />
+    <path android:fillColor="#2A3E34" android:pathData="M16,62 L64,62 L64,72 L16,72 Z" />
+    <path android:fillColor="#1B4D35" android:pathData="M16,74 L64,74 L64,78 L16,78 Z" />
+
+    <!-- ══ SHAFT ══ -->
+    <path android:fillColor="#1E332C" android:pathData="M20,78 L60,78 L62,1180 L18,1180 Z" />
+    <!-- shadow side -->
+    <path android:fillColor="#152521" android:pathData="M20,78 L40,78 L40,1180 L18,1180 Z" />
+    <!-- Flutes: dark grooves + light arris -->
+    <path android:fillColor="#0F221B"
+        android:pathData="M26,80 L29,80 L28,1178 L25,1178 Z
+                          M34,80 L37,80 L36,1178 L33,1178 Z
+                          M42,80 L45,80 L44,1178 L41,1178 Z
+                          M50,80 L53,80 L52,1178 L49,1178 Z" />
+    <path android:fillColor="#2E4A3F"
+        android:pathData="M30,80 L31.5,80 L30.5,1178 L29,1178 Z
+                          M38,80 L39.5,80 L38.5,1178 L37,1178 Z
+                          M46,80 L47.5,80 L46.5,1178 L45,1178 Z" />
+
+    <!-- ══ SNAKE WRAP — subtle diagonal front crossings ══ -->
+    <path android:fillColor="#25473A" android:pathData="M18,150 L62,176 L62,188 L18,162 Z M18,360 L62,386 L62,398 L18,372 Z M18,570 L62,596 L62,608 L18,582 Z M18,780 L62,806 L62,818 L18,792 Z M18,990 L62,1016 L62,1028 L18,1002 Z" />
+    <path android:strokeColor="#442E7D53" android:strokeWidth="1.2" android:fillColor="#00000000"
+        android:pathData="M18,150 L62,176 M18,360 L62,386 M18,570 L62,596 M18,780 L62,806 M18,990 L62,1016" />
+    <path android:strokeColor="#12261C" android:strokeWidth="1.2" android:fillColor="#00000000"
+        android:pathData="M18,162 L62,188 M18,372 L62,398 M18,582 L62,608 M18,792 L62,818 M18,1002 L62,1028" />
+
+    <!-- ══ SUBTLE EYES + FANGS (here and there) ══ -->
+    <path android:fillColor="#2E8B57" android:pathData="M29,150 l3,0 l0,3 l-3,0 z M36,150 l3,0 l0,3 l-3,0 z M33,585 l3,0 l0,3 l-3,0 z M40,585 l3,0 l0,3 l-3,0 z M28,995 l3,0 l0,3 l-3,0 z M35,995 l3,0 l0,3 l-3,0 z" />
+    <path android:fillColor="#A9F5C8" android:pathData="M30,151 l1,0 l0,1 l-1,0 z M37,151 l1,0 l0,1 l-1,0 z M34,586 l1,0 l0,1 l-1,0 z M41,586 l1,0 l0,1 l-1,0 z M29,996 l1,0 l0,1 l-1,0 z M36,996 l1,0 l0,1 l-1,0 z" />
+    <path android:fillColor="#B3F5EFE6" android:pathData="M30,154 l1.6,0 l-0.8,5 z M37,154 l1.6,0 l-0.8,5 z M34,589 l1.6,0 l-0.8,5 z M41,589 l1.6,0 l-0.8,5 z M29,999 l1.6,0 l-0.8,5 z M36,999 l1.6,0 l-0.8,5 z" />
+
+    <!-- ══ CREPIDOMA (3-step base) ══ -->
+    <path android:fillColor="#2A3E34" android:pathData="M14,1180 L66,1180 L66,1204 L14,1204 Z" />
+    <path android:fillColor="#3B5249" android:pathData="M8,1204 L72,1204 L72,1230 L8,1230 Z" />
+    <path android:fillColor="#42594F" android:pathData="M2,1230 L78,1230 L78,1258 L2,1258 Z" />
+    <path android:fillColor="#152521"
+        android:pathData="M14,1180 L40,1180 L40,1204 L14,1204 Z
+                          M8,1204 L40,1204 L40,1230 L8,1230 Z
+                          M2,1230 L40,1230 L40,1258 L2,1258 Z" />
+</vector>

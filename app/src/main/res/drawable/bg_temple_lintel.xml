@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer blocky border -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/faded_olive_teal" />
+        </shape>
+    </item>
+    <!-- Inner emerald hairline (inset by the outer border width) -->
+    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/emerald_deep" />
+        </shape>
+    </item>
+    <!-- Slab face -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="#C0122A23"
+                android:endColor="#E607140F" />
+        </shape>
+    </item>
+    <!-- Stepped 'ziggurat' corner notches: four small dark squares at the corners
+         make the rectangle read as cut stone rather than a CSS box -->
+    <item android:gravity="top|start" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="top|end" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="bottom|start" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="bottom|end" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+</layer-list>

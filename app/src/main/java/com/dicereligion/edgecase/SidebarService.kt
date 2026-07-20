@@ -29,6 +29,9 @@ import java.util.Collections
 
 class SidebarService : Service() {
     companion object {
+        /** Whether the overlay service is currently alive — read by the Serpent's Eye indicator (Phase 7 #1). */
+        @Volatile
+        var isRunning = false
         const val ACTION_UPDATE_SHORTCUTS = "com.dicereligion.edgecase.UPDATE_SHORTCUTS"
         const val ACTION_UPDATE_POSITION = "com.dicereligion.edgecase.UPDATE_POSITION"
         const val ACTION_UPDATE_STYLE = "com.dicereligion.edgecase.UPDATE_STYLE"
@@ -57,6 +60,7 @@ class SidebarService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         densityDpi = resources.displayMetrics.density
 
@@ -104,6 +108,7 @@ class SidebarService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        isRunning = false
         if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
             windowManager.removeView(sliverView)
             sliverAdded = false
@@ -166,9 +171,11 @@ class SidebarService : Service() {
             y = sliverYPx
         }
 
-        val trayWidthPx = (80 * densityDpi).toInt()
-        val trayHeightPx = (sliverHeightPx * 7)
-        val trayYPx = sliverYPx + sliverHeightPx / 2 - trayHeightPx
+        val trayWidthPx = (config.trayWidthDp * densityDpi).toInt()
+        val trayHeightPx = (config.trayHeightDp * densityDpi).toInt()
+        // Bottom-anchored to the sliver's vertical center; clamp the top so a tall manual
+        // drawer can't float off-screen (§12.5).
+        val trayYPx = (sliverYPx + sliverHeightPx / 2 - trayHeightPx).coerceAtLeast(0)
         trayParams = WindowManager.LayoutParams(
             trayWidthPx,
             trayHeightPx,
@@ -279,12 +286,14 @@ class SidebarService : Service() {
             setImageResource(R.drawable.ic_meander_border)
             scaleType = ImageView.ScaleType.FIT_XY
             alpha = 0.7f
+            // Native tarnished-silver (grey) meander
             contentDescription = "Meander border"
         }
 
         val scrollContainer = ScrollView(this).apply {
             isVerticalScrollBarEnabled = false
-            setBackgroundColor(Color.parseColor("#E6121212"))
+            // The serpent's spine: obsidian with rows of emerald scales (Phase 7 #3)
+            setBackgroundResource(R.drawable.bg_serpent_scales)
             layoutParams = LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.MATCH_PARENT, 1f
             )
@@ -395,7 +404,7 @@ class SidebarService : Service() {
             refreshTrayUiElements()
 
             // Stone door unfurl: scale from 0 at edge → 1
-            val trayWidthPx = (80 * densityDpi).toInt()
+            val trayWidthPx = (config.trayWidthDp * densityDpi).toInt()
             val pivotX = if (currentSide == ArcSliverView.Side.RIGHT) trayWidthPx.toFloat() else 0f
             trayView.scaleX = 0f
             trayView.pivotX = pivotX

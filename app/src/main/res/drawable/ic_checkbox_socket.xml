@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Empty gem setting: a square socket recess (unchecked state, §10.5) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Outer silver rim -->
+    <path android:fillColor="@color/tarnished_silver"
+        android:pathData="M2,2 L22,2 L22,22 L2,22 Z" />
+    <!-- Inner obsidian recess -->
+    <path android:fillColor="@color/obsidian_black"
+        android:pathData="M4,4 L20,4 L20,20 L4,20 Z" />
+</vector>
