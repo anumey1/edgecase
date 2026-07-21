@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
     private var altarAdapter: ActiveShortcutsAdapter? = null
     private var archiveAdapter: AvailableAppsAdapter? = null
     private var shortcutsInitialized = false
+    private var cachedApps: List<AppInfoData>? = null
+    private var appsLoading = false  // true while a background load is in flight
 
     // ── Positioning screen state (Phase 4) ─────────────
     private var positioningView: PositioningView? = null
@@ -115,6 +117,9 @@ class MainActivity : AppCompatActivity() {
             )
         }
         dustContainer?.addView(crackView)
+
+        // Pre-load the app list in background so the Shortcuts screen opens instantly.
+        preloadApps()
 
         // Show main menu
         showScreen(Screen.MAIN_MENU)
@@ -300,11 +305,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ──────────────────────────────────────────────────
+    // App list preloading (done once in onCreate) ─────
+    // ──────────────────────────────────────────────────
+
+    /** Kick off a background load of the installed-app list so the Shortcuts
+     *  screen opens instantly when the user navigates to it. */
+    private fun preloadApps() {
+        appsLoading = true
+        Thread {
+            val apps = getInstalledApps()
+            synchronized(this) {
+                cachedApps = apps
+                appsLoading = false
+            }
+        }.start()
+    }
+
+    // ──────────────────────────────────────────────────
     // Shortcuts screen — bipartite initialization
     // ──────────────────────────────────────────────────
 
     private fun initShortcutsScreen() {
-        val allApps = getInstalledApps()
+        val ready = synchronized(this) { cachedApps }
+
+        if (ready != null) {
+            // Apps already loaded — populate immediately.  Fast path.
+            buildShortcutsLists(ready)
+        } else {
+            // Still loading — set up empty shells and populate asynchronously.
+            appsLoading = true
+            Thread {
+                val apps = getInstalledApps()
+                synchronized(this) { cachedApps = apps; appsLoading = false }
+                runOnUiThread { buildShortcutsLists(apps) }
+            }.start()
+        }
+    }
+
+    /** Wire up the two RecyclerViews using [allApps] as the data source. */
+    private fun buildShortcutsLists(allApps: List<AppInfoData>) {
         stateManager = ShortcutStateManager(this, allApps)
 
         // ── Altar (top 30%) ────────────────────────

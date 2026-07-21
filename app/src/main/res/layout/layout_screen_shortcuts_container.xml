@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/obsidian_black">
 
-    <!-- Living background: fractured obsidian + pulsing emerald gems (§6.4) -->
+    <!-- Living background: fractured obsidian + pulsing emerald gems (&#167;6.4) -->
     <com.dicereligion.edgecase.ObsidianCrackView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
