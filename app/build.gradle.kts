@@ -14,8 +14,8 @@ android {
         applicationId = "com.dicereligion.edgecase"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.3.5"
+        versionCode = 3
+        versionName = "1.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,6 +32,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    buildFeatures {
+        buildConfig = true
     }
 }
 

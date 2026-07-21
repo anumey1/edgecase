@@ -134,12 +134,12 @@
 
     <!-- App version — bottom left -->
     <TextView
+        android:id="@+id/tvVersion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|bottom"
         android:paddingStart="16dp"
         android:paddingBottom="12dp"
-        android:text="ΕΚΔ. 1.4.0"
         android:textAppearance="@style/CaptionChiseled"
         android:alpha="0.6" />
 

@@ -204,6 +204,9 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────
 
     private fun wireMainMenuButtons() {
+        // Wire version from build config
+        findViewById<TextView>(R.id.tvVersion).text = "ΕΚΔ. ${BuildConfig.VERSION_NAME}"
+
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnShortcuts)).setOnClickListener {
             showScreen(Screen.SHORTCUTS)
         }
