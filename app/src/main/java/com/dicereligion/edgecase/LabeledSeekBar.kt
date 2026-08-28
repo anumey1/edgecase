@@ -1,12 +1,12 @@
 package com.dicereligion.edgecase
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 
 /**
  * A reusable control row — `[label] |———slider———| [value]` — used for every slider in the Customize
@@ -34,14 +34,14 @@ class LabeledSeekBar(context: Context, attrs: AttributeSet? = null) : LinearLayo
         setPadding(0, padV, 0, padV)
 
         labelView.apply {
-            setTextColor(Color.parseColor("#F5EFE6")) // aged marble
+            setTextColor(ContextCompat.getColor(context, R.color.aged_marble)) // aged marble
             textSize = 13f
             width = (104 * d).toInt()
         }
         seekBar.max = STEPS
         seekBar.thumb = context.getDrawable(R.drawable.ic_gem_thumb)   // square-gem thumb (§9, B11)
         valueView.apply {
-            setTextColor(Color.parseColor("#9AA0A6")) // tarnished silver
+            setTextColor(ContextCompat.getColor(context, R.color.tarnished_silver)) // tarnished silver
             textSize = 12f
             gravity = Gravity.END
             width = (56 * d).toInt()

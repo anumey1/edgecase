@@ -10,6 +10,7 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.content.ContextCompat
 import kotlin.math.sin
 
 /**
@@ -28,13 +29,13 @@ class ServiceEyeView(context: Context, attrs: AttributeSet? = null) : View(conte
 
     private val lidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        color = Color.parseColor("#9AA0A6")     // tarnished_silver
+        color = ContextCompat.getColor(context, R.color.tarnished_silver)
         strokeWidth = 2.5f
         strokeJoin = Paint.Join.MITER            // blocky (Law L1)
     }
     private val scleraPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = Color.parseColor("#0C1210")      // obsidian_facet
+        color = ContextCompat.getColor(context, R.color.obsidian_facet)
     }
     private val irisPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -130,7 +131,7 @@ class ServiceEyeView(context: Context, attrs: AttributeSet? = null) : View(conte
             irisPath.lineTo(cx - r, cy + r - r * c)
             irisPath.lineTo(cx - r, cy - r + r * c)
             irisPath.close()
-            irisPaint.color = lerp(pulse, Color.parseColor("#1D5C3F"), Color.parseColor("#2E8B57"))
+            irisPaint.color = lerp(pulse, ContextCompat.getColor(context, R.color.emerald_deep), ContextCompat.getColor(context, R.color.emerald_gem))
             canvas.drawPath(irisPath, irisPaint)
 
             if (pulse > 0.7f) {

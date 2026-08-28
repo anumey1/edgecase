@@ -35,6 +35,10 @@ class SidebarService : Service() {
         const val ACTION_UPDATE_SHORTCUTS = "com.dicereligion.edgecase.UPDATE_SHORTCUTS"
         const val ACTION_UPDATE_POSITION = "com.dicereligion.edgecase.UPDATE_POSITION"
         const val ACTION_UPDATE_STYLE = "com.dicereligion.edgecase.UPDATE_STYLE"
+        /** Detach the overlay windows without stopping the service (Docs/Ads.md §7.6). */
+        const val ACTION_SUSPEND_OVERLAY = "com.dicereligion.edgecase.SUSPEND_OVERLAY"
+        /** Re-attach the sliver after a suspend. */
+        const val ACTION_RESUME_OVERLAY = "com.dicereligion.edgecase.RESUME_OVERLAY"
         private const val CHANNEL_ID = "EdgeCaseEngineChannel"
         private const val NOTIFICATION_ID = 9182
     }
@@ -91,7 +95,11 @@ class SidebarService : Service() {
         assembleTrayView()
 
         if (Settings.canDrawOverlays(this)) {
-            addSliverIfNeeded()
+            // If the user started us from the settings screen, the Activity is in front right now.
+            // Attaching here would put the fang over our own UI (and, later, over the banner), so
+            // stay detached until onPause sends ACTION_RESUME_OVERLAY. Checking the flag rather
+            // than relying on a suspend intent arriving after onCreate avoids a start-up race.
+            if (!MainActivity.isForeground) addSliverIfNeeded()
         } else {
             stopSelf()
         }
@@ -102,6 +110,8 @@ class SidebarService : Service() {
             ACTION_UPDATE_SHORTCUTS -> refreshTrayUiElements()
             ACTION_UPDATE_POSITION -> applySliverUpdate()
             ACTION_UPDATE_STYLE -> applySliverUpdate()
+            ACTION_SUSPEND_OVERLAY -> detachOverlayWindows()
+            ACTION_RESUME_OVERLAY -> addSliverIfNeeded()
         }
         return START_STICKY
     }
@@ -221,6 +231,29 @@ class SidebarService : Service() {
         if (!sliverAdded && ::sliverView.isInitialized && !sliverView.isAttachedToWindow) {
             windowManager.addView(sliverView, sliverParams)
             sliverAdded = true
+        }
+    }
+
+    /**
+     * Detaches the sliver, and any open tray, without stopping the service.
+     *
+     * Called while MainActivity is in the foreground. Three independent reasons (Docs/Ads.md §4.3):
+     *  • **Compliance** — an overlay window sitting above an ad is an obstruction; impressions
+     *    beneath it are not viewable, and EdgeCase's sliver can be positioned at 90% of screen
+     *    height, exactly where the Plinth's banner lives.
+     *  • **UX** — an edge launcher floating over its own settings screen is noise.
+     *  • **Correctness** — the fang currently overlaps our own UI, including the PositioningView
+     *    drag canvas, where a stray fang beside the mock phone is actively confusing.
+     *
+     * Idempotent, and deliberately leaves the service running: only the windows go away.
+     */
+    private fun detachOverlayWindows() {
+        if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
+            try { windowManager.removeView(sliverView) } catch (_: Exception) {}
+        }
+        sliverAdded = false
+        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
+            try { windowManager.removeView(trayView) } catch (_: Exception) {}
         }
     }
 

@@ -12,6 +12,7 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.content.ContextCompat
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -48,13 +49,13 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
     private val facetPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val crackGlowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        color = Color.parseColor("#332E8B57")   // emerald_glow_faint
+        color = ContextCompat.getColor(context, R.color.emerald_glow_faint)
         strokeWidth = 7f
         strokeJoin = Paint.Join.MITER            // sharp — never round (Design Law L1)
     }
     private val crackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        color = Color.parseColor("#020403")      // crack_void
+        color = ContextCompat.getColor(context, R.color.crack_void)
         strokeWidth = 2.5f
         strokeJoin = Paint.Join.MITER
     }
@@ -118,13 +119,13 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
 
     private fun drawBase(c: Canvas, w: Int, h: Int, rnd: Random) {
         // Obsidian body
-        basePaint.color = Color.parseColor("#07090B")   // obsidian_black
+        basePaint.color = ContextCompat.getColor(context, R.color.obsidian_black)
         c.drawRect(0f, 0f, w.toFloat(), h.toFloat(), basePaint)
 
         // 4 giant conchoidal facets — huge dim triangles
         val facetColors = intArrayOf(
-            Color.parseColor("#0C1210"),  // obsidian_facet
-            Color.parseColor("#101816"),  // obsidian_sheen
+            ContextCompat.getColor(context, R.color.obsidian_facet),  // obsidian_facet
+            ContextCompat.getColor(context, R.color.obsidian_sheen),  // obsidian_sheen
             Color.parseColor("#0A0E0C"),
             Color.parseColor("#0D1412")
         )
@@ -236,8 +237,8 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
             // Emerald-cut gem body: elongated octagon
             buildGemPath(g)
             gemBodyPaint.color = lerpColor(pulse,
-                Color.parseColor("#1D5C3F"),   // emerald_deep (trough)
-                Color.parseColor("#2E8B57"))   // emerald_gem (peak)
+                ContextCompat.getColor(context, R.color.emerald_deep),   // emerald_deep (trough)
+                ContextCompat.getColor(context, R.color.emerald_gem))   // emerald_gem (peak)
             canvas.drawPath(gemPath, gemBodyPaint)
             canvas.drawPath(gemPath, gemFacetPaint)
 

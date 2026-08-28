@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Plinth well: the foundation stone the temple stands on.
+
+     Deliberately the INVERSE of the button language (bg_stone_button.xml): that reads as a
+     raised, pressable limestone slab; this reads as a recessed obsidian well that content
+     sits inside. A user must never mistake the ad band for a tappable EdgeCase control.
+
+     This is applied as android:background on adFrame — never a foreground, never a sibling
+     view drawn over the ad. See Docs/Ads.md §1.1 C1, §3.5, §6.2. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Outer blocky border — the same dark limestone edge as the lintel -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/limestone_border" />
+        </shape>
+    </item>
+
+    <!-- Inner emerald hairline -->
+    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/emerald_deep" />
+        </shape>
+    </item>
+
+    <!-- The well: flat obsidian, no gradient — the ad supplies the light -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/obsidian_black" />
+        </shape>
+    </item>
+
+    <!-- Ziggurat corner notches: reads as cut stone, not a CSS box.
+         These sit BEHIND the ad, so adFrame uses 10dp padding (> 8dp) to keep them visible. -->
+    <item android:gravity="top|start" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="top|end" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="bottom|start" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+    <item android:gravity="bottom|end" android:width="8dp" android:height="8dp">
+        <shape android:shape="rectangle"><solid android:color="@color/obsidian_black" /></shape>
+    </item>
+
+</layer-list>

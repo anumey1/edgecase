@@ -21,7 +21,8 @@ import androidx.appcompat.app.AlertDialog
 class SliverCustomizeDialog private constructor(
     private val context: Context,
     initial: SliverConfig,
-    private val onApplied: (SliverConfig) -> Unit
+    private val onApplied: (SliverConfig) -> Unit,
+    private val onDismissed: (() -> Unit)? = null
 ) {
     private val working: SliverConfig = initial.copy()
     private val view: View = LayoutInflater.from(context).inflate(R.layout.dialog_customize_sliver, null)
@@ -77,6 +78,9 @@ class SliverCustomizeDialog private constructor(
             onApplied(working)
             dialog.dismiss()
         }
+
+        // Fires for Apply, Cancel, back, and outside-tap alike — every way out of the dialog.
+        dialog.setOnDismissListener { onDismissed?.invoke() }
 
         dialog.show()
         // Square temple-panel window background — no rounded system dialog frame (§9/§10.2)
@@ -223,9 +227,18 @@ class SliverCustomizeDialog private constructor(
     }
 
     companion object {
-        /** Build and show the dialog. [onApplied] receives the saved config when the user taps Apply. */
-        fun show(context: Context, initial: SliverConfig, onApplied: (SliverConfig) -> Unit) {
-            SliverCustomizeDialog(context, initial, onApplied).build()
+        /**
+         * Build and show the dialog. [onApplied] receives the saved config when the user taps
+         * Apply; [onDismissed] fires however the dialog closes, and is used to restore the ad
+         * banner that was hidden for the dialog's duration (Docs/Ads.md §3.5).
+         */
+        fun show(
+            context: Context,
+            initial: SliverConfig,
+            onApplied: (SliverConfig) -> Unit,
+            onDismissed: (() -> Unit)? = null
+        ) {
+            SliverCustomizeDialog(context, initial, onApplied, onDismissed).build()
         }
     }
 }

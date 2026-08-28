@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Plinth: the foundation stone the temple stands on. Hosts the anchored
+     adaptive banner.
+
+     NOTHING in this file is clickable, focusable, or animated. That is the whole
+     point of it: it is the inert buffer that stops a finger travelling down the
+     screen from landing on an ad by accident.
+
+     See Docs/Ads.md §6 before changing any dimension here. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/adPlinth"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/obsidian_black"
+    android:clickable="false"
+    android:focusable="false"
+    android:importantForAccessibility="no">
+
+    <!-- Separator: the same meander trim that sits under every temple lintel -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/meander_trim_height"
+        android:src="@drawable/ic_meander_horizontal"
+        android:scaleType="fitXY"
+        android:alpha="0.55"
+        android:importantForAccessibility="no" />
+
+    <!-- Dead-zone buffer. Do not remove. -->
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/ad_buffer_gap" />
+
+    <!-- The well. The stone frame is this view's BACKGROUND — never a foreground
+         drawable and never a sibling view over the ad (Docs/Ads.md §1.1 C1).
+         The banner is added programmatically by AdHost so its width can be measured
+         from adFrame's real inner width. -->
+    <FrameLayout
+        android:id="@+id/adFrame"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/ad_frame_margin_h"
+        android:layout_marginEnd="@dimen/ad_frame_margin_h"
+        android:layout_marginBottom="@dimen/ad_frame_margin_bottom"
+        android:padding="@dimen/ad_frame_padding"
+        android:minHeight="@dimen/ad_slot_min_height"
+        android:background="@drawable/bg_ad_plinth"
+        android:clickable="false"
+        android:focusable="false" />
+
+</LinearLayout>

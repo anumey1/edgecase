@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Standard spacing -->
-    <dimen name="margin_standard">16dp</dimen>
     <dimen name="margin_wide">24dp</dimen>
-    <dimen name="margin_narrow">8dp</dimen>
-    <dimen name="padding_standard">16dp</dimen>
 
     <!-- Buttons -->
     <dimen name="stone_button_height">56dp</dimen>
@@ -14,15 +10,7 @@
     <!-- Icons -->
     <dimen name="app_icon_size">48dp</dimen>
 
-    <!-- Pillars -->
-    <dimen name="pillar_width">32dp</dimen>
-
-    <!-- Sliver (Fang) -->
-    <dimen name="sliver_fang_width">27dp</dimen>
-    <dimen name="sliver_fang_height">38dp</dimen>
-
-    <!-- Tray -->
-    <dimen name="tray_width">80dp</dimen>
+    <!-- Sliver defaults now live in SliverConfig, not here -->
 
     <!-- Text -->
     <dimen name="text_header">18sp</dimen>
@@ -33,9 +21,24 @@
     <dimen name="header_title_size">26sp</dimen>       <!-- main menu "EDGECASE" -->
     <dimen name="header_title_size_sub">20sp</dimen>   <!-- sub-screen titles -->
     <dimen name="header_height">64dp</dimen>
-    <dimen name="border_blocky_outer">3dp</dimen>
-    <dimen name="border_blocky_inner">1dp</dimen>
-    <dimen name="slab_crack_stroke">1.25dp</dimen>
     <dimen name="pillar_width_new">40dp</dimen>        <!-- pillars get wider & prouder -->
     <dimen name="meander_trim_height">10dp</dimen>
+
+    <!-- ══ Ad plinth (Docs/Ads.md §6.3) ══
+         These buffer values are COMPLIANCE-RELEVANT, not cosmetic. They create the
+         inert dead-zone between the lowest interactive element and the first ad pixel.
+         Do not shrink them to make something else fit — shrink app chrome instead. -->
+    <dimen name="ad_buffer_gap">10dp</dimen>
+    <dimen name="ad_frame_padding">10dp</dimen>
+    <dimen name="ad_frame_margin_h">8dp</dimen>
+    <dimen name="ad_frame_margin_bottom">6dp</dimen>
+    <!-- Floor for the ad well so the slot holds its space even if no banner is ever
+         attached. AdHost overrides this with the exact computed size. A failed load must
+         leave a correctly sized empty well, never a collapsed frame. -->
+    <dimen name="ad_slot_min_height">120dp</dimen>
+
+    <!-- Floor for the Altar list. Drag-to-reorder is unusable at one visible row — you cannot
+         see where you are dropping. Two rows (~67dp each) + the panel's 4dp padding. On roomy
+         screens the 0.38 weight wins and this never binds; on short ones it protects the drag. -->
+    <dimen name="altar_min_height">148dp</dimen>
 </resources>

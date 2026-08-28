@@ -25,6 +25,16 @@ import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        /**
+         * Whether this Activity is currently in the foreground. Read by [SidebarService.onCreate]
+         * so a service started *from* the settings screen does not attach its overlay on top of
+         * our own UI. Mirrors [SidebarService.isRunning] in the opposite direction.
+         */
+        @Volatile
+        var isForeground = false
+    }
+
     // ── Screen views ───────────────────────────────────
     private lateinit var screenMainMenu: View
     private lateinit var screenShortcuts: View
@@ -52,9 +62,16 @@ class MainActivity : AppCompatActivity() {
     // ── Haptics ─────────────────────────────────────────
     private var vibrator: Vibrator? = null
 
+    // ── Ad plinth (Docs/Ads.md §5, §7.5) ────────────────
+    private var adHost: AdHost? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // The Plinth: one persistent banner slot below all three screens. It lives outside
+        // screenContainer, so showScreen() never touches it. See Docs/Ads.md §5.
+        adHost = AdHost(this, findViewById(R.id.adFrame)).also { it.start() }
 
         // Resolve screen views from the container
         screenMainMenu = findViewById(R.id.screenMainMenu)
@@ -127,8 +144,39 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        isForeground = true
         // Sync the Serpent's Eyes with the actual service state (Phase 7 #1)
         serviceEyes.forEach { it.setRunning(SidebarService.isRunning) }
+        // Take the edge back while our own UI is on screen (Docs/Ads.md §4.3)
+        setOverlaySuspended(true)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isForeground = false
+        // Hand the edge back to the user
+        setOverlaySuspended(false)
+    }
+
+    /**
+     * Signals the running service to detach or re-attach its overlay windows.
+     *
+     * Never *starts* the service: the guard means a stopped service stays stopped, so opening the
+     * settings screen can't resurrect an overlay the user turned off.
+     */
+    private fun setOverlaySuspended(suspended: Boolean) {
+        if (!SidebarService.isRunning) return
+        startService(Intent(this, SidebarService::class.java).apply {
+            action = if (suspended) SidebarService.ACTION_SUSPEND_OVERLAY
+                     else SidebarService.ACTION_RESUME_OVERLAY
+        })
+    }
+
+    override fun onDestroy() {
+        isForeground = false
+        adHost?.destroy()
+        adHost = null
+        super.onDestroy()
     }
 
     // ──────────────────────────────────────────────────
@@ -184,6 +232,8 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────
 
     private fun showDiscardDialog() {
+        // Same rule as the Customize popup: any modal over the app hides the banner.
+        adHost?.setAdVisible(false)
         val dialog = AlertDialog.Builder(this)
             .setTitle("ABANDON THE UNCARVED?")
             .setMessage("Your offerings are not yet carved in stone. Abandon them?")
@@ -194,6 +244,7 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("KEEP CARVING", null)
             .create()
+        dialog.setOnDismissListener { adHost?.setAdVisible(true) }
         // Square temple-panel window background — no rounded system dialog frame (§9)
         dialog.window?.setBackgroundDrawableResource(R.drawable.bg_temple_panel)
         dialog.show()
@@ -252,15 +303,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun openCustomizeSliverDialog() {
         val current = SliverConfig.load(this)
-        SliverCustomizeDialog.show(this, current) { applied ->
-            // Reflect on the positioning preview and hot-reload the running overlay.
-            positioningView?.setSliverConfig(applied)
-            val intent = Intent(this, SidebarService::class.java).apply {
-                action = SidebarService.ACTION_UPDATE_STYLE
-            }
-            startService(intent)
-            Toast.makeText(this, "THE FANG IS FORGED", Toast.LENGTH_SHORT).show()
-        }
+        // The dialog dims the banner and puts its action row right above it — hide the ad for
+        // the dialog's lifetime (Docs/Ads.md §3.5, §3.2). Restored however the dialog closes.
+        adHost?.setAdVisible(false)
+        SliverCustomizeDialog.show(
+            context = this,
+            initial = current,
+            onApplied = { applied ->
+                // Reflect on the positioning preview and hot-reload the running overlay.
+                positioningView?.setSliverConfig(applied)
+                val intent = Intent(this, SidebarService::class.java).apply {
+                    action = SidebarService.ACTION_UPDATE_STYLE
+                }
+                startService(intent)
+                Toast.makeText(this, "THE FANG IS FORGED", Toast.LENGTH_SHORT).show()
+            },
+            onDismissed = { adHost?.setAdVisible(true) }
+        )
     }
 
     // ──────────────────────────────────────────────────

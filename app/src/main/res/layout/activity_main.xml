@@ -1,33 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/screenContainer"
+<!-- Root is a vertical column: app content on top (weighted), the ad plinth pinned
+     below it.
+
+     fitsSystemWindows lives HERE rather than on screenContainer, so the system
+     navigation inset lands BELOW the plinth — the ad must never overlap or fight
+     system navigation (Docs/Ads.md §5.1).
+
+     screenContainer keeps every existing screen unchanged; they simply get a
+     shorter canvas. showScreen() never touches the plinth. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootColumn"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/obsidian_black"
     android:fitsSystemWindows="true">
 
-    <!-- Screen 1: Main Menu (visible by default) -->
-    <include
-        android:id="@+id/screenMainMenu"
-        layout="@layout/layout_screen_main_menu"
+    <FrameLayout
+        android:id="@+id/screenContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <!-- Screen 2: Shortcuts Configuration -->
+        <!-- Screen 1: Main Menu (visible by default) -->
+        <include
+            android:id="@+id/screenMainMenu"
+            layout="@layout/layout_screen_main_menu"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+
+        <!-- Screen 2: Shortcuts Configuration -->
+        <include
+            android:id="@+id/screenShortcuts"
+            layout="@layout/layout_screen_shortcuts_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <!-- Screen 3: Positioning -->
+        <include
+            android:id="@+id/screenPositioning"
+            layout="@layout/layout_screen_positioning_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+    </FrameLayout>
+
+    <!-- The Plinth — persistent ad band, all screens. See Docs/Ads.md §5, §6. -->
     <include
-        android:id="@+id/screenShortcuts"
-        layout="@layout/layout_screen_shortcuts_container"
+        android:id="@+id/adPlinth"
+        layout="@layout/layout_ad_plinth"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:layout_height="wrap_content" />
 
-    <!-- Screen 3: Positioning -->
-    <include
-        android:id="@+id/screenPositioning"
-        layout="@layout/layout_screen_positioning_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
-
-</FrameLayout>
+</LinearLayout>

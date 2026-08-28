@@ -10,6 +10,7 @@ import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import androidx.core.content.ContextCompat
 
 /**
  * A custom View that renders a scaled-down phone mockup with a draggable
@@ -32,11 +33,11 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
 
     // ── Paints ─────────────────────────────────────────
     private val marblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#1A2822")
+        color = ContextCompat.getColor(context, R.color.stele_marble)
         style = Paint.Style.FILL
     }
     private val marbleBorderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#3B5249")
+        color = ContextCompat.getColor(context, R.color.faded_olive_teal)
         style = Paint.Style.STROKE
         strokeWidth = 3f
     }
@@ -54,7 +55,7 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
         style = Paint.Style.FILL
     }
     private val instructionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#F5EFE6")
+        color = ContextCompat.getColor(context, R.color.aged_marble)
         textSize = 32f
         textAlign = Paint.Align.CENTER
     }
@@ -96,11 +97,11 @@ class PositioningView(context: Context, attrs: android.util.AttributeSet? = null
     // ── Tracking arrow (The Herald, §12.2) ─────────────
     private val density = resources.displayMetrics.density
     private val arrowFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#50C878")     // emerald_bright
+        color = ContextCompat.getColor(context, R.color.emerald_bright)
         style = Paint.Style.FILL
     }
     private val arrowOutlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#071A15")
+        color = ContextCompat.getColor(context, R.color.abyssal_teal)
         style = Paint.Style.STROKE
         strokeWidth = 1.5f
         strokeJoin = Paint.Join.MITER

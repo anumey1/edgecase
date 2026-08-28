@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.view.View
+import androidx.core.content.ContextCompat
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -25,7 +26,7 @@ class CrackFlashView(context: Context) : View(context) {
 
     private val voidPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        color = Color.parseColor("#020403")      // crack_void
+        color = ContextCompat.getColor(context, R.color.crack_void)
         strokeWidth = 2.5f
         strokeJoin = Paint.Join.MITER            // sharp only (Design Law L1)
     }

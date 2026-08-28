@@ -31,13 +31,6 @@
         android:alpha="0.85"
         android:contentDescription="Right pillar" />
 
-    <!-- Dust particle overlay container -->
-    <FrameLayout
-        android:id="@+id/dustContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipChildren="false" />
-
     <!-- Center content -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -56,11 +49,22 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp" />
 
-        <!-- Buttons centered vertically in remaining space -->
-        <LinearLayout
+        <!-- Buttons centered vertically in remaining space.
+             Wrapped in a ScrollView because the plinth costs ~146dp of window height: below
+             roughly 800dp of screen height the five-button stack no longer fits, and a plain
+             centred block silently clips a button off EACH end (SHORTCUTS and STOP), leaving
+             them unreachable. fillViewport keeps the centred layout identical on tall screens
+             and only starts scrolling when it actually has to. See Docs/Ads.md §6.4. -->
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center">
 
@@ -130,7 +134,21 @@
 
         </LinearLayout>
 
+        </ScrollView>
+
     </LinearLayout>
+
+    <!-- Dust + crack overlay container.
+         Declared last AND given an elevation above the slab buttons' 8dp: draw order inside a
+         FrameLayout is decided by elevation first and child order second, so at elevation 0 these
+         effects rendered *behind* the very button that triggered them. -->
+    <FrameLayout
+        android:id="@+id/dustContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="16dp"
+        android:clipChildren="false"
+        android:importantForAccessibility="no" />
 
     <!-- App version — bottom left -->
     <TextView

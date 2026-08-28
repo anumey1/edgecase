@@ -42,6 +42,7 @@
     <color name="limestone_pressed">#B3A588</color>     <!-- pressed body -->
 
     <!-- Structure -->
+    <color name="stele_marble">#1A2822</color>          <!-- PositioningView's phone-mockup slab -->
     <color name="pillar_stone_dark">#152521</color>     <!-- pillar shaft shadow side -->
     <color name="pillar_stone">#1E332C</color>          <!-- pillar shaft lit side -->
     <color name="pillar_capital">#42594F</color>        <!-- capital & base slabs -->
