@@ -41,4 +41,11 @@
          see where you are dropping. Two rows (~67dp each) + the panel's 4dp padding. On roomy
          screens the 0.38 weight wins and this never binds; on short ones it protects the drag. -->
     <dimen name="altar_min_height">148dp</dimen>
+
+    <!-- ══ Credits screen ══ -->
+    <!-- The Seal of the Maker. Square by construction: the mark is a 1:1 asset and a
+         non-square frame would letterbox it against the niche. -->
+    <dimen name="credits_seal_size">108dp</dimen>
+    <dimen name="credits_seal_padding">11dp</dimen>
+    <dimen name="credits_section_gap">16dp</dimen>
 </resources>

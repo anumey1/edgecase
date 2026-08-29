@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/creditsContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/obsidian_black">
+
+    <!-- Living background: fractured obsidian + pulsing emerald gems (&#167;6.4) -->
+    <com.dicereligion.edgecase.ObsidianCrackView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no" />
+
+    <ImageView
+        android:layout_width="@dimen/pillar_width_new"
+        android:layout_height="match_parent"
+        android:layout_gravity="start|center_vertical"
+        android:src="@drawable/ic_pillar_serpent_left"
+        android:scaleType="fitXY"
+        android:alpha="0.85"
+        android:contentDescription="Left pillar" />
+
+    <ImageView
+        android:layout_width="@dimen/pillar_width_new"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        android:src="@drawable/ic_pillar_serpent_left"
+        android:scaleX="-1"
+        android:scaleType="fitXY"
+        android:alpha="0.85"
+        android:contentDescription="Right pillar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="52dp"
+        android:paddingRight="52dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp">
+
+        <!-- Header bar — shared temple lintel (§5.2); title set in MainActivity -->
+        <include
+            android:id="@+id/templeHeader"
+            layout="@layout/layout_temple_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp" />
+
+        <!-- All credit content scrolls. This screen is the tallest in the app and the plinth
+             already costs ~146dp of window height, so a fixed column would clip on anything
+             short. fillViewport keeps the block top-aligned and only scrolls when it must —
+             the same treatment the main menu needed. See Docs/Ads.md §6.4. -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:clipToPadding="false"
+            android:requiresFadingEdge="vertical"
+            android:fadingEdgeLength="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <!-- ── The Maker ─────────────────────────────── -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_maker_heading"
+                    android:textAppearance="@style/CaptionChiseled"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_maker_lead"
+                    android:textAppearance="@style/BodySerif"
+                    android:fontFamily="serif"
+                    android:textSize="@dimen/text_body"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_maker_body"
+                    android:textAppearance="@style/BodySerif"
+                    android:fontFamily="serif"
+                    android:textSize="@dimen/text_caption"
+                    android:lineSpacingExtra="2dp"
+                    android:alpha="0.85"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp" />
+
+                <!-- The Seal of the Maker → Play Store developer page.
+                     A FrameLayout, not an ImageButton: ImageButton would inherit the platform
+                     button background and insets and fight the frame drawable. This is inert
+                     stone with an ImageView set into it, made clickable in code so it picks up
+                     the same press / haptic / dust behaviour as every slab in the app. -->
+                <FrameLayout
+                    android:id="@+id/btnDeveloperSeal"
+                    android:layout_width="@dimen/credits_seal_size"
+                    android:layout_height="@dimen/credits_seal_size"
+                    android:layout_marginTop="@dimen/credits_section_gap"
+                    android:padding="@dimen/credits_seal_padding"
+                    android:background="@drawable/selector_dev_seal"
+                    android:elevation="@dimen/stone_button_elevation"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:contentDescription="Dice Religion on Google Play">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_dice_religion"
+                        android:scaleType="fitCenter"
+                        android:importantForAccessibility="no" />
+
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/credits_seal_hint"
+                    android:textAppearance="@style/CaptionSerif"
+                    android:fontFamily="serif"
+                    android:gravity="center"
+                    android:alpha="0.75" />
+
+                <!-- Spear divider -->
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="@dimen/credits_section_gap"
+                    android:layout_marginBottom="@dimen/credits_section_gap"
+                    android:src="@drawable/ic_divider_fangs"
+                    android:scaleType="fitXY"
+                    android:contentDescription="Divider" />
+
+                <!-- ── Lettering ─────────────────────────────── -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_lettering_heading"
+                    android:textAppearance="@style/CaptionChiseled"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_lettering_body"
+                    android:textAppearance="@style/BodySerif"
+                    android:fontFamily="serif"
+                    android:textSize="@dimen/text_caption"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp" />
+
+                <!-- ── Libraries ─────────────────────────────── -->
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_libraries_heading"
+                    android:textAppearance="@style/CaptionChiseled"
+                    android:layout_marginTop="@dimen/credits_section_gap"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_libraries_body"
+                    android:textAppearance="@style/BodySerif"
+                    android:fontFamily="serif"
+                    android:textSize="@dimen/text_caption"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp" />
+
+                <!-- ── Advertising ───────────────────────────────
+                     GONE until the real SDK replaces the placeholder banner: today the Plinth
+                     shows DummyBannerView and no ad network is present, so the attribution
+                     would be untrue. Flip both to VISIBLE at Appendix C task B2. -->
+
+                <TextView
+                    android:id="@+id/tvCreditAdsHeading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_ads_heading"
+                    android:textAppearance="@style/CaptionChiseled"
+                    android:layout_marginTop="@dimen/credits_section_gap"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvCreditAdsBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/credits_ads_body"
+                    android:textAppearance="@style/BodySerif"
+                    android:fontFamily="serif"
+                    android:textSize="@dimen/text_caption"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:visibility="gone" />
+
+                <!-- Tail padding so the last line clears the action bar when scrolled -->
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp" />
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <!-- Action bar.
+             wrap_content, never weighted — a weighted row shrinks below the 56dp the slabs
+             need on short screens and clips them (the defect fixed on the Shortcuts screen).
+             PRIVACY sits here rather than in the scroller so it is always reachable without
+             scrolling, and AD CONSENT below it remains the lowest interactive element above
+             the Plinth's inert buffer whenever it is shown. -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <Button
+                    android:id="@+id/btnBackToMenuFromCredits"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/stone_button_height"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:background="@drawable/selector_stone_button"
+                    android:elevation="@dimen/stone_button_elevation"
+                    android:text="BACK"
+                    android:textAppearance="@style/SlabButtonText"
+                    android:textSize="@dimen/text_body" />
+
+                <Button
+                    android:id="@+id/btnPrivacyPolicy"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/stone_button_height"
+                    android:layout_weight="1"
+                    android:background="@drawable/selector_stone_button"
+                    android:elevation="@dimen/stone_button_elevation"
+                    android:text="PRIVACY"
+                    android:textAppearance="@style/SlabButtonText"
+                    android:textSize="@dimen/text_body" />
+
+            </LinearLayout>
+
+            <!-- The UMP privacy-options entry point.
+                 Distinct from PRIVACY above: that opens the policy in a browser, this reopens
+                 Google's own consent form inside the app so the choice can be changed or
+                 withdrawn. Required by Google wherever UMP reports REQUIRED — the EEA, the UK,
+                 Switzerland and the applicable US states (Docs/Ads.md §7.7); the published
+                 privacy policy §6.2/§6.4 promises it exists.
+
+                 GONE in XML, and GONE for the large majority of users at runtime too:
+                 MainActivity shows it only when AdHost.isPrivacyOptionsRequired() is true, which
+                 cannot be known until UMP resolves. Until the consent SDK lands (Appendix C, B3)
+                 that is always false, so this button never appears and costs no vertical space. -->
+            <Button
+                android:id="@+id/btnAdConsent"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/stone_button_height"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/selector_stone_button"
+                android:elevation="@dimen/stone_button_elevation"
+                android:text="AD CONSENT"
+                android:textAppearance="@style/SlabButtonText"
+                android:textSize="@dimen/text_body"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

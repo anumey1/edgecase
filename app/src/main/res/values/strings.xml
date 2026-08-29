@@ -1,3 +1,33 @@
 <resources>
     <string name="app_name">EdgeCase</string>
+
+    <!-- ══ Credits screen ══
+         Long-form prose lives here rather than in the layout so there is exactly one
+         place to edit the wording. Short button labels stay inline, as elsewhere. -->
+
+    <string name="credits_maker_heading">DICE RELIGION</string>
+    <string name="credits_maker_lead">EdgeCase is designed and built by Dice Religion.</string>
+    <string name="credits_maker_body">An edge-mounted launcher: the apps you actually use live on a single fang at the side of the screen, out of the way until you reach for it.</string>
+    <string name="credits_seal_hint">Tap for more from Dice Religion</string>
+
+    <string name="credits_lettering_heading">LETTERING</string>
+    <string name="credits_lettering_body">Cinzel — Natanael Gama\nSIL Open Font License 1.1\n\nGFS Neohellenic — Greek Font Society\nSIL Open Font License 1.1</string>
+
+    <string name="credits_libraries_heading">LIBRARIES</string>
+    <string name="credits_libraries_body">AndroidX — AppCompat, RecyclerView, Core-KTX\nThe Android Open Source Project\nApache License 2.0</string>
+
+    <!-- Shown only once the real SDK lands (Docs/stats.md Appendix C, B2) -->
+    <string name="credits_ads_heading">ADVERTISING</string>
+    <string name="credits_ads_body">Ads served by Google AdMob</string>
+
+    <!-- ══ Outbound links ══
+         · url_privacy_policy: LIVE. Hosted on anumey.xyz alongside the Mach2 and BOTCH policies,
+           and registered in Play Console. This exact URL must never move — a privacy-policy URL
+           that 404s is itself a Play policy violation.
+         · url_developer_page: PLACEHOLDER. The canonical form is
+           https://play.google.com/store/apps/dev?id=<numeric publisher id>, taken from the Play
+           Console once the developer account exists. The name form below resolves too, but only
+           after the first app is published. -->
+    <string name="url_developer_page" translatable="false">https://play.google.com/store/apps/developer?id=Dice+Religion</string>
+    <string name="url_privacy_policy" translatable="false">https://anumey.xyz/legal/edgecase/privacy</string>
 </resources>

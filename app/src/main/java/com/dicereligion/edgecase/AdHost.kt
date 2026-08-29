@@ -45,6 +45,18 @@ class AdHost(private val activity: Activity, private val adFrame: FrameLayout) {
 
     private var bannerView: View? = null
 
+    /**
+     * Invoked once UMP has finished resolving consent, so the caller can re-evaluate whether the
+     * privacy-options entry point should be visible.
+     *
+     * [isPrivacyOptionsRequired] is meaningless until `requestConsentInfoUpdate` returns, which is
+     * after `onCreate` has already run — so the button's visibility cannot be decided once at
+     * start-up and left alone. Docs/Ads.md §7.7.
+     *
+     * In preview mode nothing ever calls this; the button simply stays hidden.
+     */
+    var onConsentResolved: (() -> Unit)? = null
+
     // ──────────────────────────────────────────────
     // Lifecycle
     // ──────────────────────────────────────────────
@@ -77,6 +89,49 @@ class AdHost(private val activity: Activity, private val adFrame: FrameLayout) {
      */
     fun setAdVisible(visible: Boolean) {
         bannerView?.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+    }
+
+    // ──────────────────────────────────────────────
+    // Consent (UMP)
+    // ──────────────────────────────────────────────
+
+    /**
+     * Whether Google requires a visible "privacy options" entry point for this user.
+     *
+     * True only where a consent regime applies — the EEA, the UK, Switzerland, and the US states
+     * with an applicable law. Everyone else never sees the control. This is a **Google
+     * requirement**, not a nicety: where UMP reports `REQUIRED`, the app must offer a way back
+     * into the consent form (Docs/Ads.md §7.7), and the published privacy policy §6.2/§6.4 tells
+     * users that control exists.
+     *
+     * REPLACE at Docs/Ads.md Appendix C task B3 with:
+     *
+     *     ::consentInformation.isInitialized &&
+     *         consentInformation.privacyOptionsRequirementStatus ==
+     *             ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
+     *
+     * Returns false in preview mode: there is no consent SDK yet, so there is nothing to reopen
+     * and the button correctly stays hidden.
+     */
+    fun isPrivacyOptionsRequired(): Boolean = false
+
+    /**
+     * Reopens Google's consent form so the user can change or withdraw their choice.
+     *
+     * Note this is **not** a link to a web page — UMP renders Google's own form inside the app,
+     * and the choice it records is what the ad request reads. A URL cannot do this.
+     *
+     * REPLACE at Docs/Ads.md Appendix C task B3 with:
+     *
+     *     UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
+     *         if (formError != null) Log.w(TAG, "Privacy form: ${'$'}{formError.message}")
+     *     }
+     *
+     * Unreachable in preview mode — [isPrivacyOptionsRequired] is false, so the only caller is
+     * never shown.
+     */
+    fun showPrivacyOptionsForm() {
+        Log.d(TAG, "showPrivacyOptionsForm(): no consent SDK in this build (Appendix C, B3)")
     }
 
     fun destroy() {

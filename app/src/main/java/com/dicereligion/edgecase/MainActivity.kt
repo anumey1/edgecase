@@ -1,6 +1,7 @@
 package com.dicereligion.edgecase
 
 import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -39,6 +40,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var screenMainMenu: View
     private lateinit var screenShortcuts: View
     private lateinit var screenPositioning: View
+    private lateinit var screenCredits: View
 
     // ── Shortcuts screen state (Phase 3 bipartite) ─────
     private var stateManager: ShortcutStateManager? = null
@@ -71,12 +73,18 @@ class MainActivity : AppCompatActivity() {
 
         // The Plinth: one persistent banner slot below all three screens. It lives outside
         // screenContainer, so showScreen() never touches it. See Docs/Ads.md §5.
-        adHost = AdHost(this, findViewById(R.id.adFrame)).also { it.start() }
+        adHost = AdHost(this, findViewById(R.id.adFrame)).also {
+            // UMP resolves after onCreate, so the consent button's visibility cannot be decided
+            // once here and left alone (Docs/Ads.md §7.7).
+            it.onConsentResolved = { syncAdConsentButton() }
+            it.start()
+        }
 
         // Resolve screen views from the container
         screenMainMenu = findViewById(R.id.screenMainMenu)
         screenShortcuts = findViewById(R.id.screenShortcuts)
         screenPositioning = findViewById(R.id.screenPositioning)
+        screenCredits = findViewById(R.id.screenCredits)
 
         // Per-screen temple-lintel titles (§5.5). The same tvTempleTitle id exists in each
         // included header, so it MUST be resolved scoped to each screen, never on the Activity.
@@ -87,6 +95,10 @@ class MainActivity : AppCompatActivity() {
         }
         screenPositioning.findViewById<TextView>(R.id.tvTempleTitle)?.apply {
             text = "SLIVER POSITION"
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.header_title_size_sub))
+        }
+        screenCredits.findViewById<TextView>(R.id.tvTempleTitle)?.apply {
+            text = "CREDITS"
             setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.header_title_size_sub))
         }
 
@@ -183,7 +195,7 @@ class MainActivity : AppCompatActivity() {
     // Screen routing
     // ──────────────────────────────────────────────────
 
-    private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING }
+    private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING, CREDITS }
 
     private var currentScreen: Screen = Screen.MAIN_MENU
 
@@ -191,6 +203,7 @@ class MainActivity : AppCompatActivity() {
         screenMainMenu.visibility = if (screen == Screen.MAIN_MENU) View.VISIBLE else View.GONE
         screenShortcuts.visibility = if (screen == Screen.SHORTCUTS) View.VISIBLE else View.GONE
         screenPositioning.visibility = if (screen == Screen.POSITIONING) View.VISIBLE else View.GONE
+        screenCredits.visibility = if (screen == Screen.CREDITS) View.VISIBLE else View.GONE
 
         currentScreen = screen
 
@@ -222,6 +235,7 @@ class MainActivity : AppCompatActivity() {
                     if (stateManager?.isDirty() == true) showDiscardDialog()
                     else showScreen(Screen.MAIN_MENU)
                 Screen.POSITIONING -> showScreen(Screen.MAIN_MENU)
+                Screen.CREDITS -> showScreen(Screen.MAIN_MENU)
                 Screen.MAIN_MENU -> Unit   // unreachable: callback is disabled on the menu
             }
         }
@@ -264,8 +278,8 @@ class MainActivity : AppCompatActivity() {
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnPosition)).setOnClickListener {
             showScreen(Screen.POSITIONING)
         }
-        applyStoneButtonBehavior(findViewById<Button>(R.id.btnDummy)).setOnClickListener {
-            Toast.makeText(this, "Dummy — nothing here yet", Toast.LENGTH_SHORT).show()
+        applyStoneButtonBehavior(findViewById<Button>(R.id.btnCredits)).setOnClickListener {
+            showScreen(Screen.CREDITS)
         }
 
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnStartService)).setOnClickListener {
@@ -294,6 +308,59 @@ class MainActivity : AppCompatActivity() {
         }
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnBackToMenuFromPosition)).setOnClickListener {
             showScreen(Screen.MAIN_MENU)
+        }
+        // Credits screen
+        applyStoneButtonBehavior(findViewById<Button>(R.id.btnBackToMenuFromCredits)).setOnClickListener {
+            showScreen(Screen.MAIN_MENU)
+        }
+        applyStoneButtonBehavior(findViewById<Button>(R.id.btnPrivacyPolicy)).setOnClickListener {
+            openUrl(getString(R.string.url_privacy_policy))
+        }
+        // Not a link: this reopens Google's consent form in-app so the choice can be changed or
+        // withdrawn. Hidden unless UMP says a consent regime applies to this user.
+        applyStoneButtonBehavior(findViewById<Button>(R.id.btnAdConsent)).setOnClickListener {
+            adHost?.showPrivacyOptionsForm()
+        }
+        syncAdConsentButton()
+        // The Seal is a FrameLayout, not a Button — it gets the same slab press behaviour.
+        applyStoneButtonBehavior(findViewById<View>(R.id.btnDeveloperSeal)).setOnClickListener {
+            openUrl(getString(R.string.url_developer_page))
+        }
+    }
+
+    // ──────────────────────────────────────────────────
+    // Outbound links (Credits screen)
+    // ──────────────────────────────────────────────────
+
+    /**
+     * Hands a URL to whatever the user has set as their browser / Play client.
+     *
+     * NEW_TASK keeps the external page out of EdgeCase's own task, so returning here lands on
+     * the Credits screen rather than on a foreign Activity stacked inside our history. Leaving
+     * the app fires [onPause], which correctly hands the edge back to the overlay.
+     *
+     * Both URLs are placeholders — see `url_developer_page` / `url_privacy_policy` in strings.xml.
+     */
+    /**
+     * Shows or hides the AD CONSENT slab.
+     *
+     * Called once at wiring time and again whenever UMP resolves. Returns the button to GONE
+     * rather than INVISIBLE so the action bar reclaims the row's 68dp for everyone outside a
+     * consent regime — which, on a utility app, is most people.
+     */
+    private fun syncAdConsentButton() {
+        findViewById<Button>(R.id.btnAdConsent)?.visibility =
+            if (adHost?.isPrivacyOptionsRequired() == true) View.VISIBLE else View.GONE
+    }
+
+    private fun openUrl(url: String) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
+        } catch (_: ActivityNotFoundException) {
+            // No browser at all: say so rather than dying silently.
+            Toast.makeText(this, "NO PATH TO THE OUTER WORLD", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -326,8 +393,14 @@ class MainActivity : AppCompatActivity() {
     // Stone button press animation + haptics
     // ──────────────────────────────────────────────────
 
-    private fun applyStoneButtonBehavior(button: Button): Button {
-        button.setOnTouchListener { v, event ->
+    /**
+     * Press animation + haptic + dust/crack burst, shared by every tappable slab.
+     *
+     * Generic over [View] rather than typed to [Button]: the Credits screen's Seal is a
+     * FrameLayout wrapping an ImageView, and it must feel identical to the stone buttons.
+     */
+    private fun <T : View> applyStoneButtonBehavior(view: T): T {
+        view.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     v.animate()
@@ -352,7 +425,7 @@ class MainActivity : AppCompatActivity() {
             }
             false
         }
-        return button
+        return view
     }
 
     private fun triggerHaptic(durationMs: Long, amplitude: Int) {

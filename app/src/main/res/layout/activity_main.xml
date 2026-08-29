@@ -46,6 +46,14 @@
             android:layout_height="match_parent"
             android:visibility="gone" />
 
+        <!-- Screen 4: Credits -->
+        <include
+            android:id="@+id/screenCredits"
+            layout="@layout/layout_screen_credits_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
     </FrameLayout>
 
     <!-- The Plinth — persistent ad band, all screens. See Docs/Ads.md §5, §6. -->

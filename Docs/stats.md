@@ -6,7 +6,60 @@
 > **App Name:** EdgeCase
 > **Version:** 1.4.1 (versionCode 3; the UI label reads `ΕΚΔ. 1.4.1`, sourced from `BuildConfig.VERSION_NAME`)
 >
-> **Latest change (2026-08-29, later) — the Ad Plinth, preview build.** The bottom ad band from
+> **Latest change (2026-08-29) — the AD CONSENT entry point and a legal-basis section.**
+> `btnAdConsent` now sits below PRIVACY on the Credits screen, wired to
+> `AdHost.showPrivacyOptionsForm()`. It is **not a link** — UMP renders Google's own consent form
+> in-process, and the choice it records is what the ad request reads. It is `GONE` in XML and stays
+> hidden at runtime unless `AdHost.isPrivacyOptionsRequired()` is true, which is the EEA, the UK,
+> Switzerland and the applicable US states only; until the consent SDK lands (Appendix C, **B3**)
+> that is always false, so nothing is user-visible yet. Both AdHost methods and the
+> `onConsentResolved` callback exist with final signatures and stub bodies, so B4 is a body swap.
+> Verified on device with the flag forced true, at native and 360×640dp, then reverted.
+>
+> The hosted policy also gained a **legal-basis** section (§6.3), the one concrete GDPR Article 13
+> gap in the house template; the same section was backported to the live Mach2 policy, whose
+> effective date moved to 29 August 2026 as its own §11 requires. **EdgeCase §6 renumbered** —
+> the consent control is now cited as §6.2/§6.4.
+>
+> **Previous change (2026-08-29) — the legal surface, written and audited against this code.**
+> EdgeCase's privacy policy and data-deletion page now exist, hosted on the Anumey's Lair site
+> beside the Mach2 and BOTCH policies:
+>
+> - **`https://anumey.xyz/legal/edgecase/privacy`** — already wired into `strings.xml`, so the
+>   Credits screen's PRIVACY button opens the real document.
+> - **`https://anumey.xyz/legal/edgecase/delete-data`** — required because the Data safety form
+>   will declare collection (Advertising ID); Google demands a *Delete data URL* whenever it does.
+>
+> Both were **written against this source tree, not adapted from the sibling apps**, and every
+> factual claim was checked against the code. Three claims in the first draft were wrong and were
+> corrected — see the *Claims the policy makes about this code* note in §9.
+>
+> **The policy is now a constraint on the code.** Six specific properties are asserted publicly;
+> breaking any of them silently makes a published legal document false. They are listed in §9.
+>
+> **Previous change (2026-08-29) — the Credits screen.** The main menu's third slab was a
+> `DUMMY` stub that only raised a toast. It is now **CREDITS**, opening a fourth virtual screen:
+>
+> - **Attributions** — Dice Religion (the maker), the two bundled OFL fonts, and the AndroidX
+>   libraries. An **ADVERTISING** block is written but `gone`: the Plinth still holds a placeholder,
+>   so crediting AdMob today would be untrue. It goes visible with the real SDK (Appendix C, B2).
+> - **The Seal** — the 512×512 gold line-art Dice Religion mark set in a stone frame
+>   (`bg_dev_seal.xml`), tapping through to the Play Store developer page. The frame is a deliberate
+>   third visual register: the slab reads raised, the Plinth reads recessed, and this reads as a
+>   raised frame around a dark niche.
+> - **PRIVACY** — a slab button beside BACK, opening the privacy policy.
+> - `url_privacy_policy` now points at the **real, written** policy at
+>   `https://anumey.xyz/legal/edgecase/privacy`; `url_developer_page` is still a placeholder.
+> - `applyStoneButtonBehavior` is now generic over `View` so the Seal presses like a slab; the body
+>   scrolls with a fading edge while the action bar and the Plinth stay put. Verified at
+>   360×640dp — every element reachable, nothing clipped.
+>
+> **Before that (2026-08-29) — the A track.** Overlay suspension while the Activity is foreground,
+> a two-row floor for the Altar, dust/crack effects raised above the slab buttons, 14 instrumented
+> tests, dead-resource pruning and palette reconciliation, and backup rules for `EdgeCasePrefs`.
+> See Appendix C group A.
+>
+> **Before that (2026-08-29) — the Ad Plinth, preview build.** The bottom ad band from
 > `Docs/Ads.md` §5–§6 is now built and running, with a **placeholder banner** in place of a real ad.
 > There is **no ad SDK, no new dependency, no manifest change, and no AdMob account** involved —
 > this is a visual/spatial preview so the band's footprint and inertness can be judged before any
@@ -17,8 +70,8 @@
 > - **`DummyBannerView`** — a light-coloured placeholder that reports its own measured dp size.
 > - **The Plinth** — `layout_ad_plinth.xml` + `bg_ad_plinth.xml`: meander separator, a 10dp dead
 >   gap, and a recessed obsidian well. Nothing in it is clickable, focusable, or animated.
-> - **`activity_main.xml` restructured** into a vertical column so the band is pinned below all
->   three screens and never scrolls or moves.
+> - **`activity_main.xml` restructured** into a vertical column so the band is pinned below every
+>   screen and never scrolls or moves.
 > - **Banner hidden under modal dialogs** — both dialogs now call `setAdVisible(false)`, because a
 >   dialog dims the ad *and* lands its action row beside it.
 > - **Two small-screen defects found and fixed** (see §10): below roughly 800dp of screen height the
@@ -44,7 +97,7 @@
 > it actually stands. The substantive changes since the last revision:
 >
 > - **Three new custom views:** `ObsidianCrackView` (animated fractured-obsidian background with
->   pulsing emerald gems, on all three screens), `CrackFlashView` (slab fractures at the touch point),
+>   pulsing emerald gems, on every screen), `CrackFlashView` (slab fractures at the touch point),
 >   and `ServiceEyeView` (the Serpent's Eyes service indicator in the main-menu lintel).
 > - **Shared temple-lintel header** (`layout_temple_header.xml`) replacing the three bespoke headers.
 > - **Bundled fonts** — Cinzel Black and GFS Neohellenic — driving three new text styles.
@@ -124,9 +177,10 @@ customize the sliver's appearance and geometry.
   swiped. Contains desaturated app icons (20% desaturation for the ancient-theme look) over a serpent-
   scale backdrop. Tapping an icon launches the app. **Its width and height are user-configurable**
   (defaults 80dp × 266dp).
-- **Configuration** — a three-screen activity (Main Menu → Shortcuts → Positioning). The Positioning
-  screen also hosts the **Customize Sliver** popup.
-- **The Plinth** — a persistent band pinned below all three screens, holding one banner slot inside
+- **Configuration** — a four-screen activity (Main Menu → Shortcuts / Positioning / Credits). The
+  Positioning screen also hosts the **Customize Sliver** popup; the Credits screen carries the
+  attributions, the Play Store link and the privacy-policy link.
+- **The Plinth** — a persistent band pinned below all four screens, holding one banner slot inside
   a recessed stone well. Currently filled with a placeholder (§5.19–5.20). It never scrolls, never
   moves between screens, and nothing in it responds to touch.
 - **Living theme** — every screen sits on `ObsidianCrackView`: fractured black obsidian with emerald
@@ -140,7 +194,7 @@ customize the sliver's appearance and geometry.
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         MainActivity                            │
-│      (AppCompatActivity, 3 virtual screens via visibility)      │
+│      (AppCompatActivity, 4 virtual screens via visibility)      │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌────────────┐  ┌───────────────┐  ┌────────────────────────┐  │
@@ -154,11 +208,22 @@ customize the sliver's appearance and geometry.
 │  │            │  ││ drag-reorder││  ││ marble stele +       ││  │
 │  │ • SHORTCUTS│  │└─────────────┘│  ││ draggable sliver +   ││  │
 │  │ • POSITION │  │  twin fangs   │  ││ tracking arrow       ││  │
-│  │ • DUMMY    │  │┌─────────────┐│  │└──────────────────────┘│  │
+│  │ • CREDITS  │  │┌─────────────┐│  │└──────────────────────┘│  │
 │  │ ~ divider  │  ││Archives(.42)││  │ tvPositionInfo         │  │
 │  │ • START    │  │└─────────────┘│  │ [BACK] [CUSTOMIZE]     │  │
 │  │ • STOP     │  │ [BACK][SAVE]  │  │        └→ dialog       │  │
 │  └────────────┘  └───────────────┘  └────────────────────────┘  │
+│  ┌──────────────────────────────┐                               │
+│  │ Screen 4  CREDITS            │                               │
+│  │ temple lintel "CREDITS"      │  the body scrolls; the action │
+│  │┌────────────────────────────┐│  bar and the Plinth stay put  │
+│  ││ DICE RELIGION — prose      ││                               │
+│  ││ [ Seal ] ──→ Play Store    ││                               │
+│  ││  twin fangs                ││                               │
+│  ││ LETTERING / LIBRARIES      ││                               │
+│  │└────────────────────────────┘│                               │
+│  │ [BACK] [PRIVACY] ──→ browser │                               │
+│  └──────────────────────────────┘                               │
 │                                                                 │
 │  Every screen: ObsidianCrackView backdrop + serpent pillars     │
 │  Main menu only: DustParticleView + CrackFlashView overlays     │
@@ -353,6 +418,8 @@ EdgeCase/
                 ├── drawable/
                 │   ├── bg_ad_plinth.xml              # Recessed well behind the banner slot
                 │   ├── bg_dark_seaweed_panel.xml
+                │   ├── bg_dev_seal.xml               # Stone frame around the Dice Religion mark
+                │   ├── bg_dev_seal_pressed.xml       # …hairline lights emerald on press
                 │   ├── bg_icon_socket.xml            # Square gem socket for altar app icons
                 │   ├── bg_serpent_scales.xml         # Tray backdrop: diamond snakeskin
                 │   ├── bg_start_button.xml           # Emerald-tinged limestone slab
@@ -374,10 +441,14 @@ EdgeCase/
                 │   ├── ic_pillar_serpent_left.xml    # Serpent-wrapped Doric column
                 │   ├── ic_texture_cracks.xml         # Crack overlay on slab faces
                 │   ├── icon_round.png                # 512×512 PNG, the app icon
+                │   ├── selector_dev_seal.xml
                 │   ├── selector_gem_checkbox.xml
                 │   ├── selector_start_button.xml
                 │   ├── selector_stone_button.xml
                 │   └── selector_stop_button.xml
+                │
+                ├── drawable-xxhdpi/
+                │   └── ic_dice_religion.png          # 512×512 developer mark (gold line-art)
                 │
                 ├── font/
                 │   ├── cinzel_black.ttf              # Roman-inscription capitals (weight 900)
@@ -389,10 +460,11 @@ EdgeCase/
                 │   ├── layout_ad_plinth.xml          # The ad band — wholly non-interactive
                 │   ├── layout_item_available_app.xml
                 │   ├── layout_item_shortcut_tile.xml
+                │   ├── layout_screen_credits_container.xml
                 │   ├── layout_screen_main_menu.xml
                 │   ├── layout_screen_positioning_container.xml
                 │   ├── layout_screen_shortcuts_container.xml
-                │   └── layout_temple_header.xml      # Shared lintel, included by all 3 screens
+                │   └── layout_temple_header.xml      # Shared lintel, included by all 4 screens
                 │
                 ├── mipmap-anydpi/
                 │   ├── ic_launcher.xml               (adaptive icon)
@@ -478,11 +550,11 @@ plugins {
 
 ### 5.1 `MainActivity.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/MainActivity.kt` · **582 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/MainActivity.kt` · **655 lines**
 **Extends:** `AppCompatActivity`
 
 **Responsibilities:**
-- Hosts the three-screen UI via visibility toggling (no fragments)
+- Hosts the four-screen UI via visibility toggling (no fragments)
 - Retitles the shared temple lintel per screen, and lights the Serpent's Eyes on the main menu
 - Wires slab-button press behaviour (translationY + haptics + dust burst + crack flash)
 - Manages the overlay and battery-optimization permission flow; starts/stops the foreground service
@@ -492,12 +564,15 @@ plugins {
 - Opens the **Customize Sliver** dialog and, on Apply, refreshes the preview + hot-reloads the overlay
 - Handles back navigation through `OnBackPressedDispatcher` (predictive-back compatible)
 - Owns the [AdHost] that fills the Plinth, and hides the banner while a modal dialog is up
+- Hands the Credits screen's two outbound URLs to the system (`openUrl`)
+- Shows or hides the Credits screen's AD CONSENT slab from UMP's requirement status
+  (`syncAdConsentButton`)
 
 **Key State:**
 
 | Field | Type | Purpose |
 |---|---|---|
-| `screenMainMenu` / `screenShortcuts` / `screenPositioning` | View | The three screen containers |
+| `screenMainMenu` / `screenShortcuts` / `screenPositioning` / `screenCredits` | View | The four screen containers |
 | `stateManager` | ShortcutStateManager? | Altar/Archives dual-list state |
 | `altarAdapter` / `archiveAdapter` | adapters | RecyclerView adapters |
 | `shortcutsInitialized` / `positioningInitialized` | Boolean | Lazy-init guards |
@@ -511,30 +586,42 @@ plugins {
 | `adHost` | AdHost? | Owns the Plinth's banner; created in `onCreate`, released in `onDestroy` |
 | `currentScreen` | Screen | Drives the back callback's routing |
 
-**Scoped-ID resolution (important).** `layout_temple_header.xml` is `<include>`d by all three screens,
-so `tvTempleTitle`, `serviceEyeLeft`, and `serviceEyeRight` each exist **three times** in one view
+**Scoped-ID resolution (important).** `layout_temple_header.xml` is `<include>`d by all four screens,
+so `tvTempleTitle`, `serviceEyeLeft`, and `serviceEyeRight` each exist **four times** in one view
 tree. `MainActivity` therefore resolves them **scoped to a screen** — `screenShortcuts.findViewById(…)`,
 never `findViewById(…)` on the Activity, which would return whichever copy the traversal hit first. The
-main-menu copy keeps its XML default title (`ΞDGΞCΛSΞ` at `header_title_size`); the two sub-screens are
-retitled to "SHORTCUTS" / "SLIVER POSITION" at `header_title_size_sub`. The eyes are `gone` in XML and
-only the main-menu pair is made `VISIBLE`.
+main-menu copy keeps its XML default title (`ΞDGΞCΛSΞ` at `header_title_size`); the three sub-screens
+are retitled to "SHORTCUTS" / "SLIVER POSITION" / "CREDITS" at `header_title_size_sub`. The eyes are
+`gone` in XML and only the main-menu pair is made `VISIBLE`.
+
+**`applyStoneButtonBehavior` is generic over `View`.** It was typed to `Button`; the Credits screen's
+Seal is a `FrameLayout` wrapping an `ImageView` and has to feel identical to a slab, so the helper is
+now `<T : View> (view: T): T`. Every existing call site is unchanged.
+
+**`openUrl(url)`** wraps `ACTION_VIEW` with `FLAG_ACTIVITY_NEW_TASK`, so the Play Store or browser
+opens in its **own** task rather than stacking inside EdgeCase's history — returning to the app lands
+back on the Credits screen. `ActivityNotFoundException` is caught (a device with no browser at all)
+and reported as a toast rather than crashing. Leaving the app fires `onPause`, which correctly hands
+the edge back to the overlay.
 
 **Screen Routing:**
 
 ```kotlin
-private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING }
+private enum class Screen { MAIN_MENU, SHORTCUTS, POSITIONING, CREDITS }
 ```
 
-- `showScreen(screen)` toggles visibility of all three screens, lazily initializes Shortcuts or
+- `showScreen(screen)` toggles visibility of all four screens, lazily initializes Shortcuts or
   Positioning on first entry (refreshing Shortcuts state on re-entry), and sets
-  `backCallback.isEnabled = (screen != Screen.MAIN_MENU)`.
+  `backCallback.isEnabled = (screen != Screen.MAIN_MENU)`. Credits needs no lazy init — its content
+  is entirely static.
 
 **Back navigation (predictive-back).** `backCallback` is an `OnBackPressedCallback(false)` registered
 in `onCreate`. It is **disabled on the main menu**, so the OS handles back natively there (predictive
 back-to-home); it is enabled on sub-screens so that the gesture, the 3-button back, and the on-screen
 BACK button all route through the same dirty-check logic. `btnBackToMenu` calls
-`onBackPressedDispatcher.onBackPressed()`; `btnBackToMenuFromPosition` calls `showScreen(MAIN_MENU)`
-directly (the Positioning screen has no unsaved state to guard).
+`onBackPressedDispatcher.onBackPressed()`; `btnBackToMenuFromPosition` and
+`btnBackToMenuFromCredits` call `showScreen(MAIN_MENU)` directly (neither screen has unsaved state
+to guard).
 
 **Button Map:**
 
@@ -542,12 +629,16 @@ directly (the Positioning screen has no unsaved state to guard).
 |---|---|
 | `btnShortcuts` | Navigate to Shortcuts screen |
 | `btnPosition` | Navigate to Positioning screen |
-| `btnDummy` | Toast "Dummy — nothing here yet" |
+| `btnCredits` | Navigate to Credits screen |
 | `btnStartService` | Check permissions → start SidebarService → open the Serpent's Eyes |
 | `btnStopService` | `stopService(...)` → close the Serpent's Eyes |
 | `btnBackToMenu` | Dispatch back (dirty check → discard dialog) |
 | `btnSaveShortcuts` | Commit shortcuts, notify service, toast "CARVED IN STONE" |
 | `btnCustomizeSliver` | Open the Customize Sliver dialog |
+| `btnBackToMenuFromCredits` | `showScreen(MAIN_MENU)` |
+| `btnDeveloperSeal` | `openUrl(url_developer_page)` — the Play Store developer page |
+| `btnPrivacyPolicy` | `openUrl(url_privacy_policy)` — the privacy policy, in a browser |
+| `btnAdConsent` | `adHost.showPrivacyOptionsForm()` — reopens Google's consent form **in-app**. `GONE` unless `AdHost.isPrivacyOptionsRequired()`, which is always false until B3 |
 | `btnBackToMenuFromPosition` | Return to main menu |
 
 **App-list preloading.** `preloadApps()` runs `getInstalledApps()` on a plain `Thread` during
@@ -1035,7 +1126,7 @@ dialog uses to paint the hue-spectrum track.
 **Path:** `app/src/main/java/com/dicereligion/edgecase/ObsidianCrackView.kt` · **277 lines**
 **Extends:** `View` (XML-instantiable — takes `AttributeSet`)
 
-**Purpose:** the living temple floor behind **all three screens**: fractured obsidian with emerald gems
+**Purpose:** the living temple floor behind **every screen**: fractured obsidian with emerald gems
 pulsing inside the cracks.
 
 **Performance model.** Everything static — the obsidian body, four giant conchoidal facets, 90 mineral
@@ -1060,7 +1151,7 @@ emerald-cut octagon body whose color lerps between `emerald_deep` and `emerald_g
 stroke, and — above `pulse > 0.75` — a hot `emerald_core` center pixel.
 
 **Lifecycle:** the 10s infinite `ValueAnimator` starts on attach and on becoming `VISIBLE`, and stops
-on detach or on becoming non-visible. Because the three screens are toggled by visibility, only the
+on detach or on becoming non-visible. Because the screens are toggled by visibility, only the
 foreground screen's instance animates. Its clock (`nowMs`) is a frame counter (+16f per frame), not
 wall time.
 
@@ -1112,10 +1203,10 @@ attach and visibility.
 
 ### 5.19 `AdHost.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/AdHost.kt` · **153 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/AdHost.kt` · **208 lines**
 
-**Purpose:** the single owner of every ad-related concern. `MainActivity` gets three call sites and no
-ad logic of its own.
+**Purpose:** the single owner of every ad-related concern — the banner *and* the consent flow.
+`MainActivity` gets a handful of call sites and no ad logic of its own.
 
 **Current state: preview only.** It installs a [DummyBannerView] rather than a real `AdView`, so the
 Plinth can be evaluated with no AdMob account, no network call, and no new dependency. The class's
@@ -1129,6 +1220,16 @@ change to one clearly marked block inside `attachBanner()`.
 | `start()` | Called once from `onCreate`. With the real SDK this is where UMP consent resolution and off-main-thread `MobileAds.initialize` go, gated on `canRequestAds()` |
 | `setAdVisible(visible)` | Flips the banner between `VISIBLE` and `INVISIBLE` while a modal dialog is on screen |
 | `destroy()` | Detaches the banner; the real `AdView` also needs `destroy()` here |
+| `isPrivacyOptionsRequired()` | Whether Google requires a visible privacy-options entry point for this user. **Returns `false` in preview** — replaced at B3 with UMP's `privacyOptionsRequirementStatus == REQUIRED` |
+| `showPrivacyOptionsForm()` | Reopens Google's consent form. **No-op in preview** — replaced at B3 with `UserMessagingPlatform.showPrivacyOptionsForm(...)` |
+| `onConsentResolved` | Callback property. UMP resolves *after* `onCreate`, so the AD CONSENT button's visibility cannot be decided once at start-up; `MainActivity` re-runs `syncAdConsentButton()` from here |
+
+**The consent seam.** `isPrivacyOptionsRequired()` and `showPrivacyOptionsForm()` exist now, with
+final signatures and stub bodies, for the same reason the banner does: so B3 is a body swap rather
+than a redesign. `MainActivity`'s side is already final. Note the entry point is **not a link** —
+UMP renders Google's own form in-process, and the choice it records is what the ad request reads, so
+no URL can substitute for it. Where UMP reports `REQUIRED`, offering it is a Google requirement
+(`Docs/Ads.md` §7.7), and the published privacy policy §6.2/§6.4 tells users the control exists.
 
 **Sizing.** `resolveBannerHeightDp()` returns a nominal **100dp**, clamped by the large anchored
 adaptive format's ceiling of `min(150dp, 20% of device height)`. The real SDK computes this via
@@ -1186,19 +1287,20 @@ Inert by construction: not clickable, not focusable, no touch handling, no anima
 Root: a **vertical `LinearLayout`** (id `rootColumn`) on `@color/obsidian_black` with
 `fitsSystemWindows="true"`, holding two children:
 
-1. `screenContainer` — a `FrameLayout` at `height=0dp, weight=1` containing the three screens:
+1. `screenContainer` — a `FrameLayout` at `height=0dp, weight=1` containing the four screens:
    - `@+id/screenMainMenu` → `layout_screen_main_menu` (visible)
    - `@+id/screenShortcuts` → `layout_screen_shortcuts_container` (gone)
    - `@+id/screenPositioning` → `layout_screen_positioning_container` (gone)
+   - `@+id/screenCredits` → `layout_screen_credits_container` (gone)
 2. `adPlinth` — an include of `layout_ad_plinth` at `wrap_content`
 
 `fitsSystemWindows` sits on `rootColumn` rather than `screenContainer`, so the system-navigation inset
-lands **below** the plinth — the ad must never overlap or fight system navigation. The three screens
+lands **below** the plinth — the ad must never overlap or fight system navigation. The four screens
 keep `match_parent` semantics inside a shorter box, so none of their internals needed changing, and
 because the plinth is outside `screenContainer`, `showScreen()` never touches it.
 
 #### `layout_temple_header.xml` — the shared lintel
-A vertical `LinearLayout` included by **all three** screens:
+A vertical `LinearLayout` included by **all four** screens:
 - A `FrameLayout` of `header_height` (64dp) backed by `bg_temple_lintel`, containing
   `tvTempleTitle` (`TitleMonolith`, default text `ΞDGΞCΛSΞ` at `header_title_size`, with
   `contentDescription="EdgeCase"` since the stylised glyphs are not readable text)
@@ -1207,7 +1309,7 @@ A vertical `LinearLayout` included by **all three** screens:
 - A meander trim strip below the lintel: `ic_meander_horizontal`, `meander_trim_height` (10dp),
   `fitXY`, alpha 0.55
 
-> Because this file is included three times in one activity, its IDs are **not unique** in the view
+> Because this file is included four times in one activity, its IDs are **not unique** in the view
 > tree. See the scoped-ID note in §5.1.
 
 #### `layout_ad_plinth.xml` — the ad band
@@ -1237,7 +1339,7 @@ focusable, or animated** — that is the file's entire purpose. The frame paddin
    `CrackFlashView`
 5. Center content `LinearLayout` (56dp side padding): the included temple header, then a weighted
    **`ScrollView`** (`fillViewport="true"`, scrollbars off) wrapping a `LinearLayout` that centres
-   five slab buttons — `btnShortcuts`, `btnPosition`, `btnDummy`, a
+   five slab buttons — `btnShortcuts`, `btnPosition`, `btnCredits`, a
    `ic_divider_fangs` divider, `btnStartService` ("Start", `selector_start_button`), and
    `btnStopService` ("Stop", `selector_stop_button`, Aged Marble text with an emerald glow shadow)
 6. `tvVersion` at bottom-left (`CaptionChiseled`, alpha 0.6) — its **text is set in code** from
@@ -1268,6 +1370,47 @@ header stays flush with the other screens while the canvas alone gets the extra 
 - A footer at `layout_marginHorizontal="52dp"`: `tvPositionInfo` (full-width readout) above an action
   row of two equal-weight buttons — `btnBackToMenuFromPosition` (BACK) on the left and
   `btnCustomizeSliver` (CUSTOMIZE) on the right
+
+#### `layout_screen_credits_container.xml`
+Same backdrop + pillars, 52dp side padding — structurally a sibling of the Shortcuts screen. Content:
+the temple header (retitled "CREDITS" in code); a weighted **`ScrollView`**
+(`fillViewport="true"`, `requiresFadingEdge="vertical"` at 20dp) wrapping a centred `LinearLayout`;
+then a `wrap_content` action bar.
+
+Inside the scroller, in order:
+1. **DICE RELIGION** caption (`CaptionChiseled`) over a lead line at `text_body` and a supporting
+   paragraph at `text_caption`, alpha 0.85 — the two-size split keeps the whole screen inside one
+   viewport on a large phone
+2. **The Seal** — `btnDeveloperSeal`, a `credits_seal_size` (108dp) square `FrameLayout` backed by
+   `selector_dev_seal` with `credits_seal_padding` (11dp) and the slab elevation, holding a
+   `fitCenter` `ic_dice_religion`. It is a `FrameLayout` rather than an `ImageButton` so the platform
+   button background and its insets do not fight the frame drawable; `clickable`/`focusable` are set
+   in XML and it carries the screen's only `contentDescription` that matters
+   ("Dice Religion on Google Play"), with the `ImageView` marked
+   `importantForAccessibility="no"`
+3. A one-line hint caption, then a `ic_divider_fangs` twin-fang divider
+4. **LETTERING** and **LIBRARIES** caption/body pairs
+5. **ADVERTISING** caption/body (`tvCreditAdsHeading` / `tvCreditAdsBody`) — `visibility="gone"`,
+   because today the Plinth holds a placeholder and no ad network is present, so the attribution
+   would be untrue. Flip both to `VISIBLE` at Appendix C task **B2**
+
+The action bar is a **vertical** `wrap_content` block, never weighted — the same rule the Shortcuts
+screen needed. It holds a horizontal row of two equal-weight buttons, `btnBackToMenuFromCredits`
+(BACK) and `btnPrivacyPolicy` (PRIVACY), and beneath it a full-width `btnAdConsent` (AD CONSENT) at
+`visibility="gone"`.
+
+The two privacy controls are deliberately distinct: **PRIVACY** opens the hosted policy in a
+browser; **AD CONSENT** reopens Google's consent form in-process so the choice can be changed or
+withdrawn. The second is `GONE` in XML and stays `GONE` at runtime unless
+`AdHost.isPrivacyOptionsRequired()` is true — the EEA, UK, Switzerland and the applicable US states
+only — so for most users the row costs no vertical space at all. Verified on device at both native
+and 360×640dp with the flag forced true: all three slabs render and stay reachable.
+
+These live in the fixed bar rather than the scroller so they are reachable without scrolling on any
+screen size, and whichever is lowest remains the last interactive element above the Plinth's inert
+buffer.
+
+All prose and both URLs come from `strings.xml`; only the three button labels are inline.
 
 #### `dialog_customize_sliver.xml`
 A `bg_temple_panel` vertical panel with 16dp padding. Contains a "CUSTOMIZE SLIVER" title
@@ -1308,6 +1451,8 @@ Horizontal `LinearLayout` on `dark_seaweed`, 12dp padding: `ivArchiveIcon` (48dp
 | `bg_dark_seaweed_panel.xml` | layer-list | `faded_olive_teal` → `emerald_deep` → `panel_dark_seaweed_bg` face; square (the 4dp corners of the pre-v1.4 version are gone) |
 | `bg_icon_socket.xml` | layer-list | Square gem socket: `tarnished_silver` rim with a 2dp `obsidian_black` recess |
 | `bg_serpent_scales.xml` | vector | The tray backdrop — overlapping diamond snakeskin, 80×300dp: `#040807` base, shadowed lower facets `#07100C`, lit upper facets `#0E1F15`, `#020503` separation outlines |
+| `bg_dev_seal.xml` | layer-list | The Seal's frame: `limestone_border` outer edge → 3dp `aged_bronze` hairline → 5dp `obsidian_black` niche → four 7dp `limestone_border` corner blocks. A deliberate **third** register: the slab reads raised, the plinth reads recessed, and this reads as a raised frame around a dark niche — press-able, but what sits inside is an artifact, not a control. Bronze rather than emerald because the mark is gold line-art on near-black, so the niche swallows the PNG's own ground |
+| `bg_dev_seal_pressed.xml` | layer-list | Same, with the hairline lit to `emerald_gem` and the niche one step up to `obsidian_facet` — the "gems catch the light" language used by the Serpent's Eyes, rather than the limestone-darkening used by the slabs |
 | `bg_ad_plinth.xml` | layer-list | The ad well: `limestone_border` frame → `emerald_deep` hairline → flat `obsidian_black` face (no gradient — the ad supplies the light) → four 8dp ziggurat corner notches. Mirrors the lintel's layer grammar but reads **recessed**, the deliberate inverse of the raised button language, so the band is never mistaken for a control |
 
 **Icons, trim, and texture**
@@ -1325,9 +1470,11 @@ Horizontal `LinearLayout` on `dark_seaweed`, 12dp padding: `ivArchiveIcon` (48dp
 | `ic_launcher_background.xml` | vector | Transparent (`#00000000`) — the icon fills the launcher shape without a dark border |
 | `ic_launcher_foreground.xml` | inset | 0dp inset wrapping `@drawable/icon_round` |
 | `icon_round.png` | PNG | 512×512 RGBA, the app's circular icon |
+| `drawable-xxhdpi/ic_dice_religion.png` | PNG | 512×512 RGB, the Dice Religion mark — gold line-art shrine on near-black. Placed at xxhdpi (≈170dp natural) and drawn `fitCenter` into a 108dp square, so it neither upscales nor holds an oversized bitmap |
 
-**Selectors:** `selector_stone_button`, `selector_start_button`, `selector_stop_button` (each
-pressed → default), and `selector_gem_checkbox` (`state_checked` → gem, else socket).
+**Selectors:** `selector_stone_button`, `selector_start_button`, `selector_stop_button`,
+`selector_dev_seal` (each pressed → default), and `selector_gem_checkbox` (`state_checked` → gem,
+else socket).
 
 ---
 
@@ -1390,6 +1537,9 @@ pressed → default), and `selector_gem_checkbox` (`state_checked` → gem, else
 | `ad_frame_margin_bottom` | 6dp | Below the well |
 | `ad_slot_min_height` | 120dp | Floor so an unfilled slot holds its space; `AdHost` overrides with the exact size |
 | `altar_min_height` | 148dp | Two rows, so drag-to-reorder stays usable on short screens |
+| `credits_seal_size` | 108dp | The Seal — square by construction; the mark is a 1:1 asset |
+| `credits_seal_padding` | 11dp | Inset between the Seal's stone frame and the mark |
+| `credits_section_gap` | 16dp | Spacing between Credits sections |
 
 The five `ad_*` values are **compliance-relevant, not cosmetic** — they form the buffer between the
 lowest interactive element and the first ad pixel. If something does not fit, shrink app chrome, never
@@ -1401,10 +1551,25 @@ as `DEF_WIDTH_DP` / `DEF_HEIGHT_DP` / `DEF_TRAY_WIDTH_DP`. Every remaining entry
 
 #### Strings (`strings.xml`)
 
-One string: `app_name` = `"EdgeCase"`. Every other UI label — screen titles, button text, captions,
-the dialog's controls, toasts, and the discard dialog's copy — is an inline literal in the layouts or
-in code. Note the manifest sets `android:label="EdgeCase"` as a literal rather than referencing
-`@string/app_name`.
+`app_name` = `"EdgeCase"`, plus the Credits screen's content:
+
+| Name | Role |
+|---|---|
+| `credits_maker_heading` / `credits_maker_lead` / `credits_maker_body` | The Dice Religion caption, lead line and supporting paragraph |
+| `credits_seal_hint` | One-line caption under the Seal |
+| `credits_lettering_heading` / `credits_lettering_body` | Cinzel and GFS Neohellenic, each with its OFL 1.1 attribution |
+| `credits_libraries_heading` / `credits_libraries_body` | AndroidX / AOSP, Apache 2.0 |
+| `credits_ads_heading` / `credits_ads_body` | Written but **not shown** — the views are `gone` until the real SDK lands (B2) |
+| `url_developer_page` | **Placeholder.** `…/store/apps/developer?id=Dice+Religion`. The canonical form is `…/store/apps/dev?id=<numeric publisher id>`, available from the Play Console once the account exists |
+| `url_privacy_policy` | **Live** — `https://anumey.xyz/legal/edgecase/privacy`, hosted on the Anumey's Lair site beside the Mach2 and BOTCH policies. Registered in Play Console; **must never move** |
+
+Both URLs are `translatable="false"`. The privacy policy and its companion
+`https://anumey.xyz/legal/edgecase/delete-data` page are written and building green; see
+Appendix C group B. Long-form prose lives here rather than in the layout so there
+is exactly one place to edit the wording; every other UI label — screen titles, button text,
+captions, the dialog's controls, toasts, and the discard dialog's copy — is still an inline literal
+in the layouts or in code. Note the manifest sets `android:label="EdgeCase"` as a literal rather than
+referencing `@string/app_name`.
 
 #### Styles (`styles.xml`)
 
@@ -1413,8 +1578,8 @@ in code. Note the manifest sets `android:label="EdgeCase"` as a literal rather t
 | `TitleMonolith` | `@font/gfs_neohellenic` | All-caps, letterSpacing 0.18, `aged_marble`, emerald under-glow shadow (`#802E8B57`, dy 3, radius 6). `textStyle=normal` — the TTF is already Bold, so synthetic bold is suppressed |
 | `SlabButtonText` | `@font/cinzel_black` | All-caps, letterSpacing 0.10, `text_engraved`, `text_header` size, a `#66FFFFFF` light-catch shadow below the incision. `textStyle=normal` — the TTF is already weight 900 |
 | `CaptionChiseled` | `@font/cinzel_black` | All-caps, letterSpacing 0.14, `tarnished_silver`, `text_caption` size |
-| `BodySerif` | serif | `aged_marble` — list rows and the empty-altar message |
-| `CaptionSerif` | serif | `tarnished_silver`, `text_caption` — the two section captions |
+| `BodySerif` | serif | `aged_marble` — list rows, the empty-altar message, and the Credits prose |
+| `CaptionSerif` | serif | `tarnished_silver`, `text_caption` — the two section captions and the Seal hint |
 
 #### Themes (`themes.xml`)
 
@@ -1436,6 +1601,9 @@ Two OFL-licensed faces are bundled in `res/font/`, with their licenses kept in `
 |---|---|---|
 | `gfs_neohellenic.ttf` | GFS Neohellenic (Bold) | `TitleMonolith` — lintel titles, dialog title |
 | `cinzel_black.ttf` | Cinzel Black (weight 900) | `SlabButtonText`, `CaptionChiseled` — all button lettering and section captions |
+
+Both faces are now **credited in-app** on the Credits screen (§6.1), not only in
+`Docs/fonts_licenses/`.
 
 Both styles set `textStyle="normal"` explicitly, because each TTF already carries its weight and
 letting the system synthesize bold on top of it smears the letterforms.
@@ -1522,7 +1690,7 @@ Stock file with commented-out examples; no active rules. Minification is disable
 
 | # | Feature | Status | Location |
 |---|---|---|---|
-| 1 | Three-screen navigation (Main Menu / Shortcuts / Positioning) | ✅ | `MainActivity.kt` |
+| 1 | Four-screen navigation (Main Menu / Shortcuts / Positioning / Credits) | ✅ | `MainActivity.kt` |
 | 2 | Slab button press animation (translationY) | ✅ | `MainActivity.applyStoneButtonBehavior()` |
 | 3 | Haptic feedback on button press (30ms, amplitude 255) | ✅ | `MainActivity.triggerHaptic()` |
 | 4 | Dust particle burst on button press | ✅ | `DustParticleView.kt` |
@@ -1583,7 +1751,7 @@ Stock file with commented-out examples; no active rules. Minification is disable
 | 59 | Configurable **app-drawer size**, decoupled from the sliver | ✅ v1.4.x | `SliverConfig.trayWidthDp/trayHeightDp` |
 | 60 | Background **app-list preloading** | ✅ v1.4.x | `MainActivity.preloadApps()` |
 | 61 | Version label sourced from `BuildConfig` | ✅ v1.4.x | `MainActivity.wireMainMenuButtons()` |
-| 62 | **The Plinth** — persistent, inert, bordered ad band below all three screens | ✅ preview | `layout_ad_plinth.xml`, `bg_ad_plinth.xml` |
+| 62 | **The Plinth** — persistent, inert, bordered ad band below every screen | ✅ preview | `layout_ad_plinth.xml`, `bg_ad_plinth.xml` |
 | 63 | Placeholder banner reporting its own measured size | ✅ preview | `DummyBannerView.kt` |
 | 64 | Slot space reserved before any creative arrives (no layout shift) | ✅ preview | `AdHost`, `ad_slot_min_height` |
 | 65 | Banner hidden under modal dialogs (`INVISIBLE`, no re-layout) | ✅ preview | `AdHost.setAdVisible()` |
@@ -1594,15 +1762,23 @@ Stock file with commented-out examples; no active rules. Minification is disable
 | 70 | Dust and crack effects draw above the slab buttons | ✅ | `dustContainer` elevation |
 | 71 | Instrumented test suite (14 tests) | ✅ | `app/src/androidTest/` |
 | 72 | Backup / device-transfer rules for `EdgeCasePrefs` | ✅ | `res/xml/` |
+| 73 | **Credits screen** — maker, lettering and library attributions | ✅ | `layout_screen_credits_container.xml` |
+| 74 | **The Seal** — framed developer mark linking to the Play Store page | ✅ | `bg_dev_seal.xml`, `MainActivity.openUrl()` |
+| 75 | **Privacy** button linking to the policy (placeholder URL) | ✅ | `btnPrivacyPolicy` |
+| 76 | Slab press behaviour generalised to any `View` | ✅ | `applyStoneButtonBehavior<T : View>` |
+| 77 | **AD CONSENT** entry point, hidden unless a consent regime applies | ✅ seam | `btnAdConsent`, `AdHost.isPrivacyOptionsRequired()` |
+| 78 | Published **privacy policy** and **data-deletion** pages | ✅ | `anumey.xyz/legal/edgecase/*` |
 
 ### Planned / Stub Features
 
 | # | Feature | Status |
 |---|---|---|
-| 1 | Dummy button (third menu option) | 🔶 Stub — Toast "Dummy — nothing here yet". `Docs/Ads.md` §7.7 proposes reusing it as the privacy-options entry point |
+| 1 | Dummy button (third menu option) | ✅ **Gone** — became **CREDITS** (features 73–75) |
 | 2 | Monochrome themed icon (Android 13+) | ❌ Removed — incompatible with a raster PNG foreground |
 | 3 | AdMob monetization | 🔶 **Partial** — the Plinth and its placeholder are built (§5.19–5.20); no SDK, consent flow, or ad unit yet. See `Docs/Ads.md` and Appendix C |
 | 4 | Overlay suspension while the Activity is foreground | ✅ **Done** — feature 68 |
+| 5 | UMP **privacy options** entry point | 🔶 **Seam built, body empty** — `btnAdConsent` exists on the Credits screen and is wired to `AdHost.showPrivacyOptionsForm()`. Both AdHost methods are stubs until the consent SDK lands (Appendix C, B3) |
+| 6 | In-app AdMob attribution | 🔶 Written but hidden — `tvCreditAdsHeading` / `tvCreditAdsBody` are `gone` until B2 |
 
 ---
 
@@ -1724,7 +1900,39 @@ Stock file with commented-out examples; no active rules. Minification is disable
 enumerate launchable apps under package-visibility restrictions.
 
 **Notification Channel:** `EdgeCaseEngineChannel`, `IMPORTANCE_LOW`, created in
-`buildSystemNotification()`.
+`buildSystemNotification()`. Content is `"EdgeCase Active"` / `"Listening for gestures."` — no user
+data appears in it.
+
+### Claims the privacy policy makes about this code
+
+`https://anumey.xyz/legal/edgecase/privacy` is a **published legal document that asserts specific
+properties of this source tree**. Breaking one does not fail a build or a test — it silently makes
+that document false. Before changing any of the following, change the policy in the same pass.
+
+| # | Asserted publicly | Where it lives now |
+|---|---|---|
+| P1 | The app makes **no network request of its own**. The only networking is the ads SDK fetching ads | No `File`, stream, socket or HTTP class appears anywhere in `app/src/main/java` — verified by grep. `INTERNET` is not in this manifest; it arrives only by merge from the GMA library |
+| P2 | The installed-app list is **never persisted, logged or transmitted** — only the packages the user ticks are saved | `MainActivity.getInstalledApps()` builds an in-memory `List<AppInfoData>`; `ShortcutStateManager.commit()` writes only the selected packages |
+| P3 | **No usage history** — no launch counts, no timestamps, no record of what was opened when | The launch path (`SidebarService.populateShortcuts()` → `getLaunchIntentForPackage`) writes nothing |
+| P4 | The overlay **cannot read what is beneath it**, and the app is **not an accessibility service** | `TYPE_APPLICATION_OVERLAY` only; no `AccessibilityService`, no `BIND_ACCESSIBILITY_SERVICE`, nothing in `res/xml/` declaring one |
+| P5 | The one exception is the bare **outside-touch notification**, used solely to dismiss the tray | Both windows set `FLAG_WATCH_OUTSIDE_TOUCH`; only `trayView`'s listener acts on `ACTION_OUTSIDE`, and only to call `transitionToSliverState()`. The first draft of the policy claimed the app is *never* told about outside touches — that was wrong, and this row is why the claim was rewritten |
+| P6 | The ad appears **only in the Activity** — never in the overlay, the tray, or over another app | `AdHost` is constructed in `MainActivity.onCreate` and referenced nowhere else; `SidebarService` has no ad import |
+
+**The narrow `<queries>` form is itself a promise.** The policy states the app does *not* hold
+`QUERY_ALL_PACKAGES`. Widening package visibility would contradict it, and would also change the
+Play Data safety answers.
+
+**Android backup is ON, and the policy says so.** `backup_rules.xml` and `data_extraction_rules.xml`
+both include `EdgeCasePrefs.xml`, so the shortcut list and every style key are copied to the user's
+Google backup and carried in a device-to-device transfer. This is the single biggest divergence from
+the sibling BOTCH policy, which switches backup off and says so — that wording could not be reused
+here without becoming a false statement. Turning backup off later would make the policy *overstate*
+collection, which is the safe direction, but it should still be updated.
+
+**One commitment is not yet met by the code.** §6.2 and §6.4 tell the user they can change or
+withdraw advertising consent "from the Credits screen inside the app". That control is Appendix C
+task **B4** and does not exist yet. The policy describes v1.5.0, which is the build that will carry
+both — but B4 is now a release blocker, not a nice-to-have.
 
 ---
 
@@ -1772,7 +1980,7 @@ enumerate launchable apps under package-visibility restrictions.
 10. **Each shown screen retains a full-screen bitmap.** `ObsidianCrackView` rasterizes its static layer
     into an ARGB_8888 bitmap sized to the view. A `GONE` screen is never laid out, so its bitmap is
     created lazily on first display — but once a screen has been visited, its bitmap is held for the
-    life of the activity. Visiting all three costs three full-screen bitmaps.
+    life of the activity. Visiting all four now costs four full-screen bitmaps.
 
 11. **`ObsidianCrackView` uses a frame counter, not wall time.** `nowMs` advances by a fixed 16f per
     animation callback, so the gem pulse rate tracks the achieved frame rate rather than real time.
@@ -1782,7 +1990,6 @@ enumerate launchable apps under package-visibility restrictions.
 12. **No clipboard, deep-link, or app-shortcut support.** The tray launches apps only — no
     `ShortcutManager` entries, no custom actions, no widgets.
 
-13. **Dummy button.** The third main-menu button still does nothing.
 
 ### Potential Future Enhancements
 
@@ -1798,12 +2005,13 @@ enumerate launchable apps under package-visibility restrictions.
 - Regenerate the icon PNGs with the Image Asset tool (#9)
 - Drive the gem and eye pulses from wall time rather than a frame counter (#11)
 - Add custom action shortcuts and widget pinning in the tray (#12)
-- Give the Dummy button a purpose — `Docs/Ads.md` §7.7 proposes the privacy-options entry point (#13)
 - ~~Configurable sliver size~~ — **done** (v1.3.5)
 - ~~Configurable tray size~~ — **done** (v1.4.x)
 - ~~Predictive-back navigation~~ — **done** (v1.4.0)
 - ~~Overlay suspension while the app is foreground~~ — **done** (A track)
 - ~~Prune dead resources~~, ~~unit tests~~, ~~backup rules~~ — **done** (A track)
+- ~~Give the Dummy button a purpose~~ — **done**: it is now CREDITS. The UMP privacy-options entry
+  point still needs a home on that screen once the consent SDK lands (Appendix C, B4)
 
 ---
 
@@ -1813,14 +2021,14 @@ enumerate launchable apps under package-visibility restrictions.
 
 | File | Lines | Purpose |
 |---|---|---|
-| `MainActivity.kt` | 582 | Main UI, navigation, back handling, permissions, service control, Customize hook, ad host |
+| `MainActivity.kt` | 655 | Main UI, navigation, back handling, permissions, service control, Customize hook, ad host, outbound links, consent entry point |
 | `PositioningView.kt` | 505 | Marble stele, draggable fang, tracking arrow, snap animation, particles |
 | `SidebarService.kt` | 490 | Foreground service, overlay windows, tray, in-place style/position update |
 | `ObsidianCrackView.kt` | 278 | Animated obsidian background with pulsing emerald gems |
 | `SliverCustomizeDialog.kt` | 244 | "Customize Sliver" popup controller |
 | `ShortcutStateManager.kt` | 158 | Bipartite shortcut state, persistence, dirty tracking |
 | `ServiceEyeView.kt` | 156 | Serpent's Eye service-state indicator |
-| `AdHost.kt` | 153 | Owns the Plinth's banner, sizing, space reservation, dialog hiding |
+| `AdHost.kt` | 208 | Owns the Plinth's banner, sizing, space reservation, dialog hiding, and the UMP consent seam |
 | `SliverConfig.kt` | 134 | Sliver + drawer model, prefs I/O, drawer-height migration |
 | `ArcSliverView.kt` | 125 | Config-driven fang rendering, swipe detection, `applyConfig` |
 | `CrackFlashView.kt` | 110 | One-shot fracture flash on slab press |
@@ -1833,7 +2041,7 @@ enumerate launchable apps under package-visibility restrictions.
 | `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
 | `SliverShape.kt` | 50 | Shared parametric fang-path builder |
 | `AppInfoData.kt` | 9 | Data class for installed app info |
-| | **3,530** | **total Kotlin (main)** |
+| | **3,658** | **total Kotlin (main)** |
 | `androidTest/*.kt` | 246 | 14 instrumented tests |
 
 ### Color Hex Quick Reference
@@ -1870,7 +2078,11 @@ re-derived from the code rather than carried forward; the old limitation #11 (ba
 and removed, and eight new ones were added. Updated again the same day for the **Ad Plinth preview
 build**: `AdHost` + `DummyBannerView`, `layout_ad_plinth.xml` + `bg_ad_plinth.xml`, the restructured
 `activity_main.xml` column, banner hiding under modal dialogs, and two small-screen layout fixes the
-plinth's footprint exposed. No ad SDK or dependency is present.*
+plinth's footprint exposed. No ad SDK or dependency is present. Updated again for the **A track**
+(overlay suspension, Altar floor, overlay z-order, 14 instrumented tests, resource pruning and
+palette reconciliation, backup rules) and then for the **Credits screen**: a fourth virtual screen
+carrying the maker, lettering and library attributions, the framed Dice Religion Seal linking to the
+Play Store, and a PRIVACY button — replacing the Dummy stub. Both of its URLs are placeholders.*
 
 ---
 
@@ -1878,6 +2090,7 @@ plinth's footprint exposed. No ad SDK or dependency is present.*
 
 | Document | Status | Purpose |
 |---|---|---|
+| `~/Work/Web/Anumey's Lair` | External repo | The website that **hosts EdgeCase's legal pages**: `/legal/edgecase/privacy` and `/legal/edgecase/delete-data`, beside the existing Mach2 and BOTCH policies. Next.js on Firebase App Hosting; **every push to `main` deploys**. Its `docs/stats.md` §4 → *Legal routes* is the authority on the URL constraints. The publisher-level `public/app-ads.txt` already carries the AdMob publisher ID EdgeCase will use — no change needed there |
 | `Docs/SliverAnatomy.md` | Current | Deep-dive on the fang geometry: named parts, vertices, tuning knobs, and how they map to `SliverConfig`/`SliverShape` |
 | `Docs/Dimensions.md` | Current | Stable ID/dimension addressing for every page and element; §6 covers the sliver anatomy and tuning knobs. Predates the v1.4 rehaul — verify IDs against the layouts before relying on it |
 | `Docs/Publisher.md` | Partly superseded | Google Play publication roadmap / pre-launch checklist. Its §3 ("Ad Integration Strategy") is superseded by `Docs/Ads.md` §9 |
@@ -1911,16 +2124,21 @@ external setup first.
 | B1 | Add GMA Next-Gen + UMP dependencies, `APPLICATION_ID` meta-data, per-build-type ad IDs | needs B0 | §7.2. Verify `AD_ID` merges into the manifest |
 | B2 | Replace the marked block in `AdHost.attachBanner()` with the real `AdView` | needs B1 | §7.3. Wrap it in `doOnLayout` for the measured width; keep the `minimumHeight` reservation outside |
 | B3 | UMP consent flow in `AdHost.start()`, gated on `canRequestAds()` | needs B1 | §7.3 |
-| B4 | Repurpose `btnDummy` → privacy options entry point | needs B3 | §7.7. Resolves §10 limitation #19 and buys back main-menu vertical space |
+| B4 | Fill in the two UMP consent stubs in `AdHost` | needs B3 | §7.7. **Release blocker** — the published privacy policy §6.2/§6.4 tells users they can withdraw consent from the Credits screen, so shipping without it makes that document false. **The UI is already built**: `btnAdConsent` exists, is wired, and hides itself; only `isPrivacyOptionsRequired()` and `showPrivacyOptionsForm()` need real bodies, and `onConsentResolved` needs firing. Also un-hide `tvCreditAdsHeading` / `tvCreditAdsBody` (that part belongs with B2) |
 | B5 | Delete `DummyBannerView.kt` | needs B2 | Its only purpose is the preview |
-| B6 | Privacy policy, Play Console declarations, bump to v1.5.0 | needs B0 | §7.8 |
+| B6 | Play Console declarations, bump to v1.5.0 | needs B0 | §7.8. The **privacy policy and data-deletion pages are written** — `/legal/edgecase/privacy` and `/legal/edgecase/delete-data` on `anumey.xyz`, awaiting a push to `main` to go live. `url_privacy_policy` already points at the real URL; `url_developer_page` is still a placeholder pending the numeric `dev?id=` form from the Play Console |
 
 ### C. Verification before any release with ads
 
 - Run the full compliance checklist in `Docs/Ads.md` §8.
 - Confirm the overlay grep is clean: no ad imports in `SidebarService.kt`, `ArcSliverView.kt`,
   `SliverPreviewView.kt`, or `PositioningView.kt`.
-- Re-run the small-screen pass at 360×640dp and 360×720dp on all three screens **and** the Customize
+- Re-run the small-screen pass at 360×640dp and 360×720dp on all four screens **and** the Customize
   dialog, at both the 100dp nominal banner and the 150dp worst case.
 - Watch CTR from day one. On a utility app, anything above ~2–3% means accidental clicks — widen the
   buffer before Google acts.
+- **Re-verify the six claims in §9** against the shipping build. The privacy policy asserts them
+  publicly, and the ad SDK is the one change most likely to disturb P1 and P6.
+- Confirm `https://anumey.xyz/legal/edgecase/privacy` and `/delete-data` return **200** *before*
+  either URL goes into Play Console. The in-app PRIVACY button points at the first one, so a 404
+  breaks the app as well as the listing.

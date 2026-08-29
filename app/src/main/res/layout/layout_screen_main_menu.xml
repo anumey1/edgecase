@@ -89,13 +89,13 @@
             android:textAppearance="@style/SlabButtonText" />
 
         <Button
-            android:id="@+id/btnDummy"
+            android:id="@+id/btnCredits"
             android:layout_width="match_parent"
             android:layout_height="@dimen/stone_button_height"
             android:layout_marginBottom="@dimen/margin_wide"
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
-            android:text="DUMMY"
+            android:text="CREDITS"
             android:textAppearance="@style/SlabButtonText" />
 
         <!-- Spear divider -->

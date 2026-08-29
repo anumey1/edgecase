@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Seal of the Maker: a votive tablet set in a stone frame.
+
+     A deliberate third visual register, distinct from the two that already exist:
+       · bg_stone_button.xml  — fully raised limestone face   → "press me"
+       · bg_ad_plinth.xml     — fully recessed obsidian well  → "not ours, do not press"
+       · this                 — raised stone FRAME around a dark niche → "press me, and
+         what is inside is an artifact, not a control"
+
+     The inner hairline is aged_bronze rather than the usual emerald/limestone: the
+     Dice Religion mark is gold line-art on near-black, so bronze harmonises with the
+     artwork and the obsidian well lets the mark's own black background disappear into it. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 1. Outer blocky border — the same dark limestone edge as every other frame -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/limestone_border" />
+        </shape>
+    </item>
+
+    <!-- 2. Bronze hairline, picking up the gold of the mark -->
+    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/aged_bronze" />
+        </shape>
+    </item>
+
+    <!-- 3. The niche: flat obsidian, the mark's own ground -->
+    <item android:left="5dp" android:top="5dp" android:right="5dp" android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/obsidian_black" />
+        </shape>
+    </item>
+
+    <!-- 4. Corner blocks — cut stone, matching the Plinth's ziggurat notches -->
+    <item android:gravity="top|start" android:width="7dp" android:height="7dp">
+        <shape android:shape="rectangle"><solid android:color="@color/limestone_border" /></shape>
+    </item>
+    <item android:gravity="top|end" android:width="7dp" android:height="7dp">
+        <shape android:shape="rectangle"><solid android:color="@color/limestone_border" /></shape>
+    </item>
+    <item android:gravity="bottom|start" android:width="7dp" android:height="7dp">
+        <shape android:shape="rectangle"><solid android:color="@color/limestone_border" /></shape>
+    </item>
+    <item android:gravity="bottom|end" android:width="7dp" android:height="7dp">
+        <shape android:shape="rectangle"><solid android:color="@color/limestone_border" /></shape>
+    </item>
+
+</layer-list>
