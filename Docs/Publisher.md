@@ -3,10 +3,36 @@
 > **Document Type:** Take-to-Market / Pre-Publication Checklist
 > **App:** EdgeCase
 > **Package:** `com.dicereligion.edgecase`
-> **Current Version (Code):** 2 (1.3.5)
-> **Current UI Version Label:** v1.3.5
-> **Status:** Code-complete, pre-publication engineering required
-> **Last Updated:** 2026-07-10
+> **Current Version (Code):** 3 (1.4.1) — target for the ads release is 4 (1.5.0)
+> **Current UI Version Label:** read from `BuildConfig.VERSION_NAME`
+> **Status:** Partly superseded and partly complete — read the banner below before using this document
+> **Last Updated:** 2026-08-30
+
+> ## ⚠️ Read this first (2026-08-30)
+>
+> **§3 (Ad Integration Strategy) is superseded by `Docs/Ads.md`, and following it would build a
+> Play policy violation.** `Docs/Ads.md` §9 lists thirteen specific corrections. The three that
+> matter most: §3.4 proposes **two banners** (one unit only is permitted here), proposes
+> **interstitials on back-navigation** (a named disruptive-ads pattern — dropped entirely), and
+> understates ads in the overlay tray as something that "may" be disruptive when it is an absolute
+> prohibition. **Do not work §3 or the ad items in §10.** The implemented design is the Plinth:
+> one anchored adaptive banner, Activity-only, documented in `Docs/Ads.md` §5–§7 and
+> `Docs/stats.md` §5.19.
+>
+> **Much of §2 and §10 is already done.** As of 2026-08-30: the privacy policy is written, hosted
+> and live; backup and data-extraction rules are configured; the version label reads from
+> `BuildConfig`; the Dummy button became the Credits screen; the AdMob account, SDK, banner and
+> UMP consent flow are all in (`Docs/stats.md` Appendix C, B0–B4).
+>
+> **Still genuinely outstanding from this document:** R8 + keep rules (§2.1–2.2), the release
+> keystore and signing config (§2.5, §4.1), the `SYSTEM_ALERT_WINDOW` **prominent disclosure
+> dialog** (§5.3 — still missing, and `Docs/Ads.md` §11 flags it as review-scrutiny mitigation),
+> `usesCleartextTraffic` (§2.8), every store asset (§6), and the closed-testing track (§7.1).
+>
+> **One open conflict:** §5.4 says declare *Installed Apps = collected* in Data safety. The
+> published privacy policy asserts the installed-app list never leaves the device (claim P2,
+> verified in code), and Play's "collected" means transmitted off-device. Declaring collection
+> would make the policy false. Resolve before filling the form.
 >
 > **Note (2026-07-10):** Since the last update the app gained the **Sliver Customize** feature (color, opacity,
 > fang geometry, and size — persisted in 13 new `sliver_*` SharedPreferences keys under `EdgeCasePrefs`). This
@@ -836,21 +862,22 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 - [ ] **Enable R8:** Set `isMinifyEnabled = true` and `shrinkResources = true` in `app/build.gradle.kts`
 - [ ] **Write ProGuard rules:** Copy the rules from Section 2.2 into `app/proguard-rules.pro`
-- [ ] **Configure backup rules:** Update `backup_rules.xml` and `data_extraction_rules.xml` (Sections 2.3-2.4)
+- [x] **Configure backup rules:** `backup_rules.xml` and `data_extraction_rules.xml` both include `EdgeCasePrefs.xml` (A-track)
 - [ ] **Generate release keystore:** See Section 4.1, follow instructions thoroughly
 - [ ] **Configure signing:** Add `signingConfigs` block to `app/build.gradle.kts` (Section 2.5)
-- [ ] **Create AdMob account:** [admob.google.com](https://admob.google.com)
-- [ ] **Add AdMob dependency** to `gradle/libs.versions.toml` and `app/build.gradle.kts` (Section 3.2)
-- [ ] **Add AdMob App ID meta-data** to `AndroidManifest.xml` (Section 3.6)
-- [ ] **Implement banner ads** on Main Menu + Shortcuts screens (Section 3.4)
-- [ ] **Implement interstitial ads** on screen transitions (Section 3.4)
-- [ ] **Add ad unit IDs** to `strings.xml` (Section 3.5)
-- [ ] **Initialize AdMob** in `MainActivity.onCreate()` (Section 3.3)
+- [x] **Create AdMob account** — done; publisher `pub-4587702028307036`, app + one banner unit registered
+- [x] **Add AdMob dependency** — done as B1, but per `Docs/Ads.md` §7.2 (GMA Next-Gen 1.4.0 + UMP 4.0.0), **not** §3.2's outdated `play-services-ads`
+- [x] **Add AdMob App ID meta-data** to `AndroidManifest.xml` — done as B1, resolved per build type
+- [x] **Implement banner ads** — done as B2, but **one** banner in the Plinth. ~~*on Main Menu + Shortcuts screens*~~ — struck: two units and in-content placement are policy hazards (`Docs/Ads.md` §9)
+- [ ] ~~**Implement interstitial ads** on screen transitions~~ — **DROPPED, do not implement.** Back-triggered interstitials are a disruptive-ads pattern Play forbids (`Docs/Ads.md` §9)
+- [x] **Add ad unit IDs** — done as B1 via per-build-type `resValue`, so debug can never reach a live unit. Not hardcoded in `strings.xml` as §3.5 suggests
+- [x] **Initialize AdMob** — done as B2, **off the main thread** (Next-Gen ANRs otherwise) and gated on UMP `canRequestAds()`, not §3.3's main-thread call in `onCreate`
 - [ ] **Add prominent disclosure dialog** for SYSTEM_ALERT_WINDOW (Section 5.3)
-- [ ] **Write and host a Privacy Policy** (Section 4.2.2)
-- [ ] **Bump versionCode** to 2 and **versionName** to "1.0.0" (Section 2.6)
-- [ ] **Fix version label** to read dynamically or match versionName (Section 2.6)
-- [ ] **Handle the Dummy button** — remove or implement (Section 2.7)
+- [x] **Write and host a Privacy Policy** — live at `https://anumey.xyz/legal/edgecase/privacy`, verified 200 on 2026-08-30, plus the required `/delete-data` companion
+- [ ] **Bump versionCode to 4 and versionName to "1.5.0"** (was "2 / 1.0.0" here — stale; the app is already at 3 / 1.4.1). See `Docs/Ads.md` §7.8
+- [x] **Fix version label** — reads `BuildConfig.VERSION_NAME`
+- [x] **Handle the Dummy button** — became the **Credits** screen (`Docs/stats.md` §6.1)
+- [ ] **Add the UMP privacy-options entry point** — done in code as B4; **still unproven under an EEA debug geography** (`Docs/stats.md` Appendix C, group C)
 
 ### 🟡 Important — Complete Before Submission
 
@@ -868,7 +895,7 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ### 🟢 Nice-to-Have — Complete When Ready
 
-- [ ] **Add UMP SDK** for GDPR consent (Section 4.2.1) — required if targeting EU/UK
+- [x] **Add UMP SDK** for GDPR consent — done as B1/B3 at **4.0.0**, not §4.2.1's outdated 3.1.0
 - [ ] **Add Firebase Crashlytics** (Section 9.2)
 - [ ] **Create promo video** (Section 6.5)
 - [ ] **Set up Play App Signing** on first upload

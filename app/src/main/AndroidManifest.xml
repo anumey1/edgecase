@@ -26,6 +26,12 @@
         android:theme="@style/Theme.EdgeCase"
         tools:targetApi="31">
 
+        <!-- A missing or malformed APPLICATION_ID crashes the app at startup (Docs/Ads.md §7.2).
+             The value is resolved per build type: test App ID in debug, the real one in release. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/admob_app_id" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

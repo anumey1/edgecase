@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // The Plinth: one persistent banner slot below all three screens. It lives outside
+        // The Plinth: one persistent banner slot below all four screens. It lives outside
         // screenContainer, so showScreen() never touches it. See Docs/Ads.md §5.
         adHost = AdHost(this, findViewById(R.id.adFrame)).also {
             // UMP resolves after onCreate, so the consent button's visibility cannot be decided
@@ -329,6 +329,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ──────────────────────────────────────────────────
+    // Ad consent entry point (Credits screen)
+    // ──────────────────────────────────────────────────
+
+    /**
+     * Shows or hides the AD CONSENT slab.
+     *
+     * Called once at wiring time and again whenever UMP resolves. Returns the button to GONE
+     * rather than INVISIBLE so the action bar reclaims the row's 68dp for everyone outside a
+     * consent regime — which, on a utility app, is most people.
+     *
+     * Not an outbound link: [AdHost.showPrivacyOptionsForm] renders Google's own form in-process.
+     */
+    private fun syncAdConsentButton() {
+        findViewById<Button>(R.id.btnAdConsent)?.visibility =
+            if (adHost?.isPrivacyOptionsRequired() == true) View.VISIBLE else View.GONE
+    }
+
+    // ──────────────────────────────────────────────────
     // Outbound links (Credits screen)
     // ──────────────────────────────────────────────────
 
@@ -339,20 +357,11 @@ class MainActivity : AppCompatActivity() {
      * the Credits screen rather than on a foreign Activity stacked inside our history. Leaving
      * the app fires [onPause], which correctly hands the edge back to the overlay.
      *
-     * Both URLs are placeholders — see `url_developer_page` / `url_privacy_policy` in strings.xml.
+     * `url_privacy_policy` is **live** — verified 200 on 2026-08-30 — and must never move, since a
+     * privacy-policy URL that 404s is itself a Play policy violation. It is not yet registered in
+     * Play Console, because no listing exists yet. `url_developer_page` is still a placeholder,
+     * pending the numeric `dev?id=` form from the Play Console. See strings.xml.
      */
-    /**
-     * Shows or hides the AD CONSENT slab.
-     *
-     * Called once at wiring time and again whenever UMP resolves. Returns the button to GONE
-     * rather than INVISIBLE so the action bar reclaims the row's 68dp for everyone outside a
-     * consent regime — which, on a utility app, is most people.
-     */
-    private fun syncAdConsentButton() {
-        findViewById<Button>(R.id.btnAdConsent)?.visibility =
-            if (adHost?.isPrivacyOptionsRequired() == true) View.VISIBLE else View.GONE
-    }
-
     private fun openUrl(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {

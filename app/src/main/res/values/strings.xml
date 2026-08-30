@@ -21,9 +21,10 @@
     <string name="credits_ads_body">Ads served by Google AdMob</string>
 
     <!-- ══ Outbound links ══
-         · url_privacy_policy: LIVE. Hosted on anumey.xyz alongside the Mach2 and BOTCH policies,
-           and registered in Play Console. This exact URL must never move — a privacy-policy URL
-           that 404s is itself a Play policy violation.
+         · url_privacy_policy: LIVE — deployed and verified 200 on 2026-08-30, hosted on
+           anumey.xyz beside the Mach2 and BOTCH policies. This exact URL must never move — a
+           privacy-policy URL that 404s is itself a Play policy violation. Not yet registered in
+           Play Console: no listing exists yet.
          · url_developer_page: PLACEHOLDER. The canonical form is
            https://play.google.com/store/apps/dev?id=<numeric publisher id>, taken from the Play
            Console once the developer account exists. The name form below resolves too, but only

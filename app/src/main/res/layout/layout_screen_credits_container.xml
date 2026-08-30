@@ -190,10 +190,8 @@
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp" />
 
-                <!-- ── Advertising ───────────────────────────────
-                     GONE until the real SDK replaces the placeholder banner: today the Plinth
-                     shows DummyBannerView and no ad network is present, so the attribution
-                     would be untrue. Flip both to VISIBLE at Appendix C task B2. -->
+                <!-- ADVERTISING: visible as of B2 — the real Google Mobile Ads SDK now serves the
+                     Plinth banner, so the attribution is true and required. -->
 
                 <TextView
                     android:id="@+id/tvCreditAdsHeading"
@@ -203,8 +201,7 @@
                     android:textAppearance="@style/CaptionChiseled"
                     android:layout_marginTop="@dimen/credits_section_gap"
                     android:layout_marginBottom="6dp"
-                    android:layout_marginStart="4dp"
-                    android:visibility="gone" />
+                    android:layout_marginStart="4dp" />
 
                 <TextView
                     android:id="@+id/tvCreditAdsBody"
@@ -215,8 +212,7 @@
                     android:fontFamily="serif"
                     android:textSize="@dimen/text_caption"
                     android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:visibility="gone" />
+                    android:layout_marginEnd="4dp" />
 
                 <!-- Tail padding so the last line clears the action bar when scrolled -->
                 <Space
