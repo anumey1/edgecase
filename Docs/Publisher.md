@@ -5,8 +5,10 @@
 > **Package:** `com.dicereligion.edgecase`
 > **Current Version (Code):** 4 (1.5.0) — the ads release
 > **Current UI Version Label:** read from `BuildConfig.VERSION_NAME`
-> **Status:** Partly superseded and largely complete — read the banner below before using this document
-> **Last Updated:** 2026-09-04
+> **Status:** ✅ **Discharged.** Every item in this roadmap is either done, superseded, or established
+> as not applicable. It is now a historical record plus §9.1's post-launch routine — read the banners
+> below before using any section of it
+> **Last Updated:** 2026-09-05
 
 > ## ⚠️ Read this first (2026-08-30)
 >
@@ -47,14 +49,43 @@
 >   targets 36. It has been added to the manifest, and Play reads that string at review — keep it in
 >   step with the §5.2 justification.
 >
-> **Still genuinely outstanding from this document:** the release keystore and signing config
-> (§2.5, §4.1) — `assembleRelease` currently emits `app-release-unsigned.apk` — every store asset
-> (§6), and the closed-testing track (§7.1).
+> ## ✅ SUBMITTED TO GOOGLE PLAY — 2026-09-04 (re-verified 2026-09-05)
 >
-> **One open conflict:** §5.4 says declare *Installed Apps = collected* in Data safety. The
-> published privacy policy asserts the installed-app list never leaves the device (claim P2,
-> verified in code), and Play's "collected" means transmitted off-device. Declaring collection
-> would make the policy false. Resolve before filling the form.
+> **Nothing in this document is outstanding any more.** Keystore and signing (§2.5/§4.1), every
+> store asset (§6), and the full declaration set are done; v1.5.0 / versionCode 4 is in review on the
+> **production** track at **100% rollout**, 176 countries + rest of world.
+>
+> **§7.1 did not apply.** The 12-testers-for-14-days rule targets personal accounts created after
+> ~Nov 2023; this account already had Mach2 published, so Production was never gated. That removed
+> the longest item on the whole plan. §7.1's "20 testers" figure is stale regardless — Google's
+> number has been **12** since Dec 2024.
+>
+> **The record of what was actually submitted, answer by answer, is `Docs/stats.md` Appendix C,
+> group E** — including the one thing no help page documents: the **foreground-service declaration
+> never appears in App content**. It surfaces as a blocking error on the production release's Review
+> screen. App content reported "You're all caught up" throughout.
+>
+> **That open conflict is resolved (2026-09-04): declare installed apps NOT collected.** §5.4 below
+> says the opposite and is **wrong** — Play's "collected" means transmitted off-device, the published
+> policy asserts the list never leaves the phone (claim P2, verified in code), and declaring
+> collection would make a published legal document false.
+>
+> ## ⚠️ What is actually left (2026-09-05)
+>
+> Not from this document — both are tracked as `Docs/stats.md` Appendix C **group F**:
+>
+> 1. 🔴 **The published privacy policy is one revision behind its source.** `READ_BASIC_PHONE_STATE`
+>    and `WAKE_LOCK` are missing from a permission list that reads as exhaustive. The fix is written
+>    in the Anumey's Lair repo and **has not been pushed**; the live page still served *29 August
+>    2026* on 2026-09-05. The URL is registered in this listing, so this is now a live inconsistency
+>    between the store entry and the document it points at, not a paperwork item.
+> 2. **The small-screen main-menu fix is in the tree but not in any build.** It needs
+>    `versionCode = 5` / `versionName = "1.5.1"` (§2.6, §9.1). **Recommended sequencing:** wait for
+>    v1.5.0 to clear review, since a second bundle pushed to the same production release replaces the
+>    one under review rather than queueing behind it.
+>
+> Post-launch, blocked on the listing going live: relink AdMob to the Play listing, let app-ads.txt
+> self-verify, and start the CTR watch (`Docs/Ads.md` §11).
 >
 > **Note (2026-07-10):** Since the last update the app gained the **Sliver Customize** feature (color, opacity,
 > fang geometry, and size — persisted in 13 new `sliver_*` SharedPreferences keys under `EdgeCasePrefs`). This
@@ -81,21 +112,24 @@
 ## 1. Executive Summary
 
 EdgeCase is a feature-complete edge-launcher app themed with a "Hellenic Serpent" aesthetic. **As of
-2026-09-04 the code is release-ready.** What remains is a keystore, an account, and assets.
+2026-09-04 it is submitted to Google Play** — production track, 100% rollout, versionCode 4 /
+versionName 1.5.0, awaiting review. The keystore, the account, the assets and every declaration are
+done; the record of what was filed is `Docs/stats.md` Appendix C, group E.
 
 | Area | Current State | Action Required |
 |------|--------------|-----------------|
 | **R8 / ProGuard** | ✅ Enabled; 44 lines of keep rules. 22.5 MB debug → 5.5 MB release | — (§2.2's rule set was *not* used; see the banner) |
-| **App Signing** | ✅ `~/keys/edgecase-release.jks` (RSA 4096, to 2054) + `signingConfigs` reading a gitignored `keystore.properties`. Signed APK and AAB both build | Back the key up off-machine; enable Play App Signing on first upload |
+| **App Signing** | ✅ `~/keys/edgecase-release.jks` (RSA 4096, to 2054) + `signingConfigs` reading a gitignored `keystore.properties`. Signed APK and AAB both build; re-verified green 2026-09-05 | **Back the key up off-machine** — this is the one item with no recovery path if it is missed |
 | **Backup Rules** | ✅ `EdgeCasePrefs.xml` in both backup and device-transfer rules | — |
-| **Ads** | ✅ One anchored adaptive banner in the Plinth; UMP consent gating every request | Play Console declarations only (§7.8 of `Ads.md`) |
-| **Privacy Policy** | ✅ Live and verified 200, with the required delete-data companion | Register the URL in the listing |
+| **Ads** | ✅ One anchored adaptive banner in the Plinth; UMP consent gating every request | — (all `Ads.md` §7.8 declarations filed) |
+| **Privacy Policy** | ◐ Live and verified 200 on 2026-09-05, with the required delete-data companion, and registered in the listing | 🔴 **Push the pending permission-list correction** — the deployed copy omits `READ_BASIC_PHONE_STATE` and `WAKE_LOCK` (`Docs/stats.md` §9, group F2) |
 | **Overlay Disclosure** | ✅ Prominent disclosure dialog before the Settings redirect | — |
-| **Foreground Service** | ✅ `specialUse` + the required `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` | Write the matching Console justification (§5.2) |
+| **Foreground Service** | ✅ `specialUse` + the required `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; Console justification filed with a video | — (it is **not** in App content — it appears as a blocking error on the release's Review screen; group E) |
 | **Dummy Button** | ✅ Became the Credits screen | — |
-| **Store Assets** | ❌ None except the app icon | Screenshots, feature graphic, descriptions (§6) |
-| **Testing** | ◐ Device pass done 2026-09-04 on a Pixel 9 Pro XL — 14/14 tests, signed release build verified running. **It caught an R8 launch crash** (`Docs/stats.md` §4). Small-screen pass still outstanding | Closed track, 20 testers (§7.1) |
-| **Version Code** | ✅ 4 (`versionName` 1.5.0) | — |
+| **Store Assets** | ✅ Complete — icon, 1024×500 feature graphic, phone screenshots, both descriptions | — |
+| **Testing** | ✅ Device pass 2026-09-04 on a Pixel 9 Pro XL — 14/14 tests, signed release build verified running. **It caught an R8 launch crash** (`Docs/stats.md` §4). Small-screen pass run the same day; its one defect is fixed but unreleased | — (§7.1's closed-testing gate does not apply to this account) |
+| **Ads / Consent** | ✅ EU + US-states consent messages published in AdMob; `requestConsentInfoUpdate` verified succeeding on device | Relink AdMob to the listing once it is live (fill rate); the EEA form render is a **closed, accepted risk** (`Docs/stats.md` Appendix C, group C) |
+| **Version Code** | ✅ 4 (`versionName` 1.5.0) — the submitted build | Bump to 5 / 1.5.1 for the small-screen fix; best done after review clears |
 
 ---
 
@@ -613,6 +647,26 @@ The app must have a publicly accessible privacy policy URL. This is required bec
 
 ### 5.2 Foreground Service Justification
 
+> ## ✅ FILED 2026-09-04 — and this section understates where it lives
+>
+> **It is NOT in App content.** That page reported "You're all caught up" on both the *Need
+> attention* and *Actioned* tabs throughout, even after the bundle was uploaded. The declaration
+> surfaced only on clicking **Next** on the production release, as a **blocking error on the Review
+> screen**. Do not conclude the declaration is unnecessary because App content is clean.
+>
+> **The form is simpler than the help page describes.** One checkbox — **Other**, because
+> `specialUse` has no preset category — a video link, and **a single text field asking for the
+> description *and* "why the task must start immediately and cannot be paused or restarted"
+> together**. The separate "user impact" question `support.google.com/.../13392821` lists does not
+> exist as its own field.
+>
+> **Video:** `https://youtube.com/shorts/T_qOdUcj3ns` — unlisted, verified reachable
+> unauthenticated. Recorded on the **emulator**; the first take was reshot because it captured the
+> maintainer's real home screen, calendar entries and contacts.
+>
+> Keep the text below in step with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` in the manifest — Play reads
+> that string at review too (`Docs/stats.md` §6.6).
+
 **Play Console Declaration:** When you upload the app, you'll be asked: "Why does this app need a foreground service?"
 
 **Write this justification:**
@@ -678,7 +732,7 @@ When filling the Data Safety form in Play Console, declare:
 
 | Data Type | Collected? | Shared? | Purpose |
 |-----------|-----------|---------|---------|
-| **Installed Apps** | Yes | No | App functionality — to populate the shortcuts configuration list |
+| **Installed Apps** | ~~Yes~~ → **No** | No | ⚠️ **This row was wrong. Decided 2026-09-04: NOT collected.** Play defines "collected" as transmitted off-device; the list is built in memory and never leaves the phone (`Docs/stats.md` §9, claim P2). Only the packages the user ticks are saved, and only locally |
 | **Advertising ID** | Yes (via AdMob) | Yes (AdMob) | Advertising or marketing |
 | **App Interactions** | No | No | — |
 | **Crash Logs** | No (unless Crashlytics added) | — | — |
@@ -687,6 +741,16 @@ When filling the Data Safety form in Play Console, declare:
 > Data is stored **only locally** via SharedPreferences. No data is transmitted off-device by EdgeCase itself.
 
 ### 5.5 Content Rating Questionnaire
+
+> ## ✅ SUBMITTED 2026-09-04 — **Everyone / PEGI 3 / USK 0**
+>
+> **It never asked about ads.** For the Utility category the questionnaire has no ads question at
+> all; the "contains ads" declaration lives only in the separate **Ads** section of App content.
+> Earlier revisions of these documents said the questionnaire "now asks about ads" — it does not.
+>
+> **Target audience was answered 13-15 / 16-17 / 18+.** Ticking any under-13 box would have forced
+> the **Families** policy: certified ad SDKs only, no interest-based ads, and a rebuild of the whole
+> AdMob setup.
 
 Complete the content rating questionnaire in Play Console. EdgeCase should receive a **"Everyone"** or **"Teen"** rating:
 - No violence
@@ -699,6 +763,13 @@ Complete the content rating questionnaire in Play Console. EdgeCase should recei
 ---
 
 ## 6. Store Listing Requirements
+
+> ## ✅ COMPLETE 2026-09-04
+>
+> Icon, 1024×500 feature graphic, phone screenshots, short description and full description are all
+> uploaded. The **feature graphic is declared as AI-created** in Play's AI-asset question; the
+> screenshots and icon are not. A listing promo video (§6.5) was not made and is optional — the only
+> video in the submission is the foreground-service justification clip (§5.2).
 
 ### 6.1 Required Graphic Assets
 
@@ -790,6 +861,17 @@ A 30-second screen recording showing:
 
 ### 7.1 Closed Testing Requirement (New Developer Accounts)
 
+> ## ❌ DID NOT APPLY — and the figure below is wrong
+>
+> **This never gated EdgeCase.** The rule targets **personal** developer accounts created after
+> ~Nov 2023. This account already publishes Mach2, so the Production track was open from the start
+> and v1.5.0 went straight to production on 2026-09-04. **This removed the single longest item on
+> the entire release timeline** (Appendix C below still budgets 14 days for it — it did not happen).
+>
+> **The "20 testers" figure is also stale.** Google's number has been **12 testers opted in for 14
+> continuous days** since December 2024. If this ever does apply to a future account, use 12, and
+> check Console → Testing rather than trusting either figure here.
+
 As of November 2023, Google requires **new Play Console developer accounts** to run a **closed test with 20 testers for 14 continuous days** before production access is granted.
 
 **Action plan:**
@@ -800,6 +882,9 @@ As of November 2023, Google requires **new Play Console developer accounts** to 
 5. After 14 days + 20 testers, the "Apply for production" button becomes available
 
 ### 7.2 Pre-Launch Report
+
+*(Not run before submission. It becomes available on the uploaded bundle — worth reading once the
+review completes, and before the 1.5.1 bundle goes up.)*
 
 Play Console runs automated tests on your app. It crawls your app on real devices and reports:
 - Stability (crashes, ANRs)
@@ -912,6 +997,9 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ### 🔴 Critical — Must Complete Before Submission
 
+> ✅ **All clear as of 2026-09-04.** Every box below is ticked except the interstitial-ads line,
+> which is struck through: it is a Play policy hazard and was **dropped, not deferred**.
+
 - [x] **Enable R8** — done 2026-09-04. Note the Kotlin-DSL property is `isShrinkResources`, not `shrinkResources` as written above
 - [x] **Write ProGuard rules** — done, but **not** §2.2's set. 44 lines; see the banner for why, and `Docs/stats.md` §4 for what shipped
 - [x] **Configure backup rules:** `backup_rules.xml` and `data_extraction_rules.xml` both include `EdgeCasePrefs.xml` (A-track)
@@ -924,48 +1012,54 @@ Google requires apps to target the latest Android API within one year. Check eac
 - [ ] ~~**Implement interstitial ads** on screen transitions~~ — **DROPPED, do not implement.** Back-triggered interstitials are a disruptive-ads pattern Play forbids (`Docs/Ads.md` §9)
 - [x] **Add ad unit IDs** — done as B1 via per-build-type `resValue`, so debug can never reach a live unit. Not hardcoded in `strings.xml` as §3.5 suggests
 - [x] **Initialize AdMob** — done as B2, **off the main thread** (Next-Gen ANRs otherwise) and gated on UMP `canRequestAds()`, not §3.3's main-thread call in `onCreate`
-- [x] **Add prominent disclosure dialog** for SYSTEM_ALERT_WINDOW — `MainActivity.showOverlayDisclosureDialog()`. **Verified on device 2026-09-04.** Caveat: on Android 17 the Settings redirect lands on the *global* overlay list, not EdgeCase's own page (`Docs/stats.md` Known Limitations #12)
-- [x] **Write and host a Privacy Policy** — live at `https://anumey.xyz/legal/edgecase/privacy`, verified 200 on 2026-08-30, plus the required `/delete-data` companion
+- [x] **Add prominent disclosure dialog** for SYSTEM_ALERT_WINDOW — `MainActivity.showOverlayDisclosureDialog()`. **Verified on device 2026-09-04.** Caveat: on Android 17 the Settings redirect lands on the *global* overlay list, not EdgeCase's own page (`Docs/stats.md` Known Limitations #12) — worth re-checking on a stable release, and softening the dialog's "the next screen is Android's own settings page" line if it persists
+- [x] **Write and host a Privacy Policy** — live at `https://anumey.xyz/legal/edgecase/privacy`, re-verified 200 on 2026-09-05, plus the required `/delete-data` companion, and registered in the listing. 🔴 **One correction is written but unpushed** — the permission list omits `READ_BASIC_PHONE_STATE` and `WAKE_LOCK` (`Docs/stats.md` §9, Appendix C group F2)
 - [x] **Bump versionCode to 4 and versionName to "1.5.0"** — done 2026-09-04
 - [x] **Fix version label** — reads `BuildConfig.VERSION_NAME`
 - [x] **Handle the Dummy button** — became the **Credits** screen (`Docs/stats.md` §6.1)
-- [ ] **Add the UMP privacy-options entry point** — done in code as B4; **still unproven under an EEA debug geography** (`Docs/stats.md` Appendix C, group C)
+- [x] **Add the UMP privacy-options entry point** — done in code as B4. **The EEA render is unproven and will stay that way**: closed as an accepted risk 2026-09-04 (`Docs/stats.md` Appendix C, group C, item 1). The console half *is* verified — EU and US-states messages published, `requestConsentInfoUpdate` succeeding on device. Note the method this document and `Ads.md` originally gave was wrong: debug geography is a **client-side API**, not an AdMob console setting
 - [x] **Set `usesCleartextTraffic="false"`** (Section 2.8) — done 2026-09-04
 - [x] **Declare `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`** — **missing from this document.** Required at targetSdk 34+ for `foregroundServiceType="specialUse"`; the app targets 36. Added 2026-09-04
 - [x] **Delete `DummyBannerView.kt`** — dead since B2, removed 2026-09-04
 
 ### 🟡 Important — Complete Before Submission
 
-- [x] **Resolve version inconsistency:** UI label (`v1.3.5`) now matches `versionName = "1.3.5"` (`versionCode = 2`). Consider reading the label programmatically to prevent future drift. (Section 2.6)
-- [ ] **Create feature graphic** (1024×500 PNG) (Section 6.1)
-- [ ] **Capture 4-8 store screenshots** (Section 6.2)
-- [ ] **Write short description** (≤80 characters) (Section 6.3)
-- [ ] **Write full description** (≤4000 characters) (Section 6.4)
-- [ ] **Complete content rating questionnaire** (Section 5.5)
-- [ ] **Fill Data Safety section** in Play Console (Section 5.4)
-- [ ] **Write foreground service justification** for Play Console (Section 5.2)
-- [ ] **Run through manual test checklist** (Section 7.3)
-- [ ] **Test on at least 3 emulated devices** covering low, mid, and current API levels
-- [ ] **Test on a physical device** if at all possible
+- [x] **Resolve version inconsistency** — long since obsolete as written (it cites v1.3.5). The label is read from `BuildConfig.VERSION_NAME`, so drift is structurally impossible; the app is at **1.5.0 / 4**. (Section 2.6)
+- [x] **Create feature graphic** (1024×500 PNG) — done, and **declared as AI-created** in the Play AI-asset question. Screenshots and icon are not (Section 6.1)
+- [x] **Capture 4-8 store screenshots** (Section 6.2)
+- [x] **Write short description** (≤80 characters) (Section 6.3)
+- [x] **Write full description** (≤4000 characters) (Section 6.4)
+- [x] **Complete content rating questionnaire** — Everyone / PEGI 3 / USK 0. **It never asked about ads** for the Utility category; that declaration lives only in the separate Ads section (Section 5.5)
+- [x] **Fill Data Safety section** in Play Console — four types, all collected + shared: Approximate location, Diagnostics, App interactions, Device or other IDs. **Installed apps deliberately NOT declared** — §5.4 below says otherwise and is wrong (Section 5.4)
+- [x] **Write foreground service justification** for Play Console — filed with an unlisted YouTube video. ⚠️ **It is not in App content.** That page reports "You're all caught up" throughout; the requirement surfaces as a blocking error on the production release's **Review** screen (Section 5.2)
+- [x] **Run through manual test checklist** — device pass 2026-09-04 on a Pixel 9 Pro XL against the **signed release build**, plus the small-screen pass at 360×640dp / 360×720dp (Section 7.3)
+- [x] **Test on at least 3 emulated devices** — 360×640dp and 360×720dp emulators alongside the physical Pixel 9 Pro XL; the small-screen pass came out of exactly this
+- [x] **Test on a physical device** — Pixel 9 Pro XL (Android 17), signed release build. It caught the R8 launch crash a green build had hidden
 
 ### 🟢 Nice-to-Have — Complete When Ready
 
 - [x] **Add UMP SDK** for GDPR consent — done as B1/B3 at **4.0.0**, not §4.2.1's outdated 3.1.0
-- [ ] **Add Firebase Crashlytics** (Section 9.2)
-- [ ] **Create promo video** (Section 6.5)
-- [ ] **Set up Play App Signing** on first upload
-- [ ] **Create Google Group** for closed testing track
-- [ ] **Recruit 20 testers** for 14-day closed test (Section 7.1)
-- [ ] **Set up Play Console internal test track**
-- [ ] **Run Pre-Launch Report** and fix issues
+- [ ] **Add Firebase Crashlytics** (Section 9.2) — still not added. The app ships with **no crash reporting at all**, so Play Console vitals are the only signal after launch
+- [x] **Create promo video** — one exists, though for the **foreground-service justification**, not the store listing: `https://youtube.com/shorts/T_qOdUcj3ns`, unlisted, verified reachable unauthenticated. Recorded on the emulator — the first take was reshot because it captured the maintainer's real home screen, calendar and contacts. A listing promo video (Section 6.5) is still optional and absent
+- [x] **Set up Play App Signing** on first upload — done with the v1.5.0 bundle
+- [x] ~~**Create Google Group** for closed testing track~~ — not needed; §7.1 did not apply
+- [x] ~~**Closed test**~~ — **established as not applicable, 2026-09-04.** The rule targets *personal* accounts created after ~Nov 2023; this one already publishes Mach2, so Production was never gated. §7.1's "20 testers" is stale anyway — the figure has been **12** since Dec 2024
+- [x] ~~**Set up Play Console internal test track**~~ — skipped deliberately; production was open
+- [ ] **Run Pre-Launch Report** and fix issues — available on the uploaded bundle; read it once review completes and again before the 1.5.1 upload
 - [ ] **Consider monetization alternatives** (premium ad-free, tips) (Section 8)
 - [ ] **Prepare a support email/SM account** for user inquiries
-- [ ] **Monitor Play Console vitals** (crashes, ANR rate) for first 2 weeks after release
-- [ ] **Plan v1.1.0 features** — repurpose Dummy button (Section 9.1)
+- [ ] **Monitor Play Console vitals** (crashes, ANR rate) for first 2 weeks after release — starts when the listing goes live, alongside the CTR watch (`Docs/Ads.md` §11)
+- [x] ~~**Plan v1.1.0 features** — repurpose Dummy button~~ — done: it became the Credits screen. **The real next release is 1.5.1 / versionCode 5**, carrying the small-screen main-menu fix (`Docs/stats.md` Appendix C, group F)
 
 ---
 
 ## Appendix A: Files That Need Modification
+
+> **Historical — every row is done, and three are wrong.** Kept for the record of what was planned.
+> The ad work went to a **new** `AdHost.kt` rather than into `MainActivity`; there is **no `AdView`
+> in any screen layout** (the banner lives in `layout_ad_plinth.xml`, outside the screens, so it
+> never scrolls); and ad unit IDs are **per-build-type `resValue`s in `app/build.gradle.kts`**, not
+> strings. The actual file inventory is `Docs/stats.md` §3.
 
 | File | Change |
 |------|--------|
@@ -982,6 +1076,12 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ## Appendix B: New Files That Need Creation
 
+> **Historical — all created except Crashlytics, which was never added.** The keystore is
+> `~/keys/edgecase-release.jks` (outside the repo, credentials in a gitignored `keystore.properties`);
+> the privacy policy is a Next.js route in the Anumey's Lair repo, not a standalone page; the feature
+> graphic and screenshots are uploaded. Files the plan did not anticipate: `AdHost.kt`,
+> `layout_ad_plinth.xml`, `bg_ad_plinth.xml`, `values/bools.xml` and `values-h800dp/`.
+
 | File | Purpose |
 |------|---------|
 | `edgecase-release.keystore` | Release signing keystore (outside Git, kept secure) |
@@ -992,6 +1092,10 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ## Appendix C: Estimated Timeline
 
+> **Actual: submitted 2026-09-04.** The estimate below said ~4–5 weeks; the dominant line item —
+> 14 days of closed testing — **never applied** (§7.1), and Play Console review is the only
+> remaining wait. Keep the estimate for the shape of the work, not the arithmetic.
+
 | Phase | Duration | Dependencies |
 |-------|----------|--------------|
 | Code changes (R8, ProGuard, ads, permissions, version) | 2-3 days | — |
@@ -1001,9 +1105,10 @@ Google requires apps to target the latest Android API within one year. Check eac
 | Asset creation (screenshots, feature graphic) | 1-2 days | App functional on emulator |
 | Store listing writing | 1 day | — |
 | Internal testing + bug fixes | 3-5 days | App signed, uploaded |
-| Closed testing (20 testers, 14 days) | 14 days (mandatory minimum) | Testers recruited |
+| ~~Closed testing (20 testers, 14 days)~~ | **0 — did not apply** (§7.1) | — |
 | Play Console review | 1-7 days | Everything above complete |
-| **TOTAL (optimistic)** | **~4-5 weeks** | — |
+| **TOTAL (estimated)** | **~4-5 weeks** | — |
+| **TOTAL (actual, code start → submission)** | **~1 week** | — |
 
 ---
 

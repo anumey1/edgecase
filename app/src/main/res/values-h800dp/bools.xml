@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Normal phones: plenty of empty space bottom-left, so the caption shows as always. -->
+    <bool name="show_version_label">true</bool>
+</resources>

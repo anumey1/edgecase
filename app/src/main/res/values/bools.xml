@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The version caption sits bottom-left of the whole screen, outside the content
+         column, so on a short screen it lands on top of the STOP slab once the compact
+         menu metrics push the stack down. Squeezing another ~22dp out of the button
+         stack to clear it would leave 8dp gaps between slabs — worse than losing a
+         decorative caption. The version is still visible in Play and in Android's
+         App info. Restored at >= 800dp in values-h800dp/bools.xml. -->
+    <bool name="show_version_label">false</bool>
+</resources>

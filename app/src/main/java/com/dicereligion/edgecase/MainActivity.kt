@@ -269,8 +269,15 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────
 
     private fun wireMainMenuButtons() {
-        // Wire version from build config
-        findViewById<TextView>(R.id.tvVersion).text = "ΕΚΔ. ${BuildConfig.VERSION_NAME}"
+        // Wire version from build config. Hidden on short screens, where the caption
+        // would land on top of the STOP slab — see values/bools.xml.
+        findViewById<TextView>(R.id.tvVersion).apply {
+            if (resources.getBoolean(R.bool.show_version_label)) {
+                text = "ΕΚΔ. ${BuildConfig.VERSION_NAME}"
+            } else {
+                visibility = View.GONE
+            }
+        }
 
         applyStoneButtonBehavior(findViewById<Button>(R.id.btnShortcuts)).setOnClickListener {
             showScreen(Screen.SHORTCUTS)

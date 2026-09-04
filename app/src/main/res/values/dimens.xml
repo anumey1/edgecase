@@ -4,6 +4,27 @@
 
     <!-- Buttons -->
     <dimen name="stone_button_height">56dp</dimen>
+
+    <!-- ══ Main-menu metrics — COMPACT (default) ══
+         The main menu is the only screen whose stack cannot be made to fit on a short
+         phone: header + 3 nav slabs + divider + START + STOP is ~560dp of content, and
+         a 360x640dp screen has ~442dp once the 174dp Plinth and the status bar are gone.
+         START was clipped to a sliver and STOP fell off the bottom entirely.
+
+         Android has no "max height" resource qualifier — only minimums — so the compact
+         values live HERE, in the default folder, and values-h800dp/ restores the roomy
+         originals for every normal phone. Anything at least 800dp tall renders exactly as
+         it did before; only genuinely short screens get the tighter stack.
+
+         These are deliberately main-menu-only. stone_button_height and margin_wide are
+         shared by every other screen and are NOT touched — Shortcuts, Position, Credits
+         and the Customize dialog were all verified to fit at 360x640dp already. -->
+    <dimen name="menu_button_height">48dp</dimen>
+    <dimen name="menu_button_gap">12dp</dimen>
+    <dimen name="menu_divider_height">12dp</dimen>
+    <dimen name="menu_divider_margin_top">4dp</dimen>
+    <dimen name="menu_divider_margin_bottom">10dp</dimen>
+    <dimen name="menu_padding_bottom">12dp</dimen>
     <dimen name="stone_button_elevation">8dp</dimen>
     <dimen name="stone_button_pressed_translation">4dp</dimen>
 

@@ -39,7 +39,7 @@
         android:paddingLeft="56dp"
         android:paddingRight="56dp"
         android:paddingTop="12dp"
-        android:paddingBottom="32dp">
+        android:paddingBottom="@dimen/menu_padding_bottom">
 
         <!-- Header bar — shared temple lintel (§5.2); main menu keeps default title -->
         <include
@@ -50,11 +50,17 @@
             android:layout_marginBottom="12dp" />
 
         <!-- Buttons centered vertically in remaining space.
-             Wrapped in a ScrollView because the plinth costs ~146dp of window height: below
+             Wrapped in a ScrollView because the plinth costs ~174dp of window height: below
              roughly 800dp of screen height the five-button stack no longer fits, and a plain
              centred block silently clips a button off EACH end (SHORTCUTS and STOP), leaving
              them unreachable. fillViewport keeps the centred layout identical on tall screens
-             and only starts scrolling when it actually has to. See Docs/Ads.md §6.4. -->
+             and only starts scrolling when it actually has to. See Docs/Ads.md §6.4.
+
+             The ScrollView is the safety net, not the fix. Scrolling still worked, but at
+             360x640dp START was clipped to a sliver and STOP was off-screen on first paint,
+             so a new user saw three nav buttons and no way to start anything. The menu_* dimens
+             (values/dimens.xml) shrink the stack enough to fit on short screens; the ScrollView
+             stays for whatever is shorter still. -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -71,8 +77,8 @@
         <Button
             android:id="@+id/btnShortcuts"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/stone_button_height"
-            android:layout_marginBottom="@dimen/margin_wide"
+            android:layout_height="@dimen/menu_button_height"
+            android:layout_marginBottom="@dimen/menu_button_gap"
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="SHORTCUTS"
@@ -81,8 +87,8 @@
         <Button
             android:id="@+id/btnPosition"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/stone_button_height"
-            android:layout_marginBottom="@dimen/margin_wide"
+            android:layout_height="@dimen/menu_button_height"
+            android:layout_marginBottom="@dimen/menu_button_gap"
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="POSITION"
@@ -91,8 +97,8 @@
         <Button
             android:id="@+id/btnCredits"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/stone_button_height"
-            android:layout_marginBottom="@dimen/margin_wide"
+            android:layout_height="@dimen/menu_button_height"
+            android:layout_marginBottom="@dimen/menu_button_gap"
             android:background="@drawable/selector_stone_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="CREDITS"
@@ -101,9 +107,9 @@
         <!-- Spear divider -->
         <ImageView
             android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
+            android:layout_height="@dimen/menu_divider_height"
+            android:layout_marginTop="@dimen/menu_divider_margin_top"
+            android:layout_marginBottom="@dimen/menu_divider_margin_bottom"
             android:src="@drawable/ic_divider_fangs"
             android:scaleType="fitXY"
             android:contentDescription="Divider" />
@@ -111,8 +117,8 @@
         <Button
             android:id="@+id/btnStartService"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/stone_button_height"
-            android:layout_marginBottom="@dimen/margin_wide"
+            android:layout_height="@dimen/menu_button_height"
+            android:layout_marginBottom="@dimen/menu_button_gap"
             android:background="@drawable/selector_start_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="Start"
@@ -121,7 +127,7 @@
         <Button
             android:id="@+id/btnStopService"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/stone_button_height"
+            android:layout_height="@dimen/menu_button_height"
             android:background="@drawable/selector_stop_button"
             android:elevation="@dimen/stone_button_elevation"
             android:text="Stop"

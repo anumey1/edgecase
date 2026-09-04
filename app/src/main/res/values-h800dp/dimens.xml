@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Main-menu metrics — ROOMY. Applies at >= 800dp of available screen height, which
+         is every current phone (a Pixel 9 Pro XL is 997dp). The threshold is 800, not 700:
+         the roomy stack needs ~760dp of screen height once the 174dp Plinth and the status
+         bar are subtracted, so a 720dp-tall screen still clipped STOP at 700. Measured, not
+         guessed. These are the ORIGINAL values
+         the screen shipped with, so tall screens are pixel-identical to v1.5.0.
+         The compact fallbacks, and why the inversion is necessary, are in values/dimens.xml. -->
+    <dimen name="menu_button_height">56dp</dimen>
+    <dimen name="menu_button_gap">24dp</dimen>
+    <dimen name="menu_divider_height">20dp</dimen>
+    <dimen name="menu_divider_margin_top">8dp</dimen>
+    <dimen name="menu_divider_margin_bottom">24dp</dimen>
+    <dimen name="menu_padding_bottom">32dp</dimen>
+</resources>

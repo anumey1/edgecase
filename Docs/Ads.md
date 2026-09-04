@@ -4,7 +4,10 @@
 > **App:** EdgeCase · `com.dicereligion.edgecase`
 > **Current Version:** versionCode 4 / versionName 1.5.0
 > **Author:** Engineering
-> **Last Updated:** 2026-08-28 (status annotations 2026-09-04)
+> **Last Updated:** 2026-08-28 (status annotations 2026-09-05)
+> **Status:** ✅ **Fully implemented.** §5–§6 and §7.1–§7.8 are all built and filed. What stays live
+> in this document: **§8** (run before every ads release), **§10.3** (moot — 100% rollout was chosen)
+> and **§11** (post-launch risks, incl. the CTR watch that starts when the listing goes live).
 > **Supersedes:** `Docs/Publisher.md` §3 ("Ad Integration Strategy") — see [§9](#9-corrections-to-publishermd-3) for the list of corrections.
 
 ---
@@ -365,11 +368,28 @@ Google publishes no numeric minimum — the requirement is qualitative ("some bu
 
 Large anchored adaptive banner ≈ 90–110 dp on a phone, plus 10 dp trim + 10 dp space + 20 dp frame padding + 14 dp margins ≈ **~145–165 dp** of window height consumed.
 
-Consequences to verify during implementation:
+> ## ⚠️ MEASURED: the estimate above is the floor, not the range
+>
+> The banner measured **411×128 dp** on a Pixel 9 Pro XL, not the ~100 dp assumed here — anchored
+> adaptive sizes track the `min(150dp, 20% of height)` ceiling more closely than the middle of the
+> documented range. **Budget 150 dp for the banner, and ~174 dp for the whole plinth**, not 146.
+> Everything sized against the smaller figure was under-sized, and that is precisely how the
+> main-menu defect below got through the first small-screen pass.
 
-- **Main Menu** — five 56 dp buttons + margins + divider inside a weighted centred block. It will get tight on short devices. **Mitigation:** the buttons are already centred in a `weight=1` block, so they compress gracefully. If a device clips, reduce `@dimen/margin_wide` (24 dp) between buttons to 16 dp *for this screen only* rather than shrinking the ad or the buffer.
-- **Shortcuts** — the Altar (`weight=0.38`) / Archives (`weight=0.42`) / actions (`weight=0.10`) split is proportional, so it rescales automatically. Verify the Altar still shows ≥ 2 rows on a small device; if not, rebalance to 0.34 / 0.46 / 0.10.
-- **Positioning** — `PositioningView` is `weight=1`; the phone mock will shrink. Verify the drag interaction is still comfortable, and that the mock's aspect ratio handling degrades cleanly.
+Consequences verified on device (2026-09-04):
+
+- **Main Menu** — ❌ **This one clipped, and the mitigation suggested here was not enough.** At
+  360×640 dp START was cut to a sliver and STOP was off-screen entirely on first paint. A
+  `ScrollView` had already been added, so nothing was strictly unreachable — but a new user saw
+  three nav slabs and no way to start the service, which is the app's primary action. The fix went
+  further than the 24 dp → 16 dp suggestion here: a full set of **main-menu-only `menu_*` dimens**,
+  compact in `values/` and roomy in `values-h800dp/`, because Android has **no maximum-size
+  qualifier**. See `Docs/stats.md` §6.3. **Not in the submitted build** — it needs versionCode 5.
+- **Shortcuts** — ✅ Passed unchanged. The proportional split rescaled as predicted, and
+  `altar_min_height` (148 dp ≈ two rows) already guaranteed the ≥ 2-row floor this section asks for.
+- **Positioning** — ✅ Passed unchanged; the drag interaction stayed comfortable at 360×640 dp.
+- **Credits and the Customize dialog** — ✅ Both passed unchanged. Not listed here originally
+  because neither existed when this was written.
 
 **Never** solve a space problem by shrinking the buffer or overlapping the ad. Shrink app chrome instead.
 
@@ -439,6 +459,24 @@ New entries for `res/values/dimens.xml`:
 Ten phases. Phases 0–7 ship v1.5.0; phase 8 is fallback documentation; phase 9 is post-launch.
 
 ### 7.1 Phase 0 — AdMob account & ad units
+
+> ## ✅ DONE — with one step left, and a warning about step 6
+>
+> Publisher **pub-4587702028307036** (shared with the sibling apps, so **any enforcement here hits
+> them too**). App ID `…~3708305513`; one unit, `EdgeCase — Plinth Banner`, `…/8470994251`,
+> auto-refresh 60s. Test device registered account-wide — **keyed to its advertising ID, so
+> resetting that ID silently de-registers it.**
+>
+> **Step 2 is still open:** the app is registered as *not listed on a store yet*. **Relink it to the
+> Play listing once that is live** — the unlinked path costs fill rate, and AdMob then runs its own
+> ad-serving review separate from Play's.
+>
+> **Step 6 is the one that bites, and it fails silently.** Skipping it does not break your test
+> device: the consent-failure path falls through to cached `canRequestAds()`, which is permissive
+> outside a consent regime, so a non-EEA device shows a banner as if nothing is wrong — **while the
+> EEA gets no ads at all.** Both messages were created 2026-09-04, deliberately **separate from
+> Mach2's** rather than shared: a consent message carries a single privacy-policy URL, so reusing
+> Mach2's would have shown EdgeCase users Mach2's policy.
 
 *(Blocking prerequisite; nothing else can be finished without the real IDs.)*
 
@@ -917,17 +955,26 @@ Where the button is hidden, the main menu keeps a clean four-button stack, which
 
 1. **Privacy policy** (hard requirement — `Publisher.md` §4.2.2). Must now disclose: advertising ID collection, AdMob as a third-party ad partner, personalised vs non-personalised ads, and the installed-app-list access the launcher already requires. Host it (GitHub Pages / Firebase Hosting) and put the URL in the Play listing.
 2. **Play Console → App content → Ads:** declare **"Yes, my app contains ads."** The store listing gets a *Contains ads* badge.
-3. **Play Console → App content → Advertising ID:** declare use of the ad ID, purpose = **Advertising or marketing**. Must match the merged `AD_ID` permission (§7.2).
-4. **Data safety:** add *Device or other IDs → Advertising ID*, collected & shared, for Advertising. Keep the existing installed-apps disclosure.
-5. **Content rating:** re-run the questionnaire — it now asks about ads.
+3. **Play Console → App content → Advertising ID:** declare use of the ad ID, purpose = **Advertising or marketing**. Must match the merged `AD_ID` permission (§7.2). ⚠️ **Understated — the answer filed was Analytics + Advertising + Fraud prevention.** Google's own AdMob disclosure page lists all three, and this answer has to match Data safety or Play flags the inconsistency.
+4. **Data safety:** add *Device or other IDs → Advertising ID*, collected & shared, for Advertising. Keep the existing installed-apps disclosure. ⚠️ **Both halves wrong.** Four types were declared, not one — Approximate location, Diagnostics, App interactions and Device or other IDs, all attributed to the SDK by that same Google page. And **installed apps were deliberately NOT declared**: Play's "collected" means transmitted off-device, and claim P2 (`Docs/stats.md` §9, verified in code) says the list never leaves the phone, so declaring it would have made a published legal document false.
+5. **Content rating:** re-run the questionnaire — ~~it now asks about ads~~. ❌ **It does not.** For the Utility category there is no ads question at all; the declaration lives only in the separate Ads section. Result: Everyone / PEGI 3 / USK 0.
 6. **Not child-directed.** EdgeCase is a system utility. Do **not** set `TagForChildDirectedTreatment`; leave the default. If the content rating ever lands in a family bracket, the Families ads policy (certified SDKs, no interest-based ads) applies and this plan must be revisited.
 7. **Version bump:** `versionCode = 4`, `versionName = "1.5.0"`. The main-menu `tvVersion` picks it up automatically from `BuildConfig.VERSION_NAME`. **✅ Done 2026-09-04.**
 
-> **Phase 7 status (2026-09-04).** Item 1 (privacy policy) and item 7 (version bump) are done. Items
-> 2–6 are all Play Console work and remain blocked on the developer account. See `Docs/stats.md`
-> Appendix C, B6 — including the two open questions that must be settled before the Data safety form
-> is filled: the `READ_BASIC_PHONE_STATE` disclosure gap, and whether installed apps count as
-> "collected" (`Publisher.md` §5.4 says yes; policy claim P2 says no).
+> **Phase 7 status — ✅ COMPLETE 2026-09-04.** All seven items are filed; the answer-by-answer record
+> is `Docs/stats.md` Appendix C, **group E**. Three of them did not match what this section
+> predicted — see the ⚠️/❌ notes on items 3, 4 and 5 above.
+>
+> **Two things this list has no item for, and should.** **Target audience**, answered 13-15 / 16-17 /
+> 18+ — ticking any under-13 box would have forced the Families policy (certified ad SDKs only, no
+> interest-based ads) and a rebuild of the whole AdMob setup, which is item 6's concern arriving
+> through a different form. And the **foreground-service declaration**, which does not appear in App
+> content at all: it surfaces as a blocking error on the production release's **Review** screen while
+> App content still reports "You're all caught up" (`Publisher.md` §5.2).
+>
+> 🔴 **Still open from item 1:** the published policy's permission list omits
+> `READ_BASIC_PHONE_STATE` and `WAKE_LOCK`. The correction is written in the Anumey's Lair repo and
+> **not pushed** (`Docs/stats.md` §9, Appendix C group F2).
 
 ### 7.9 Fallback: legacy SDK variant
 
@@ -956,48 +1003,53 @@ Interstitials remain off the table unless a genuine, non-exit transition point a
 
 ## 8. Compliance checklist
 
-Run this before every release that touches ads.
+Run this before every release that touches ads. **Boxes below reflect the last full run: 2026-09-05,
+against versionCode 4 plus the unreleased small-screen fix.** Re-open them all for the next release.
 
 ### Placement
-- [ ] Exactly **one** banner ad unit in the entire app.
-- [ ] The banner is anchored at the bottom of the Activity window, never inside a scrolling container.
-- [ ] ≥ 28 dp of non-interactive space between the lowest interactive element and the first ad pixel, on **all three** screens (§6.3).
-- [ ] Nothing inside `layout_ad_plinth.xml` is `clickable`, `focusable`, or animated.
-- [ ] No app text, icon, label, or caption inside `adFrame`.
-- [ ] The frame is `android:background` on `adFrame`, **not** a `foreground` and **not** a sibling view over the `AdView`.
-- [ ] `adFrame.minimumHeight` is set from the computed `AdSize` **before** `loadAd`, so no layout shift occurs.
-- [ ] The ad sits above the system navigation inset and never overlaps system UI.
+- [x] Exactly **one** banner ad unit in the entire app.
+- [x] The banner is anchored at the bottom of the Activity window, never inside a scrolling container. It lives in `layout_ad_plinth.xml`, a sibling of the screen container in `activity_main.xml` — structurally outside every screen, so no screen's scrolling can move it.
+- [x] ≥ 28 dp of non-interactive space between the lowest interactive element and the first ad pixel, on **all three** screens (§6.3). 30dp inert buffer plus each screen's own bottom padding — 38dp on Shortcuts, the tightest.
+- [x] Nothing inside `layout_ad_plinth.xml` is `clickable`, `focusable`, or animated. Verified 2026-09-05: both views carry explicit `clickable="false" focusable="false"`.
+- [x] No app text, icon, label, or caption inside `adFrame`.
+- [x] The frame is `android:background` on `adFrame`, **not** a `foreground` and **not** a sibling view over the `AdView`.
+- [x] `adFrame.minimumHeight` is set from the computed `AdSize` **before** `loadAd`, so no layout shift occurs. `AdHost` reserves **twice** — a nominal figure pre-layout so the well never pops, then the exact `AdSize`.
+- [x] The ad sits above the system navigation inset and never overlaps system UI.
 
 ### The overlay
-- [ ] No `com.google.android.libraries.ads` (or `com.google.android.gms.ads`) import exists in `SidebarService.kt`, `ArcSliverView.kt`, `SliverPreviewView.kt`, or `PositioningView.kt`.
-  - Verify: `grep -rn "ads.mobile.sdk\|gms.ads" app/src/main/java/ | grep -v "MainActivity\|AdHost"` returns nothing.
-- [ ] The overlay is suspended whenever `MainActivity` is in the foreground.
-- [ ] With `sliver_y_bias = 1.0` and the service running, re-entering the app leaves the plinth completely unobstructed.
+- [x] No `com.google.android.libraries.ads` (or `com.google.android.gms.ads`) import exists in `SidebarService.kt`, `ArcSliverView.kt`, `SliverPreviewView.kt`, or `PositioningView.kt`.
+  - Verify: `grep -rn "ads.mobile.sdk\|gms.ads" app/src/main/java/ | grep -v "MainActivity\|AdHost"` returns nothing. **Re-run clean 2026-09-05.**
+- [x] The overlay is suspended whenever `MainActivity` is in the foreground. (A1: `ACTION_SUSPEND_OVERLAY` / `ACTION_RESUME_OVERLAY` off `onResume`/`onPause`.)
+- [x] With `sliver_y_bias = 1.0` and the service running, re-entering the app leaves the plinth completely unobstructed — the overlay is detached entirely, so there is nothing left to obstruct it.
 
 ### Consent & privacy
-- [ ] UMP 4.0.0 integrated; `requestConsentInfoUpdate` runs on **every** launch.
-- [ ] No ad is requested until `canRequestAds()` returns `true`.
-- [ ] A privacy-options entry point is visible whenever `PrivacyOptionsRequirementStatus == REQUIRED`.
-- [ ] EEA and US-states messages exist in the AdMob console. ⚠️ **Confirmed ABSENT 2026-09-04** —
-  UMP returns *"Publisher misconfiguration … no form(s) configured for the input app ID"*. Note what
-  this costs: the consent-failure path falls through to cached `canRequestAds()`, which is permissive
-  outside a consent regime, so a non-EEA test device still shows a banner and the fault is invisible.
-  **In the EEA it serves nothing.** This is the §11 "UMP not implemented → EEA ad serving restricted"
-  risk materialising through the console rather than the code.
-- [ ] Privacy policy is live, discloses AdMob + advertising ID + installed-app access, and its URL is in the Play listing.
+- [x] UMP 4.0.0 integrated; `requestConsentInfoUpdate` runs on **every** launch.
+- [x] No ad is requested until `canRequestAds()` returns `true` — gated on all three paths into `initializeAndLoad()`.
+- [x] A privacy-options entry point is visible whenever `PrivacyOptionsRequirementStatus == REQUIRED`. **Implemented, never seen rendering** — closed as an accepted risk (`Docs/stats.md` Appendix C, group C, item 1).
+- [x] EEA and US-states messages exist in the AdMob console. ~~⚠️ **Confirmed ABSENT 2026-09-04**~~ →
+  ✅ **Both created and published 2026-09-04**, scoped to EdgeCase and deliberately *separate* from
+  Mach2's, since a consent message carries one privacy-policy URL. Re-verified on device the same
+  day: the `Publisher misconfiguration` error is gone and `requestConsentInfoUpdate` succeeds, with
+  `required` resolving to a real `NOT_REQUIRED`.
+  **Keep the failure mode in mind for next time:** the consent-failure path falls through to cached
+  `canRequestAds()`, which is permissive outside a consent regime — so a non-EEA test device still
+  showed a banner and the fault was invisible, while **in the EEA it served nothing**. That is the
+  §11 "UMP not implemented → EEA ad serving restricted" risk arriving through the console rather
+  than the code. *A consent misconfiguration looks like success everywhere it does not apply.*
+- [x] Privacy policy is live, discloses AdMob + advertising ID + installed-app access, and its URL is in the Play listing. 🔴 **One caveat:** the deployed copy is a revision behind its source — its permission list still omits `READ_BASIC_PHONE_STATE` and `WAKE_LOCK` (`Docs/stats.md` §9, Appendix C group F2). Close this before the next ads release.
 
 ### Play Console
-- [ ] "Contains ads" declared.
-- [ ] Advertising ID declaration completed and consistent with the merged `AD_ID` permission.
-- [ ] Data safety lists Advertising ID as collected and shared.
-- [ ] Content rating questionnaire re-submitted.
+- [x] "Contains ads" declared. *(Submitted 2026-09-04 — see `Docs/stats.md` Appendix C, group E.)*
+- [x] Advertising ID declaration completed and consistent with the merged `AD_ID` permission. **Purposes are Analytics + Advertising + Fraud prevention, not advertising alone** — Google's own AdMob disclosure page lists all three, and the answer has to match Data safety or Play flags the inconsistency.
+- [x] Data safety lists Advertising ID as collected and shared — **plus Approximate location, Diagnostics and App interactions**, which the same Google page attributes to the SDK. Declaring only the ad ID would have under-reported against the app's own privacy policy.
+- [x] Content rating questionnaire re-submitted — Everyone / PEGI 3. **It never asked about ads** for the Utility category; that declaration lives only in the separate Ads section.
 
 ### Build & test hygiene
-- [ ] Debug builds resolve **test** ad unit IDs; release builds resolve production IDs (`resValue` per build type).
-- [ ] Every development device is registered as an AdMob test device.
-- [ ] Nobody has clicked a live ad in a release build. Not once.
-- [ ] Banner auto-refresh is set to 60 s in the AdMob console; there is no client-side refresh or retry loop.
-- [ ] `APPLICATION_ID` meta-data present in the merged manifest (a missing one crashes at launch).
+- [x] Debug builds resolve **test** ad unit IDs; release builds resolve production IDs (`resValue` per build type). Requires `buildFeatures { resValues = true }` — AGP 9 gates `resValue` exactly as it gates `buildConfig`.
+- [x] Every development device is registered as an AdMob test device. The Pixel 9 Pro XL is registered account-wide under Settings → Test devices, **keyed to its advertising ID — resetting that ID silently de-registers it.**
+- [x] Nobody has clicked a live ad in a release build. Not once. The device pass served test creatives only, so that pass carries no invalid-traffic exposure.
+- [x] Banner auto-refresh is set to 60 s in the AdMob console; there is no client-side refresh or retry loop.
+- [x] `APPLICATION_ID` meta-data present in the merged manifest (a missing one crashes at launch). **Re-verified 2026-09-05** in `merged_manifests/release/processReleaseManifest/AndroidManifest.xml`, alongside `AD_ID`.
 - [x] **R8 has not broken the SDK.** Verified on device 2026-09-04: `Plinth banner loaded
   (411×128dp)` from a signed release build. The ad AARs' own consumer rules were sufficient **for
   the ad SDKs** — but not for what they drag in: R8 stripped a constructor from Room 2.2.5 (via
@@ -1055,6 +1107,18 @@ Run this before every release that touches ads.
 
 ### 10.3 Staged rollout
 
+> ## ❌ NOT WHAT HAPPENED — v1.5.0 went straight to production at 100%
+>
+> Both premises here are wrong. `Publisher.md` §7.1's closed-testing gate **did not apply** — it
+> targets accounts created after ~Nov 2023, and this one already publishes Mach2 — so nothing forced
+> an internal track, and staged rollout was **declined** in favour of 100%, 176 countries + rest of
+> world, on 2026-09-04.
+>
+> **What that costs is the blast radius.** With no staged ramp there is no small cohort to detect a
+> placement problem on, so the monitoring below is not optional and the response to a CTR anomaly is
+> to **widen the buffer immediately**, not to pause a ramp. Everything in the bullet list still
+> applies — it is now the day-one watch list rather than a per-stage gate.
+
 Ship v1.5.0 to internal testing first (which `Publisher.md` §7.1 requires anyway: 20 testers for a new developer account), then 20 % → 50 % → 100 %, watching:
 
 - **AdMob:** match rate, fill rate, and — most importantly — **CTR**. A banner CTR above ~2–3 % on a utility app is a strong signal of accidental clicks and an invalid-activity flag waiting to happen. If it appears, **increase the buffer**; do not wait for Google to act.
@@ -1071,13 +1135,14 @@ Ship v1.5.0 to internal testing first (which `Publisher.md` §7.1 requires anywa
 | **Accidental clicks from the drag surfaces + adjacent nav buttons** | Medium | Severe | 28 dp inert buffer (§6.3); watch CTR post-launch. |
 | **Self-clicking during development** | Medium | Severe (account-level) | Test IDs in debug via `resValue`; register test devices; a standing "never tap the ad" rule. |
 | **Missing/incorrect `APPLICATION_ID` meta-data** | Medium | App crashes at launch | Verify in the merged manifest during phase 1. |
-| **UMP not implemented → EEA ad serving restricted** | **Materialised** (console side) | Revenue collapse in EU | The code is correct — UMP 4.0.0 gated on `canRequestAds()` — but **no consent messages exist in the AdMob console** (confirmed on device 2026-09-04), so UMP has nothing to serve. Mitigation is now a console task, not a code one. |
+| **UMP not implemented → EEA ad serving restricted** | **Materialised, then closed** | Revenue collapse in EU | The code was always correct — UMP 4.0.0 gated on `canRequestAds()` — but **no consent messages existed in the AdMob console** (confirmed on device 2026-09-04), so UMP had nothing to serve. **Both messages created and published the same day**; `requestConsentInfoUpdate` now succeeds on device. Residual: the form has never been *seen* rendering — an accepted risk (`Docs/stats.md` Appendix C, group C). |
 | **Ad ID declaration mismatch in Play Console** | Medium | Ad ID zeroed → fill/CPM collapse | Phase 7 items 3–4; check the merged manifest. |
-| **Plinth squeezes the UI on small screens** | Medium | Poor reviews | §6.4 verification; shrink app chrome, never the buffer. |
+| **Plinth squeezes the UI on small screens** | **Materialised** | Poor reviews | Happened, on the main menu, at 360×640 dp — because the plinth's real cost is **174 dp, not the ~146 dp** everything was sized against (§6.4). Fixed by shrinking app chrome, never the buffer, exactly as this row prescribes: main-menu-only `menu_*` dimens with the compact set as the default and `values-h800dp/` restoring the originals. **The fix is not in the submitted build** — versionCode 5. |
 | **`SYSTEM_ALERT_WINDOW` + ads draws extra review scrutiny** | Medium | Review delay / rejection | Prominent disclosure (`Publisher.md` §5.3); the overlay is demonstrably ad-free (§4.2 grep check). |
 | **Someone later "just adds a small ad to the tray"** | Low but catastrophic | App removal | §4.2 written as a hard rule; the grep in §8 belongs in CI. |
 | **Next-Gen SDK immaturity (GA since Apr 2026)** | Low | Schedule slip | §7.9 legacy fallback keeps everything but `AdHost` unchanged. |
-| **CTR anomaly triggers automated review** | Low | Ad serving limited | Monitor from day one; widen the buffer at the first sign. |
+| **CTR anomaly triggers automated review** | Low | Ad serving limited | Monitor from day one; widen the buffer at the first sign. **Sharper now than when written:** 100% rollout means no staged blast radius (§10.3), and the watch cannot start until the listing is live. |
+| **AdMob app never relinked to the Play listing** | **Open** | Materially lower fill rate | The AdMob app is still registered as *not listed on a store*. Relink at AdMob → Apps → EdgeCase → App settings the moment the listing is live; AdMob then runs its **own** ad-serving review, separate from Play's. app-ads.txt self-verifies at the same point. |
 
 ---
 
