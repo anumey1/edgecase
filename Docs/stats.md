@@ -1,12 +1,62 @@
 # EdgeCase — Project Status & Blueprint
 
-> **Last Updated:** 2026-08-30
+> **Last Updated:** 2026-09-04
 > **Project Root:** `/Users/anumey/Work/Android/EdgeCase`
 > **Package:** `com.dicereligion.edgecase`
 > **App Name:** EdgeCase
-> **Version:** 1.4.1 (versionCode 3; the UI label reads `ΕΚΔ. 1.4.1`, sourced from `BuildConfig.VERSION_NAME`)
+> **Version:** 1.5.0 (versionCode 4; the UI label reads `ΕΚΔ. 1.5.0`, sourced from `BuildConfig.VERSION_NAME`)
 >
-> **Latest change (2026-08-30) — ads are real: B1, B2, B3 and B4 all landed.**
+> **Latest change (2026-09-04) — release prep: the code half of the launch checklist is done.**
+> Everything in `Publisher.md` §10's critical list that does not need an external account has landed
+> (Appendix C, **group D**), plus a Credits-screen trim. What changed:
+>
+> - **R8 is on.** `isMinifyEnabled` + `isShrinkResources` for release; the APK drops from
+>   **22.5 MB to 5.5 MB**. The keep rules are 44 lines, not `Publisher.md` §2.2's set — that one is
+>   over-broad, carries `android.support.v7` rules for a namespace this app lacks, and names the
+>   **legacy** ads package. The rule that earns its place is the enum-constant keep: `SliverConfig`
+>   restores `ColorMode` with `valueOf()`, so obfuscated constants would throw on prefs written by
+>   v1.4.1. Verified in `mapping.txt` (§4).
+> - **Prominent disclosure** for `SYSTEM_ALERT_WINDOW` (§5.1). `checkAndRequestPermissions()` no
+>   longer drops the user into system Settings unannounced. Its closing paragraph is a user-facing
+>   restatement of policy claims **P4/P5**, so it is now part of the §9 constraint set.
+> - **`PROPERTY_SPECIAL_USE_FGS_SUBTYPE`** added (§6.6). This appears on **no checklist in any of
+>   these documents** and was a genuine gap: `foregroundServiceType="specialUse"` requires a declared
+>   subtype from targetSdk 34 onward, and this app targets 36.
+> - **`usesCleartextTraffic="false"`**, `DummyBannerView.kt` deleted (B5), version bumped to
+>   **1.5.0 / 4**.
+> - **Credits trimmed.** The maker's supporting paragraph, the LIBRARIES block and the ADVERTISING
+>   block are gone (§6.1). Neither removed block was an obligation — and an earlier revision of this
+>   document calling the AdMob attribution "required" was simply wrong. **LETTERING stays**: the OFL
+>   on the two embedded fonts is the one credit that is genuinely binding.
+> - **`url_developer_page` is fixed and live.** It used `…/store/apps/developer?id=Dice+Religion`,
+>   which is not a developer page — Play treats the name as a search term — so the Seal was landing
+>   users on a results list. Now the numeric `…/store/apps/dev?id=7276298746168757657`. **No
+>   placeholder URL remains in the app.**
+>
+> **Same-day device pass (group D′), signed release build on a Pixel 9 Pro XL.** The keystore and
+> `signingConfigs` landed too (D9), so `assembleRelease` now emits a signed **app-release.apk
+> (5.5 MB)** and `bundleRelease` an **app-release.aab (5.9 MB)**.
+>
+> - **R8 broke the app, and only running it revealed that.** The first signed release build compiled
+>   green and then died before `MainActivity` ran: R8 removed the no-arg constructor of
+>   `WorkDatabase_Impl`, which Room creates by reflection. Room 2.2.5 — pulled in transitively by the
+>   ads SDK via `androidx.work` — ships a consumer rule that keeps the class but not its members.
+>   One keep rule fixes it (§4), but the lesson outranks the fix: **a green `assembleRelease` says
+>   nothing about whether the app starts**, and "the AAR ships consumer rules" only ever covers the
+>   direct dependency, never what it drags in.
+> - **Everything else passed:** 14/14 instrumented tests, correct rendering under `shrinkResources`,
+>   the banner serving under R8, the disclosure dialog framing correctly with the Plinth well going
+>   empty beneath it, the trimmed Credits screen, and the Seal reaching the real developer page.
+> - **The EEA consent path is blocked, and one blocker is a live revenue risk.** The device proved
+>   there are **no consent messages configured** for this AdMob app ID — so in the EEA the app would
+>   serve no ads at all, not merely fail a test. This document's stated method for the EEA test was
+>   also wrong: debug geography is a client-side API, not an AdMob console setting. Both corrections
+>   are in Appendix C, group C.
+>
+> **Still not run, by request:** the small-screen pass, which remains sized against 146dp rather than
+> the real 174dp.
+>
+> **Previous change (2026-08-30) — ads are real: B1, B2, B3 and B4 all landed.**
 > The Plinth stopped being a preview. The GMA Next-Gen SDK and UMP are on the classpath, a real
 > `AdView` serves the band, and UMP resolves consent before any ad is requested. What changed:
 >
@@ -25,7 +75,7 @@
 >   withdrawing consent can change the requirement status. **This closes the one published-policy
 >   commitment the code had not met** (§9).
 >
-> **Two things are done but unproven, and both gate the release.** The EEA consent path has never
+> **Two things were done but unproven, and both still gate the release.** The EEA consent path has never
 > rendered — the test device reports `NOT_REQUIRED`, so the form and the AD CONSENT slab have not
 > been seen (Appendix C, group C). And the banner measured **411×128dp** on a Pixel 9 Pro XL, not
 > the ~100dp every document assumed, so the Plinth's real cost is **174dp, not 146dp** and the
@@ -173,7 +223,7 @@
    - [5.17 CrackFlashView.kt](#517-crackflashviewkt)
    - [5.18 ServiceEyeView.kt](#518-serviceeyeviewkt)
    - [5.19 AdHost.kt](#519-adhostkt)
-   - [5.20 DummyBannerView.kt](#520-dummybannerviewkt)
+   - [5.20 DummyBannerView.kt — deleted](#520-dummybannerviewkt--deleted-b5-2026-09-04)
 6. [Resources — Complete Reference](#6-resources--complete-reference)
    - [6.1 Layouts](#61-layouts)
    - [6.2 Drawables](#62-drawables)
@@ -430,7 +480,6 @@ EdgeCase/
             │   ├── ArcSliverView.kt
             │   ├── AvailableAppsAdapter.kt
             │   ├── CrackFlashView.kt             # Slab fracture-flash on button press
-            │   ├── DummyBannerView.kt            # DEAD since B2 — delete at B5
             │   ├── DustParticleView.kt
             │   ├── LabeledSeekBar.kt             # Reusable label+slider+value row
             │   ├── MainActivity.kt
@@ -562,11 +611,20 @@ plugins {
 - **namespace / applicationId:** `com.dicereligion.edgecase`
 - **compileSdk:** 36 (with `minorApiLevel = 1`)
 - **minSdk:** 30 · **targetSdk:** 36
-- **versionCode:** 3 · **versionName:** `"1.4.1"`
+- **versionCode:** 4 · **versionName:** `"1.5.0"` — bumped for the ads release (`Docs/Ads.md` §7.8)
 - **Java:** 11 (source & target)
 - **buildFeatures:** `buildConfig = true` — required by the version label, which reads
   `BuildConfig.VERSION_NAME` rather than a hardcoded string
-- **Minification:** disabled (`isMinifyEnabled = false`)
+- **Release signing:** a `signingConfigs { release { … } }` block reading `keystore.properties`
+  from the repo root — **gitignored**, alongside `*.jks` / `*.keystore`. When that file is absent
+  (a fresh clone, CI, anyone but the release engineer) `hasSigningConfig` is false and the release
+  build simply comes out unsigned rather than failing, so size and R8 checks still work. `v1Signing`
+  is off — it covers Android 7–8 and `minSdk` is 30 — with v2/v3 on. The keystore itself lives at
+  `~/keys/edgecase-release.jks` (RSA 4096, alias `edgecase`, valid to Jan 2054), **outside the
+  repository**; `keystore.properties.example` documents the shape. Under Play App Signing this is
+  the *upload* key, which Google can reset if lost — it is not the irrecoverable app-signing key
+- **Minification:** **enabled on release** — `isMinifyEnabled = true` + `isShrinkResources = true`
+  (`Publisher.md` §2.1). Keep rules live in `app/proguard-rules.pro`; see the note below
 - **testInstrumentationRunner:** `androidx.test.runner.AndroidJUnitRunner` — used by the **14
   instrumented tests** in `app/src/androidTest/` (`SliverShapeTest` 6, `SliverConfigTest` 8; see
   Appendix C, A4). The JVM source set `app/src/test/` is still an empty package tree: both classes
@@ -587,7 +645,78 @@ plugins {
 > **The ad stack is complete (B1–B4).** The GMA Next-Gen SDK and UMP are on the classpath, the
 > `APPLICATION_ID` meta-data is in the manifest, a real `AdView` serves the Plinth, and UMP gates
 > every ad request. The SDK drags in Cronet and `androidx.work` transitively; the debug APK is
-> **22 MB**, which R8 (still disabled — `Publisher.md` §2.1) will cut substantially for release.
+> **22.5 MB**, and R8 cuts the release APK to **5.5 MB**.
+
+### `app/proguard-rules.pro`
+
+R8 keep rules, written at the release-prep pass (2026-09-04). **Deliberately small — 68 lines.**
+AAPT2 already generates keep rules for every manifest component and every custom `View` named in a
+layout, including its `(Context, AttributeSet)` constructor, and both ad AARs bundle their own
+consumer `proguard.txt` (verified by unzipping the artifacts in `~/.gradle/caches`). Restating any
+of that by hand adds nothing. Four rules cover what R8 genuinely cannot see:
+
+1. **Enum constant names** for `com.dicereligion.edgecase.**`. `SliverConfig` persists `ColorMode`
+   by `.name` and restores it with `valueOf()` (§5.11), so an obfuscated constant would throw on
+   prefs written by an earlier build. Verified in `mapping.txt`: `DEFAULT -> DEFAULT`,
+   `CUSTOM -> CUSTOM`.
+2. **`-keep class * extends androidx.room.RoomDatabase { <init>(); }`** — see the crash below. This
+   is the rule that actually mattered.
+3. `-keepattributes SourceFile,LineNumberTable` + `-renamesourcefileattribute SourceFile`, so Play
+   Console stack traces retrace against the per-release `mapping.txt`.
+4. Two `-dontwarn` lines for optional SDK back-references.
+
+#### The launch crash R8 caused, and why a green build did not catch it
+
+**The first R8 release build compiled cleanly, installed, and died before `MainActivity` ran:**
+
+```
+java.lang.RuntimeException: Unable to get provider androidx.startup.InitializationProvider
+Caused by: Failed to create an instance of androidx.work.impl.WorkDatabase
+    at androidx.work.WorkManagerInitializer.b(SourceFile:26)
+```
+
+`usage.txt` named the casualty exactly:
+
+```
+androidx.work.impl.WorkDatabase_Impl:
+    public void <init>()          ← removed
+```
+
+The chain: the ads SDK pulls in `androidx.work:2.7.0`, which pulls in **Room 2.2.5**, whose own
+consumer rule is
+
+```
+-keep class * extends androidx.room.RoomDatabase
+```
+
+That keeps the **class** but not its **members**, and Room instantiates the generated
+`WorkDatabase_Impl` reflectively. R8 saw a constructor nobody called and removed it. Room added
+`{ <init>(); }` to its own rule in later releases; 2.2.5 predates the fix and arrives transitively,
+so the version cannot simply be raised here.
+
+**Three things this establishes, and they generalise:**
+
+- **A successful `assembleRelease` proves nothing about whether the app runs.** Reflection-based
+  failures are invisible to the compiler and to R8 itself. Any dependency bump that touches
+  `work`/`room` — or any new library that instantiates by reflection — means *launching* a release
+  build, not just building one.
+- **"The AAR ships consumer rules, so no rules are needed" is only true of the direct dependency.**
+  It was true of `ads-mobile-sdk` and `user-messaging-platform`. It was false of what they drag in.
+  An earlier revision of this section asserted the general form of that claim; it was wrong.
+- **`usage.txt` is the diagnostic tool**, not `mapping.txt`. The class was present and unrenamed in
+  the mapping, which looked healthy; the removed member only shows in the usage report.
+
+**`Publisher.md` §2.2's rule set was not used.** It predates the ad SDK and is over-broad: a blanket
+`-keep` on all of AppCompat and RecyclerView plus `-keep public class * extends android.view.View`
+would defeat most of the shrink, it carries `android.support.v7` rules for a namespace this app does
+not contain, and its commented-out AdMob block names `com.google.android.gms.ads` — the **legacy**
+SDK, not the Next-Gen one on the classpath. The deviations are recorded in the file's header.
+
+**Verified after enabling R8:** all 19 classes survive. The four that get renamed
+(`ArcSliverView`, `CrackFlashView`, `DustParticleView`, `AdHost`) are instantiated from code only —
+confirmed by grep that none appears in any layout XML, so there is no inflation crash. Resource
+shrinking is safe because the app makes no `getIdentifier()` call anywhere; both bundled fonts are
+present in the shrunk APK.
 
 ---
 
@@ -595,7 +724,7 @@ plugins {
 
 ### 5.1 `MainActivity.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/MainActivity.kt` · **655 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/MainActivity.kt` · **690 lines**
 **Extends:** `AppCompatActivity`
 
 **Responsibilities:**
@@ -705,6 +834,25 @@ list is sorted by lowercased app name.
 **Discard dialog (`showDiscardDialog()`):** an `android.app.AlertDialog` titled
 "ABANDON THE UNCARVED?" with "ABANDON" / "KEEP CARVING" buttons, whose window background is forced to
 `bg_temple_panel` so no rounded system dialog frame shows.
+
+**Overlay disclosure dialog (`showOverlayDisclosureDialog()`, added 2026-09-04).** The prominent
+disclosure Play requires for `SYSTEM_ALERT_WINDOW` (`Publisher.md` §5.3). `checkAndRequestPermissions()`
+no longer drops the user straight into system Settings; it raises this dialog first —
+"DISPLAY OVER OTHER APPS", body from `@string/overlay_disclosure_body`, with the Settings redirect
+moved onto its "OPEN SETTINGS" button and "NOT NOW" as the negative. Built from `showDiscardDialog`
+so it presses and frames identically, and it takes the same `setAdVisible(false)` /
+`setOnDismissListener { setAdVisible(true) }` treatment as every other modal here.
+
+Two reasons this matters beyond the checkbox: an overlay app that also serves ads is read closely at
+review (`Docs/Ads.md` §11), and the body's closing paragraph — *"The overlay only draws. It cannot
+read, record, or transmit anything on the screen beneath it."* — is a user-facing restatement of
+policy claims **P4 and P5** (§9). Changing the overlay's capabilities means changing this string and
+the hosted policy in the same pass.
+
+**Still undisclosed:** the battery-optimization redirect immediately after still fires with no
+explanation, sending the user to a second system screen unannounced. Not a policy requirement — the
+prominent-disclosure rule covers `SYSTEM_ALERT_WINDOW`, not Doze exemption — but it is the rougher
+half of the flow now that the first half is explained.
 
 **Service-state sync.** `onResume()` sets every eye to `SidebarService.isRunning`, so the indicator is
 correct after the service dies, is killed by the system, or is stopped from elsewhere.
@@ -1321,20 +1469,15 @@ height so nothing re-lays out behind the dialog.
 
 ---
 
-### 5.20 `DummyBannerView.kt`
+### 5.20 `DummyBannerView.kt` — **DELETED (B5, 2026-09-04)**
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/DummyBannerView.kt` · **106 lines**
-**Extends:** `View`
-
-**Dead code as of B2 — nothing references it.** It was the placeholder that let the Plinth's look,
-footprint and inertness be judged before any AdMob account existed. A real `AdView` replaced it, so
-its only remaining purpose is served. **Delete at Appendix C, B5.**
-
-Retained here only so the deletion is a deliberate act rather than an unexplained absence: it was
-drawn light (`#FAFAF7` face, `#C9C4BA` edge) rather than in the EdgeCase palette, because real
-creatives are overwhelmingly bright and a temple-toned placeholder would have misrepresented how the
-band actually reads against the obsidian frame. It printed its own measured dp size and carried a
-stand-in AdChoices corner tag so that space was accounted for too.
+The 106-line placeholder that let the Plinth's look, footprint and inertness be judged before any
+AdMob account existed. A real `AdView` replaced it at B2, nothing referenced it afterwards, and it
+was removed at the release-prep pass. Recorded here only so its absence is legible: it was drawn
+light (`#FAFAF7` face, `#C9C4BA` edge) rather than in the EdgeCase palette, because real creatives
+are overwhelmingly bright and a temple-toned placeholder would have misrepresented how the band
+reads against the obsidian frame. It printed its own measured dp size and carried a stand-in
+AdChoices corner tag so that space was accounted for too. **Source tree is now 19 Kotlin files.**
 
 ---
 
@@ -1443,9 +1586,9 @@ the temple header (retitled "CREDITS" in code); a weighted **`ScrollView`**
 then a `wrap_content` action bar.
 
 Inside the scroller, in order:
-1. **DICE RELIGION** caption (`CaptionChiseled`) over a lead line at `text_body` and a supporting
-   paragraph at `text_caption`, alpha 0.85 — the two-size split keeps the whole screen inside one
-   viewport on a large phone
+1. **DICE RELIGION** caption (`CaptionChiseled`) over a single lead line at `text_body`. The
+   supporting paragraph beneath it (`credits_maker_body`, "An edge-mounted launcher…") was
+   **removed on 2026-09-04** as surplus — the screen credits, it does not pitch
 2. **The Seal** — `btnDeveloperSeal`, a `credits_seal_size` (108dp) square `FrameLayout` backed by
    `selector_dev_seal` with `credits_seal_padding` (11dp) and the slab elevation, holding a
    `fitCenter` `ic_dice_religion`. It is a `FrameLayout` rather than an `ImageButton` so the platform
@@ -1454,9 +1597,29 @@ Inside the scroller, in order:
    ("Dice Religion on Google Play"), with the `ImageView` marked
    `importantForAccessibility="no"`
 3. A one-line hint caption, then a `ic_divider_fangs` twin-fang divider
-4. **LETTERING** and **LIBRARIES** caption/body pairs
-5. **ADVERTISING** caption/body (`tvCreditAdsHeading` / `tvCreditAdsBody`) — **visible as of B2**.
-   A real ad network now serves the Plinth, so the attribution is both true and required
+4. **LETTERING** — the caption/body pair carrying the two OFL font credits
+
+**LIBRARIES and ADVERTISING were removed on 2026-09-04**, with their four strings and the
+`tvCreditAdsHeading` / `tvCreditAdsBody` IDs. Neither was an obligation:
+
+- **ADVERTISING** ("Ads served by Google AdMob") is not required by the GMA SDK terms, the AdMob
+  program policies, or Play policy. The real ad obligations sit elsewhere and none of them lived in
+  this block — the hosted policy discloses AdMob, the UMP consent flow and its `btnAdConsent` entry
+  point are in the **action bar** and were untouched, and *Contains ads* is a Play Console
+  declaration. An earlier revision of this section called the attribution "required"; that was
+  wrong.
+- **LIBRARIES** (AndroidX, Apache 2.0) named the libraries and the licence but shipped no licence
+  text, so it never satisfied Apache 2.0 §4 in the first place — removing it moved the screen from a
+  gesture to nothing, not from compliant to non-compliant. Actual compliance would need a full
+  licence-text screen, which is a future-work item, not a release blocker.
+
+**LETTERING is the one credit block that cannot go.** Cinzel and GFS Neohellenic are OFL 1.1 and
+both TTFs are embedded in the APK (§6.4); the OFL requires the copyright notice and licence travel
+with the font. Do not "tidy" this section the way the other two were tidied.
+
+The screen is now materially shorter than the tallest-in-the-app it was built as. `fillViewport`
+keeps the block top-aligned either way, but the fading edge will only appear on short screens —
+re-check during the small-screen pass (Appendix C, group C).
 
 The action bar is a **vertical** `wrap_content` block, never weighted — the same rule the Shortcuts
 screen needed. It holds a horizontal row of two equal-weight buttons, `btnBackToMenuFromCredits`
@@ -1619,18 +1782,18 @@ as `DEF_WIDTH_DP` / `DEF_HEIGHT_DP` / `DEF_TRAY_WIDTH_DP`. Every remaining entry
 
 | Name | Role |
 |---|---|
-| `credits_maker_heading` / `credits_maker_lead` / `credits_maker_body` | The Dice Religion caption, lead line and supporting paragraph |
+| `credits_maker_heading` / `credits_maker_lead` | The Dice Religion caption and lead line. `credits_maker_body` was removed on 2026-09-04 |
 | `credits_seal_hint` | One-line caption under the Seal |
-| `credits_lettering_heading` / `credits_lettering_body` | Cinzel and GFS Neohellenic, each with its OFL 1.1 attribution |
-| `credits_libraries_heading` / `credits_libraries_body` | AndroidX / AOSP, Apache 2.0 |
-| `credits_ads_heading` / `credits_ads_body` | Written but **not shown** — the views are `gone` until the real SDK lands (B2) |
-| `url_developer_page` | **Placeholder.** `…/store/apps/developer?id=Dice+Religion`. The canonical form is `…/store/apps/dev?id=<numeric publisher id>`, available from the Play Console once the account exists |
+| `credits_lettering_heading` / `credits_lettering_body` | Cinzel and GFS Neohellenic, each with its OFL 1.1 attribution. **Required** — see §6.1 |
+| `overlay_disclosure_body` | The prominent-disclosure text shown before the system overlay-permission screen (§5.1). Its closing paragraph restates policy claims P4 and P5 (§9) — do not soften it without changing the policy |
+| `url_developer_page` | **Live** — `…/store/apps/dev?id=7276298746168757657`. Must be the **numeric `dev?id=`** form. The `developer?id=<name>` form used until 2026-09-04 is not a developer page at all: Play treats the name as a search term and lands the user on a results list, which is exactly what it did |
 | `url_privacy_policy` | **Live** — `https://anumey.xyz/legal/edgecase/privacy`, deployed and verified **200 on 2026-08-30**, hosted on the Anumey's Lair site beside the Mach2 and BOTCH policies. **Must never move.** Not yet registered in Play Console, because no listing exists yet (Appendix C, B6) |
 
 Both URLs are `translatable="false"`. The privacy policy and its companion
 `https://anumey.xyz/legal/edgecase/delete-data` are **deployed and live** — both verified 200 on
 2026-08-30, with §6.2/§6.3/§6.4 present as the code and this document cite them. `url_developer_page`
-remains the one placeholder, pending the numeric `dev?id=` form. See Appendix C group B. Long-form prose lives here rather than in the layout so there
+was corrected to the numeric form on 2026-09-04, so **no placeholder URL remains**.
+`credits_libraries_*` and `credits_ads_*` were deleted the same day (§6.1). Long-form prose lives here rather than in the layout so there
 is exactly one place to edit the wording; every other UI label — screen titles, button text,
 captions, the dialog's controls, toasts, and the discard dialog's copy — is still an inline literal
 in the layouts or in code. Note the manifest sets `android:label="EdgeCase"` as a literal rather than
@@ -1713,6 +1876,7 @@ correctly in both standard and circular launcher modes. The manifest sets
 
     <application
         android:allowBackup="true"
+        android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -1739,10 +1903,24 @@ correctly in both standard and circular launcher modes. The manifest sets
             android:name=".SidebarService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Hosts the always-available edge overlay …" />
+        </service>
     </application>
 </manifest>
 ```
+
+**Two release-prep additions (2026-09-04):**
+
+- **`usesCleartextTraffic="false"`** (`Publisher.md` §2.8). AdMob is HTTPS-only and the app makes no
+  request of its own (claim P1, §9), so nothing needs cleartext and the secure default is free.
+- **`PROPERTY_SPECIAL_USE_FGS_SUBTYPE`** on the service. This was a genuine gap, not on any
+  checklist: `foregroundServiceType="specialUse"` **requires** a declared subtype from targetSdk 34
+  onward, and this app targets 36. Play reads the string and checks it against what the service
+  actually does, so it must stay factual and in step with the foreground-service justification in
+  the Console listing (`Publisher.md` §5.2).
 
 #### `backup_rules.xml` & `data_extraction_rules.xml`
 Both now include `EdgeCasePrefs.xml` — `backup_rules.xml` for cloud backup below API 31, and
@@ -1751,7 +1929,8 @@ list onto a device missing some of those apps is safe: `ShortcutStateManager` fi
 packages on load, and `SidebarService.populateShortcuts` skips any package that fails to resolve.
 
 #### `proguard-rules.pro`
-Stock file with commented-out examples; no active rules. Minification is disabled.
+44 lines of R8 keep rules as of 2026-09-04; minification is **on** for release. Fully described
+under §4 → `app/proguard-rules.pro`.
 
 ---
 
@@ -1788,7 +1967,7 @@ Stock file with commented-out examples; no active rules. Minification is disable
 | 25 | System gesture exclusion for the sliver (API 29+) | ✅ | `SidebarService.assembleSliverView()` |
 | 26 | Hot-reload shortcuts in the running service | ✅ | `ACTION_UPDATE_SHORTCUTS` |
 | 27 | Hot-reload position in the running service | ✅ | `ACTION_UPDATE_POSITION` |
-| 28 | Overlay permission check + redirect to settings | ✅ | `MainActivity.checkAndRequestPermissions()` |
+| 28 | Overlay permission check + **prominent disclosure** + redirect to settings | ✅ | `MainActivity.checkAndRequestPermissions()` → `showOverlayDisclosureDialog()` |
 | 29 | Battery optimization exemption request | ✅ | `MainActivity.checkAndRequestPermissions()` |
 | 30 | Custom adaptive app icon (transparent bg, 0dp inset) | ✅ | §6.5 |
 | 31 | Tray dismiss on outside touch | ✅ | `trayView.setOnTouchListener()` |
@@ -1823,7 +2002,7 @@ Stock file with commented-out examples; no active rules. Minification is disable
 | 60 | Background **app-list preloading** | ✅ v1.4.x | `MainActivity.preloadApps()` |
 | 61 | Version label sourced from `BuildConfig` | ✅ v1.4.x | `MainActivity.wireMainMenuButtons()` |
 | 62 | **The Plinth** — persistent, inert, bordered ad band below every screen | ✅ | `layout_ad_plinth.xml`, `bg_ad_plinth.xml` |
-| 63 | ~~Placeholder banner~~ — replaced by a real `AdView` at B2 | ✅ | `DummyBannerView.kt` now dead (B5) |
+| 63 | ~~Placeholder banner~~ — replaced by a real `AdView` at B2 | ✅ | `DummyBannerView.kt` deleted at B5 |
 | 64 | Slot space reserved before any creative arrives (no layout shift) | ✅ | `AdHost`, `ad_slot_min_height` — two-stage reservation |
 | 65 | Banner hidden under modal dialogs (`INVISIBLE`, no re-layout) | ✅ | `AdHost.setAdVisible()` |
 | 66 | Scrollable main-menu button stack (small-screen safety) | ✅ | `layout_screen_main_menu.xml` |
@@ -1833,14 +2012,16 @@ Stock file with commented-out examples; no active rules. Minification is disable
 | 70 | Dust and crack effects draw above the slab buttons | ✅ | `dustContainer` elevation |
 | 71 | Instrumented test suite (14 tests) | ✅ | `app/src/androidTest/` |
 | 72 | Backup / device-transfer rules for `EdgeCasePrefs` | ✅ | `res/xml/` |
-| 73 | **Credits screen** — maker, lettering and library attributions | ✅ | `layout_screen_credits_container.xml` |
+| 73 | **Credits screen** — maker and lettering attributions | ✅ | `layout_screen_credits_container.xml` — library and advertising blocks removed 2026-09-04 (§6.1) |
 | 74 | **The Seal** — framed developer mark linking to the Play Store page | ✅ | `bg_dev_seal.xml`, `MainActivity.openUrl()` |
-| 75 | **Privacy** button linking to the policy (placeholder URL) | ✅ | `btnPrivacyPolicy` |
+| 75 | **Privacy** button linking to the live hosted policy | ✅ | `btnPrivacyPolicy` |
 | 76 | Slab press behaviour generalised to any `View` | ✅ | `applyStoneButtonBehavior<T : View>` |
 | 77 | **AD CONSENT** entry point, hidden unless a consent regime applies | ✅ | `btnAdConsent`, `AdHost.isPrivacyOptionsRequired()` — real UMP body as of B4 |
 | 79 | **UMP consent resolved before any ad request** (`canRequestAds()` gate) | ✅ | `AdHost.start()` |
 | 80 | Real GMA Next-Gen banner in the Plinth, adaptive-sized | ✅ | `AdHost.attachBanner()` |
 | 78 | Published **privacy policy** and **data-deletion** pages | ✅ | `anumey.xyz/legal/edgecase/*` |
+| 81 | **Prominent disclosure** before the overlay-permission redirect | ✅ | `MainActivity.showOverlayDisclosureDialog()` |
+| 82 | **R8** shrink + resource shrink on release builds | ✅ | `build.gradle.kts`, `proguard-rules.pro` — 22.5 MB debug → 5.5 MB release |
 
 ### Planned / Stub Features
 
@@ -1848,10 +2029,10 @@ Stock file with commented-out examples; no active rules. Minification is disable
 |---|---|---|
 | 1 | Dummy button (third menu option) | ✅ **Gone** — became **CREDITS** (features 73–75) |
 | 2 | Monochrome themed icon (Android 13+) | ❌ Removed — incompatible with a raster PNG foreground |
-| 3 | AdMob monetization | 🔶 **Partial** — the Plinth and its placeholder are built (§5.19–5.20); no SDK, consent flow, or ad unit yet. See `Docs/Ads.md` and Appendix C |
+| 3 | AdMob monetization | ✅ **Code complete** (B0–B5) — real SDK, real banner, UMP consent, live ad unit. What remains is Play Console work and the unproven-path verification in Appendix C |
 | 4 | Overlay suspension while the Activity is foreground | ✅ **Done** — feature 68 |
 | 5 | UMP **privacy options** entry point | ✅ **Done** (B3/B4) — real `UserMessagingPlatform` bodies; unproven under an actual consent regime, see §9 |
-| 6 | In-app AdMob attribution | 🔶 Written but hidden — `tvCreditAdsHeading` / `tvCreditAdsBody` are `gone` until B2 |
+| 6 | In-app AdMob attribution | ❌ **Removed** 2026-09-04. Never an obligation — no GMA SDK term, AdMob policy or Play policy requires it, and the real ad disclosures live in the hosted policy, the UMP flow and the Console declaration (§6.1) |
 
 ---
 
@@ -1963,15 +2144,16 @@ Stock file with commented-out examples; no active rules. Minification is disable
 
 | Permission | Purpose | Handling |
 |---|---|---|
-| `SYSTEM_ALERT_WINDOW` | Draw the overlay windows (Sliver & Tray) | `Settings.canDrawOverlays()`; redirect to settings if denied. The service also `stopSelf()`s if it starts without it |
+| `SYSTEM_ALERT_WINDOW` | Draw the overlay windows (Sliver & Tray) | `Settings.canDrawOverlays()`; **prominent disclosure dialog** (§5.1), then redirect to settings if denied. The service also `stopSelf()`s if it starts without it |
 | `FOREGROUND_SERVICE` | Run the persistent foreground service | Declared only |
-| `FOREGROUND_SERVICE_SPECIAL_USE` | Qualify the foreground service type | Declared only |
+| `FOREGROUND_SERVICE_SPECIAL_USE` | Qualify the foreground service type | Declared, plus the `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` the platform requires at targetSdk 34+ (§6.6). Play reads that string at review |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Prevent Doze from killing the service | `PowerManager.isIgnoringBatteryOptimizations()`; redirect to settings (non-blocking — the flow continues either way) |
 | `VIBRATE` | Haptics on button presses, swipes, and launches | Declared, no runtime check needed |
 
 **Five more permissions arrive by manifest merge (B1).** None is declared in this app's manifest;
-all are contributed by the ad libraries and appear only in the *merged* manifest. Verified against
-`manifest-merger-release-report.txt`:
+all are contributed by the ad libraries and appear only in the *merged* manifest. **Re-verified
+against the merged release manifest on 2026-09-04**, after R8 and the version bump — all five still
+present, `AD_ID` and `APPLICATION_ID` included:
 
 | Permission | Contributed by | Note |
 |---|---|---|
@@ -2080,7 +2262,16 @@ C. Until that run happens, this row is *implemented but unproven*.
     On a sustained frame drop the pulse slows; on a 120Hz panel it runs fast. Same for
     `ServiceEyeView`.
 
-12. **No clipboard, deep-link, or app-shortcut support.** The tray launches apps only — no
+12. **`ACTION_MANAGE_OVERLAY_PERMISSION` lands on the global list, not EdgeCase's own page.**
+    Observed on the Pixel 9 Pro XL (Android 17) 2026-09-04: the intent carries
+    `Uri.parse("package:$packageName")`, but `com.android.settings.spa.SpaActivity` shows the full
+    alphabetical "Display over other apps" list of every installed app, leaving the user to hunt for
+    EdgeCase. Pre-existing — the disclosure dialog only made it visible — and possibly specific to
+    this Android beta, since the package-scoped form works on earlier releases. It reads badly right
+    after a dialog that promises "the next screen is Android's own settings page", so it is worth
+    re-checking on a stable build and, if it persists, softening that sentence.
+
+13. **No clipboard, deep-link, or app-shortcut support.** The tray launches apps only — no
     `ShortcutManager` entries, no custom actions, no widgets.
 
 
@@ -2114,7 +2305,7 @@ C. Until that run happens, this row is *implemented but unproven*.
 
 | File | Lines | Purpose |
 |---|---|---|
-| `MainActivity.kt` | 664 | Main UI, navigation, back handling, permissions, service control, Customize hook, ad host, outbound links, consent entry point |
+| `MainActivity.kt` | 690 | Main UI, navigation, back handling, permissions, service control, Customize hook, ad host, outbound links, consent entry point |
 | `PositioningView.kt` | 505 | Marble stele, draggable fang, tracking arrow, snap animation, particles |
 | `SidebarService.kt` | 490 | Foreground service, overlay windows, tray, in-place style/position update |
 | `ObsidianCrackView.kt` | 278 | Animated obsidian background with pulsing emerald gems |
@@ -2125,7 +2316,6 @@ C. Until that run happens, this row is *implemented but unproven*.
 | `SliverConfig.kt` | 134 | Sliver + drawer model, prefs I/O, drawer-height migration |
 | `ArcSliverView.kt` | 125 | Config-driven fang rendering, swipe detection, `applyConfig` |
 | `CrackFlashView.kt` | 110 | One-shot fracture flash on slab press |
-| `DummyBannerView.kt` | 106 | Dead since B2; delete at B5 |
 | `DustParticleView.kt` | 104 | Particle burst effect for button presses |
 | `LabeledSeekBar.kt` | 95 | Reusable label + slider + value control row |
 | `ShortcutDragCallback.kt` | 68 | Drag-to-reorder ItemTouchHelper |
@@ -2193,8 +2383,8 @@ unproven — the EEA consent path and the small-screen pass at the measured 128d
 | `~/Work/Web/Anumey's Lair` | External repo | The website that **hosts EdgeCase's legal pages**: `/legal/edgecase/privacy` and `/legal/edgecase/delete-data`, beside the existing Mach2 and BOTCH policies. Next.js on Firebase App Hosting; **every push to `main` deploys**. Its `docs/stats.md` §4 → *Legal routes* is the authority on the URL constraints. The publisher-level `public/app-ads.txt` already carries the AdMob publisher ID EdgeCase will use — no change needed there |
 | `Docs/SliverAnatomy.md` | Current | Deep-dive on the fang geometry: named parts, vertices, tuning knobs, and how they map to `SliverConfig`/`SliverShape` |
 | `Docs/Dimensions.md` | Current | Stable ID/dimension addressing for every page and element; §6 covers the sliver anatomy and tuning knobs. Predates the v1.4 rehaul — verify IDs against the layouts before relying on it |
-| `Docs/Publisher.md` | Partly superseded | Google Play publication roadmap / pre-launch checklist. Its §3 ("Ad Integration Strategy") is superseded by `Docs/Ads.md` §9 |
-| `Docs/Ads.md` | **Implemented except §7.8** | AdMob integration plan (2026-08-28): the "Plinth" bordered-banner architecture, the overlay-service compliance hazard and its fix, a 7-phase implementation plan, and a compliance checklist. §5–§6 (architecture, visual spec), §7.1–7.5 (account, SDK, AdHost, layout, wiring), §7.6 (overlay suspension) and §7.7 (privacy entry point) are all built. Only **§7.8 (Play Console, versioning)** remains — Appendix C, B6. **Caveat: §7.3's code listing has drifted from the shipped SDK** and must not be pasted verbatim; verify symbols against the AAR |
+| `Docs/Publisher.md` | Partly superseded, mostly complete | Google Play publication roadmap / pre-launch checklist. Its §3 ("Ad Integration Strategy") is superseded by `Docs/Ads.md` §9, and its §2.2 keep rules were rejected in favour of the 44-line set in §4 above. Its §2.1/§2.6/§2.8/§5.3 items are all done and annotated in place. **What is still live in it: §2.5/§4.1 (keystore), §6 (store assets), §7.1 (closed testing).** It has no item for `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, which was a real gap |
+| `Docs/Ads.md` | **Implemented except §7.8** | AdMob integration plan (2026-08-28): the "Plinth" bordered-banner architecture, the overlay-service compliance hazard and its fix, a 7-phase implementation plan, and a compliance checklist. §5–§6 (architecture, visual spec), §7.1–7.5 (account, SDK, AdHost, layout, wiring), §7.6 (overlay suspension) and §7.7 (privacy entry point) are all built. Of **§7.8**, the privacy policy and the version bump are done; the five Play Console declarations remain — Appendix C, B6. **Caveat: §7.3's code listing has drifted from the shipped SDK** and must not be pasted verbatim; verify symbols against the AAR |
 | `Docs/Legacy/NewTheme.md` | **Implemented** | The v1.4.0 "Obsidian Serpent" blueprint. Its Phases 1–7 and §12 functional changes are all present in the code described above; retained for the design rationale behind the Design Laws referenced in source comments |
 | `Docs/Legacy/EdgeCaseTD.md`, `EdgecaseTheme.md`, `EdgeNextPDP.md`, `IMPLEMENTATION_PLAN.md` | Historical | Superseded early design and planning documents |
 
@@ -2220,25 +2410,92 @@ external setup first.
 
 | # | Task | Blocking? | Notes |
 |---|---|---|---|
-| B0 ◐ | **AdMob account, app registration, one banner unit** | mostly done 2026-08-30 | `Docs/Ads.md` §7.1. Publisher **pub-4587702028307036** (shared with the sibling apps, so any enforcement here hits them too). App registered as "Edgecase"/Android, *not listed on a store yet* — **relink to the Play listing after publication**, the unlinked path costs fill rate. One unit, `EdgeCase — Plinth Banner`, `…/8470994251`, format Banner, **auto-refresh 60s** ✅. Test device (Pixel 9 Pro XL) registered account-wide at Settings → Test devices, keyed to its advertising ID — resetting that ID silently de-registers it. **Outstanding: EU + US-states consent messages** must exist in Privacy & messaging or UMP has nothing to show, and app-ads.txt verification is blocked until a Play listing exists (the file itself is correct and serving 200) |
+| B0 ◐ | **AdMob account, app registration, one banner unit** | mostly done 2026-08-30 | `Docs/Ads.md` §7.1. Publisher **pub-4587702028307036** (shared with the sibling apps, so any enforcement here hits them too). App registered as "Edgecase"/Android, *not listed on a store yet* — **relink to the Play listing after publication**, the unlinked path costs fill rate. One unit, `EdgeCase — Plinth Banner`, `…/8470994251`, format Banner, **auto-refresh 60s** ✅. Test device (Pixel 9 Pro XL) registered account-wide at Settings → Test devices, keyed to its advertising ID — resetting that ID silently de-registers it. **Outstanding: EU + US-states consent messages.** ⚠️ **Confirmed missing on device 2026-09-04** — UMP returns *"Publisher misconfiguration … no form(s) configured for the input app ID"* for `…~3708305513`. This is not merely a test blocker: in the EEA the consent-failure path serves **no ads at all**. Top ad priority. app-ads.txt verification is separately blocked until a Play listing exists (the file itself is correct and serving 200) |
 | B1 ✅ | Add GMA Next-Gen + UMP dependencies, `APPLICATION_ID` meta-data, per-build-type ad IDs | done 2026-08-30 | §7.2. `ads-mobile-sdk:1.4.0` + `user-messaging-platform:4.0.0`; meta-data reads `@string/admob_app_id`; debug→test IDs, release→live IDs. Needed `resValues = true` (AGP 9 gates it, undocumented in §7.2). Both variants build; `APPLICATION_ID` and `AD_ID` confirmed in both merged manifests. Four other permissions merged in too — see §9 |
-| B2 ✅ | Replace the marked block in `AdHost.attachBanner()` with the real `AdView` | done 2026-08-30 | §7.3. Real `AdView` + `MobileAds.initialize` off the main thread; `doOnLayout` for the measured width, with a **two-stage** reservation (nominal before layout so the well never pops, exact `AdSize` after). ADVERTISING credit un-hidden. Verified on device: `Plinth banner loaded (411×128dp)`, no crash, overlay grep clean. Two API corrections vs §7.3 — see below |
+| B2 ✅ | Replace the marked block in `AdHost.attachBanner()` with the real `AdView` | done 2026-08-30 | §7.3. Real `AdView` + `MobileAds.initialize` off the main thread; `doOnLayout` for the measured width, with a **two-stage** reservation (nominal before layout so the well never pops, exact `AdSize` after). ADVERTISING credit un-hidden *(and since deleted — D8; it was never an obligation)*. Verified on device: `Plinth banner loaded (411×128dp)`, no crash, overlay grep clean. Two API corrections vs §7.3 — see below |
 | B3 ✅ | UMP consent flow in `AdHost.start()`, gated on `canRequestAds()` | done 2026-08-30 | §7.3. `requestConsentInfoUpdate` on every launch → `loadAndShowConsentFormIfRequired` → `canRequestAds()` gate on all three paths into `initializeAndLoad()`. Verified on device: `canRequestAds=true required=NOT_REQUIRED formAvailable=false`, both callbacks firing. UMP 4.0.0's API matched the doc exactly, unlike the ads SDK. **The §7.3 listing has drifted from the shipped SDK** — verify every symbol against the AAR (`javap` on the artifact in `~/.gradle/caches`) before trusting it. Two errors found at B2: `InitializationConfig` is in `…sdk.initialization`, **not** `…sdk.common`; and `LoadAdError.code`/`.message` are Kotlin properties, not `getCode()`/`getMessage()`. `MobileAds.initialize` also needs an explicit `object : OnAdapterInitializationCompleteListener` rather than the trailing lambda §7.3 shows |
-| B4 ✅ | Fill in the two UMP consent stubs in `AdHost` | done 2026-08-30 | §7.7. Done with B3 — inseparable: B3 makes `consentInformation` live and B4 is the code that reads it, so B3 alone would have left the entry point permanently hidden even where Google requires it. `showPrivacyOptionsForm` also re-fires `onConsentResolved` on dismissal, since withdrawing consent can change the requirement status. ADVERTISING credit un-hidden with B2. **Still needs the EEA debug-geography run** (group C): the published policy §6.2/§6.4 promises this control, so it must be *seen* working, not assumed |
-| B5 | Delete `DummyBannerView.kt` | **unblocked** | Dead code since B2 — nothing references it (§5.20). A one-line deletion |
-| B6 | Play Console declarations, bump to v1.5.0 | **needs a Play Console account** | §7.8. The legal pages are **deployed and verified 200** (2026-08-30), and `url_privacy_policy` points at the real one. Remaining: create the developer account and listing; declare *Contains ads*; the **Advertising ID** declaration, which must match the merged `AD_ID` (§9) or the ad ID is zeroed; Data safety with Advertising ID collected+shared; re-run the content rating questionnaire (it now asks about ads); leave `TagForChildDirectedTreatment` unset; bump to `versionCode = 4` / `versionName = "1.5.0"`. Then relink AdMob to the listing (B0) and fix `url_developer_page` with the numeric `dev?id=` form. **Two open questions first** — the `READ_BASIC_PHONE_STATE` disclosure gap (§9) and whether Data safety should declare installed apps as collected, which `Publisher.md` §5.4 says yes and policy claim P2 says no |
+| B4 ✅ | Fill in the two UMP consent stubs in `AdHost` | done 2026-08-30 | §7.7. Done with B3 — inseparable: B3 makes `consentInformation` live and B4 is the code that reads it, so B3 alone would have left the entry point permanently hidden even where Google requires it. `showPrivacyOptionsForm` also re-fires `onConsentResolved` on dismissal, since withdrawing consent can change the requirement status. **Still needs the EEA debug-geography run** (group C): the published policy §6.2/§6.4 promises this control, so it must be *seen* working, not assumed |
+| B5 ✅ | Delete `DummyBannerView.kt` | done 2026-09-04 | 106 lines removed; no references anywhere in `app/src`. The source tree is now 19 Kotlin files (§5.20) |
+| B6 | Play Console declarations, bump to v1.5.0 | **needs a Play Console account** | §7.8. The legal pages are **deployed and verified 200** (2026-08-30), and `url_privacy_policy` points at the real one. Remaining: create the developer account and listing; declare *Contains ads*; the **Advertising ID** declaration, which must match the merged `AD_ID` (§9) or the ad ID is zeroed; Data safety with Advertising ID collected+shared; re-run the content rating questionnaire (it now asks about ads); leave `TagForChildDirectedTreatment` unset; the version bump to `versionCode = 4` / `versionName = "1.5.0"` is **done** (2026-09-04), as is `url_developer_page` — now the numeric `dev?id=7276298746168757657`. Still to do after publication: relink AdMob to the listing (B0). **Two open questions first** — the `READ_BASIC_PHONE_STATE` disclosure gap (§9) and whether Data safety should declare installed apps as collected, which `Publisher.md` §5.4 says yes and policy claim P2 says no |
+
+### D. Release prep — ✅ **COMPLETE (2026-09-04)**
+
+The code half of `Publisher.md` §10's critical list. None of it needed an external account.
+
+| # | Task | Outcome |
+|---|---|---|
+| D1 ✅ | Enable R8 | `isMinifyEnabled = true` + `isShrinkResources = true`. Release APK **22.5 MB → 5.5 MB**. All 20 classes survive; the four renamed ones are code-instantiated only, confirmed absent from every layout XML |
+| D2 ✅ | Write keep rules | 44 lines, not `Publisher.md` §2.2's set — see §4. The one rule that actually matters is the enum-constant keep protecting `ColorMode.valueOf()` against prefs written by v1.4.1 |
+| D3 ✅ | Prominent disclosure for `SYSTEM_ALERT_WINDOW` | `showOverlayDisclosureDialog()` (§5.1). Built from the discard dialog so it presses and frames identically |
+| D4 ✅ | Delete `DummyBannerView.kt` | B5, above |
+| D5 ✅ | `usesCleartextTraffic="false"` | §6.6 |
+| D6 ✅ | Version bump | `versionCode = 4` / `versionName = "1.5.0"`. `tvVersion` picks it up from `BuildConfig` |
+| D7 ✅ | `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` | **Not on any checklist — a genuine gap.** `specialUse` requires a declared subtype at targetSdk 34+ and this app targets 36 (§6.6) |
+| D8 ✅ | Credits screen trim | `credits_maker_body` removed; LIBRARIES and ADVERTISING removed with their four strings and two view IDs; `url_developer_page` corrected to the numeric `dev?id=` form (§6.1, §6.3) |
+
+| D9 ✅ | Release keystore + `signingConfigs` | `~/keys/edgecase-release.jks` (RSA 4096, alias `edgecase`, valid to Jan 2054), credentials in the gitignored `keystore.properties`. `assembleRelease` → **app-release.apk, 5.5 MB**; `bundleRelease` → **app-release.aab, 5.9 MB**. `apksigner` verifies under the v3 scheme (v2 is absent by design at `minSdk` 30) |
+| D10 ✅ | Fix the R8 launch crash | The Room constructor rule — see §4. Found only by running the build, not by building it |
+
+### D′. Device pass — 2026-09-04, Pixel 9 Pro XL (Android 17)
+
+Everything below was run against the **signed release build**, not debug.
+
+| Check | Result |
+|---|---|
+| 14 instrumented tests | ✅ 14/14 |
+| Release APK launches | ❌ → ✅ — crashed on the first attempt (§4), passes after the Room rule |
+| Rendering under `shrinkResources` | ✅ Both fonts, all vectors, the crack background and gems intact; `tvVersion` reads `ΕΚΔ. 1.5.0` |
+| Ad SDK under R8 | ✅ `Plinth banner loaded (411×128dp)`. Test creatives, because the device is a registered AdMob test device — no invalid-traffic exposure from this pass |
+| Prominent disclosure dialog | ✅ Renders in `bg_temple_panel`, all three paragraphs, correct buttons |
+| Banner hidden under the dialog | ✅ The Plinth well is visibly empty while it is up, and refills on dismiss |
+| OPEN SETTINGS destination | ⚠️ Reaches the overlay settings screen, but the **global list**, not EdgeCase's own page — see Known Limitations #13 |
+| Credits screen | ✅ Maker line only, LETTERING intact, LIBRARIES and ADVERTISING gone, AD CONSENT correctly hidden, no scrolling needed |
+| The Seal → developer page | ✅ Opens the real Dice Religion page in the Play app (banner, description, Mach2 listed). The `dev?id=` fix is confirmed end to end |
+| EEA consent path | ❌ **Not runnable** — see group C |
+
+**Not run, by request:** the small-screen pass at 360×640dp / 360×720dp. Still outstanding, and
+still sized against the wrong figure (174dp, not 146dp).
 
 ### C. Verification before any release with ads
 
 > **Two items here are now the critical path**, because the code they cover is written but has
 > never been exercised:
 >
-> 1. **The EEA consent path has never rendered.** The test device reports `NOT_REQUIRED`, so the
->    consent form and the AD CONSENT slab have not been seen once. Set AdMob → Privacy & messaging
->    → **debug geography = EEA** for the registered test device, relaunch, and confirm: the form
->    appears on first launch, `EdgeCaseAds` logs `required=REQUIRED`, the slab is visible on
->    Credits, and tapping it reopens the form. The published policy §6.2/§6.4 promises this control
->    exists, so it must be seen working before release, not assumed.
+> 1. **The EEA consent path has never rendered, and is currently blocked twice over.**
+>
+>    **Correction to the method this document previously gave.** It said to set debug geography in
+>    AdMob → Privacy & messaging. **There is no such console setting.** Forcing geography is a
+>    *client-side* API — `ConsentDebugSettings.Builder(ctx).setDebugGeography(DEBUG_GEOGRAPHY_EEA)
+>    .addTestDeviceHashedId(…)`, passed into `ConsentRequestParameters`. The console's test-device
+>    registration governs **ad** test mode, which is a different mechanism. `AdHost.start()` builds
+>    a bare `ConsentRequestParameters.Builder().build()` (§5.19), so geography cannot be forced from
+>    any current build at all.
+>
+>    **Blocker A — no consent messages exist.** Proven on device 2026-09-04, not inferred:
+>
+>    ```
+>    EdgeCaseAds: Consent update failed: 3 Publisher misconfiguration: Failed to read publisher's
+>    account configuration; no form(s) configured for the input app ID. Verify that you have
+>    configured one or more forms for this application and try again.
+>    Received app ID: `ca-app-pub-4587702028307036~3708305513`.
+>    ```
+>
+>    **This is now the top ad blocker, and it is a live revenue risk, not just a test obstacle.**
+>    The banner still loaded on the test device only because the failure path falls through to
+>    `canRequestAds()` on cached consent, which is permissive outside a consent regime. **In the EEA
+>    the same path serves nothing** — the "UMP not implemented → EEA ad serving restricted" row in
+>    `Docs/Ads.md` §11, arriving by a different route than expected. Create the EU and US-states
+>    messages in AdMob → Privacy & messaging (Appendix C, B0).
+>
+>    **Blocker B — no `ConsentDebugSettings` in the code.** A debug-build-only block is needed
+>    before the EEA path can be exercised at all. Harvest the device's hashed ID from the UMP log
+>    line on first run, then force `DEBUG_GEOGRAPHY_EEA`. Do blocker A first: with no message
+>    configured, forcing EEA yields `formAvailable=false` and a **false pass**.
+>
+>    Once both are cleared, confirm: the form appears on first launch, `EdgeCaseAds` logs
+>    `required=REQUIRED`, the AD CONSENT slab is visible on Credits, and tapping it reopens the
+>    form. The published policy §6.2/§6.4 promises this control exists, so it must be seen working
+>    before release, not assumed.
 > 2. **The small-screen pass must be re-run at 128dp**, not the 100dp it was originally done at.
 >    The Plinth's real cost is 174dp (§6.1). The main-menu `ScrollView` and the fixed-height
 >    Shortcuts action bar were both sized against the smaller figure.

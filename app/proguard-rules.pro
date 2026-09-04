@@ -1,21 +1,68 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# ══════════════════════════════════════════════════════════════════════════════
+# EdgeCase — R8 keep rules
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Deliberately small. AAPT2 generates keep rules automatically for everything
+# named in AndroidManifest.xml (MainActivity, SidebarService) and for every
+# custom View referenced by a layout, including its (Context, AttributeSet)
+# constructor. Restating those by hand adds nothing and hides real intent.
+#
+# This file therefore covers only the four things R8 cannot see for itself.
+#
+# Deviations from Docs/Publisher.md §2.2, which was written before the ad SDK
+# landed and is over-broad:
+#   · No blanket -keep on androidx.appcompat / androidx.recyclerview. Those
+#     ship consumer rules and a wildcard keep defeats most of the shrink.
+#   · No -keep public class * extends android.view.View, which would retain
+#     every view in every dependency.
+#   · No android.support.v7 rules — that namespace does not exist in this app.
+#   · No AdMob rules. ads-mobile-sdk 1.4.0 and user-messaging-platform 4.0.0
+#     both bundle a consumer proguard.txt (verified inside the AARs), and the
+#     package in §2.2 (com.google.android.gms.ads) is the LEGACY SDK anyway.
+# ══════════════════════════════════════════════════════════════════════════════
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ── 1. Enum constants read back out of SharedPreferences ──────────────────────
+# SliverConfig persists ColorMode by name and restores it with
+# ColorMode.valueOf(), so the constant names are load-bearing across an upgrade:
+# an obfuscated name would throw on prefs written by an earlier build.
+# ArcSliverView.Side is kept for the same reason should it ever be persisted.
+-keepclassmembers enum com.dicereligion.edgecase.** {
+    <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ── 2. Room databases instantiated by reflection ──────────────────────────────
+# The ads SDK pulls in androidx.work 2.7.0, which pulls in Room 2.2.5, whose own
+# consumer rule is:
+#
+#     -keep class * extends androidx.room.RoomDatabase
+#
+# That keeps the class but NOT its members, and Room creates the generated
+# WorkDatabase_Impl by reflection. R8 duly removed the no-arg constructor, and the
+# release build died on launch:
+#
+#     Unable to get provider androidx.startup.InitializationProvider
+#     Caused by: Failed to create an instance of androidx.work.impl.WorkDatabase
+#
+# Room fixed its own rule in later versions by adding `{ <init>(); }`; 2.2.5 predates
+# that and arrives transitively, so the version cannot simply be raised here. This
+# rule is the fix. It costs one constructor.
+#
+# NOTE: this is the exact failure mode that a successful `assembleRelease` does NOT
+# catch. Any dependency bump touching work/room means launching a release build again,
+# not just compiling one.
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ── 3. Readable crash reports ─────────────────────────────────────────────────
+# Keep line numbers so Play Console stack traces are usable, but rename the
+# source file so the class names stay obfuscated. Retrace with the mapping.txt
+# that Play App Signing stores per release.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# ── 4. Silence warnings from optional SDK back-references ─────────────────────
+# The ads SDK compiles against classes it does not require at runtime.
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**

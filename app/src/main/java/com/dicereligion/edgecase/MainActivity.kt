@@ -359,8 +359,9 @@ class MainActivity : AppCompatActivity() {
      *
      * `url_privacy_policy` is **live** — verified 200 on 2026-08-30 — and must never move, since a
      * privacy-policy URL that 404s is itself a Play policy violation. It is not yet registered in
-     * Play Console, because no listing exists yet. `url_developer_page` is still a placeholder,
-     * pending the numeric `dev?id=` form from the Play Console. See strings.xml.
+     * Play Console, because no listing exists yet. `url_developer_page` is the numeric `dev?id=`
+     * form — the `developer?id=<name>` form it used before was a store search, not a developer
+     * page. See strings.xml.
      */
     private fun openUrl(url: String) {
         try {
@@ -608,14 +609,39 @@ class MainActivity : AppCompatActivity() {
     // Permissions & service control
     // ──────────────────────────────────────────────────
 
+    /**
+     * Prominent disclosure for SYSTEM_ALERT_WINDOW (Docs/Publisher.md §5.3).
+     *
+     * Play policy requires the app to explain the overlay in its own words BEFORE the system
+     * grant screen appears; dropping the user straight into Settings is a rejection risk, and
+     * an overlay app that also serves ads gets read closely (Docs/Ads.md §11). Modelled on
+     * [showDiscardDialog] so it presses and frames like every other modal here.
+     */
+    private fun showOverlayDisclosureDialog() {
+        // Same rule as every modal over the app: the banner hides while it is up.
+        adHost?.setAdVisible(false)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("DISPLAY OVER OTHER APPS")
+            .setMessage(getString(R.string.overlay_disclosure_body))
+            .setPositiveButton("OPEN SETTINGS") { _, _ ->
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                )
+            }
+            .setNegativeButton("NOT NOW", null)
+            .create()
+        dialog.setOnDismissListener { adHost?.setAdVisible(true) }
+        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_temple_panel)
+        dialog.show()
+    }
+
     private fun checkAndRequestPermissions(): Boolean {
         if (!Settings.canDrawOverlays(this)) {
-            startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
-            )
+            // Disclosure first; the Settings redirect now happens on its positive button.
+            showOverlayDisclosureDialog()
             return false
         }
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager

@@ -88,19 +88,6 @@
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp" />
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/credits_maker_body"
-                    android:textAppearance="@style/BodySerif"
-                    android:fontFamily="serif"
-                    android:textSize="@dimen/text_caption"
-                    android:lineSpacingExtra="2dp"
-                    android:alpha="0.85"
-                    android:layout_marginTop="6dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp" />
-
                 <!-- The Seal of the Maker → Play Store developer page.
                      A FrameLayout, not an ImageButton: ImageButton would inherit the platform
                      button background and insets and fight the frame drawable. This is inert
@@ -165,52 +152,6 @@
                     android:fontFamily="serif"
                     android:textSize="@dimen/text_caption"
                     android:lineSpacingExtra="2dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp" />
-
-                <!-- ── Libraries ─────────────────────────────── -->
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/credits_libraries_heading"
-                    android:textAppearance="@style/CaptionChiseled"
-                    android:layout_marginTop="@dimen/credits_section_gap"
-                    android:layout_marginBottom="6dp"
-                    android:layout_marginStart="4dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/credits_libraries_body"
-                    android:textAppearance="@style/BodySerif"
-                    android:fontFamily="serif"
-                    android:textSize="@dimen/text_caption"
-                    android:lineSpacingExtra="2dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp" />
-
-                <!-- ADVERTISING: visible as of B2 — the real Google Mobile Ads SDK now serves the
-                     Plinth banner, so the attribution is true and required. -->
-
-                <TextView
-                    android:id="@+id/tvCreditAdsHeading"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/credits_ads_heading"
-                    android:textAppearance="@style/CaptionChiseled"
-                    android:layout_marginTop="@dimen/credits_section_gap"
-                    android:layout_marginBottom="6dp"
-                    android:layout_marginStart="4dp" />
-
-                <TextView
-                    android:id="@+id/tvCreditAdsBody"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/credits_ads_body"
-                    android:textAppearance="@style/BodySerif"
-                    android:fontFamily="serif"
-                    android:textSize="@dimen/text_caption"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="4dp" />
 

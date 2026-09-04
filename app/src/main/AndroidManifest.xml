@@ -17,6 +17,7 @@
 
     <application
         android:allowBackup="true"
+        android:usesCleartextTraffic="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -41,11 +42,18 @@
             </intent-filter>
         </activity>
 
+        <!-- specialUse requires a declared subtype from targetSdk 34 onward, and Play reviews
+             this string against the service's actual behaviour. Keep it factual and keep it in
+             step with the foreground-service justification in the Play Console listing. -->
         <service
             android:name=".SidebarService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Hosts the always-available edge overlay (the sliver and its shortcut tray) so the user can launch apps from any screen. The overlay must persist while other apps are in the foreground, which no other foreground service type covers." />
+        </service>
     </application>
 
 </manifest>

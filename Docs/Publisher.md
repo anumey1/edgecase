@@ -3,10 +3,10 @@
 > **Document Type:** Take-to-Market / Pre-Publication Checklist
 > **App:** EdgeCase
 > **Package:** `com.dicereligion.edgecase`
-> **Current Version (Code):** 3 (1.4.1) — target for the ads release is 4 (1.5.0)
+> **Current Version (Code):** 4 (1.5.0) — the ads release
 > **Current UI Version Label:** read from `BuildConfig.VERSION_NAME`
-> **Status:** Partly superseded and partly complete — read the banner below before using this document
-> **Last Updated:** 2026-08-30
+> **Status:** Partly superseded and largely complete — read the banner below before using this document
+> **Last Updated:** 2026-09-04
 
 > ## ⚠️ Read this first (2026-08-30)
 >
@@ -24,10 +24,32 @@
 > `BuildConfig`; the Dummy button became the Credits screen; the AdMob account, SDK, banner and
 > UMP consent flow are all in (`Docs/stats.md` Appendix C, B0–B4).
 >
-> **Still genuinely outstanding from this document:** R8 + keep rules (§2.1–2.2), the release
-> keystore and signing config (§2.5, §4.1), the `SYSTEM_ALERT_WINDOW` **prominent disclosure
-> dialog** (§5.3 — still missing, and `Docs/Ads.md` §11 flags it as review-scrutiny mitigation),
-> `usesCleartextTraffic` (§2.8), every store asset (§6), and the closed-testing track (§7.1).
+> ## ⚠️ Update (2026-09-04) — the code half of §10 is finished
+>
+> R8 and keep rules (§2.1–2.2), the prominent disclosure dialog (§5.3), `usesCleartextTraffic`
+> (§2.8) and the version bump (§2.6) have all landed. `Docs/stats.md` Appendix C **group D** is the
+> record of what was actually built; where it and this document disagree, group D is right.
+>
+> Three specific corrections to the sections below:
+>
+> - **§2.2's keep rules were not used.** They are over-broad (a blanket keep on all of AppCompat
+>   and RecyclerView, plus `-keep public class * extends android.view.View`, defeats most of the
+>   shrink), they include `android.support.v7` rules for a namespace this app does not contain, and
+>   the commented-out AdMob block names `com.google.android.gms.ads` — the **legacy** SDK, not the
+>   Next-Gen one actually on the classpath. Both ad AARs ship their own consumer `proguard.txt`, and
+>   AAPT2 auto-generates keeps for manifest components and XML-inflated views, so the shipped file
+>   is 44 lines. §2.2 also **misses the one rule that matters**: `SliverConfig` restores `ColorMode`
+>   with `valueOf()`, so the enum constant names must be kept or prefs written by v1.4.1 throw.
+> - **§2.1's snippet uses Groovy syntax.** In this Kotlin-DSL build the property is
+>   `isShrinkResources`, not `shrinkResources`.
+> - **This document has no item for `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, and it should.**
+>   `foregroundServiceType="specialUse"` requires a declared subtype at targetSdk 34+; the app
+>   targets 36. It has been added to the manifest, and Play reads that string at review — keep it in
+>   step with the §5.2 justification.
+>
+> **Still genuinely outstanding from this document:** the release keystore and signing config
+> (§2.5, §4.1) — `assembleRelease` currently emits `app-release-unsigned.apk` — every store asset
+> (§6), and the closed-testing track (§7.1).
 >
 > **One open conflict:** §5.4 says declare *Installed Apps = collected* in Data safety. The
 > published privacy policy asserts the installed-app list never leaves the device (claim P2,
@@ -58,20 +80,22 @@
 
 ## 1. Executive Summary
 
-EdgeCase is a feature-complete edge-launcher app themed with a "Hellenic Serpent" aesthetic. The codebase is finished and compiles cleanly. However, **the following areas need work before any Play Store submission is possible**:
+EdgeCase is a feature-complete edge-launcher app themed with a "Hellenic Serpent" aesthetic. **As of
+2026-09-04 the code is release-ready.** What remains is a keystore, an account, and assets.
 
 | Area | Current State | Action Required |
 |------|--------------|-----------------|
-| **R8 / ProGuard** | Minification disabled, stock ProGuard file empty | Enable R8, write keep rules |
-| **App Signing** | No release keystore configured | Generate release keystore, configure signing |
-| **Backup Rules** | Stock templates, completely empty | Configure proper backup rules for SharedPreferences |
-| **Ads** | None | Integrate AdMob SDK, place ad units |
-| **Privacy Policy** | None | Write and host privacy policy URL |
-| **Foreground Service Declaration** | No prominent disclosure | Add justification in Play Console |
-| **Dummy Button** | Shows a Toast stub | Remove or implement real feature |
-| **Store Assets** | None (except app icon) | Create screenshots, feature graphic, description |
-| **Testing** | No formal testing | Set up internal test track, 20 testers minimum (new accounts) |
-| **Version Code** | 1 | Bump to appropriate release version |
+| **R8 / ProGuard** | ✅ Enabled; 44 lines of keep rules. 22.5 MB debug → 5.5 MB release | — (§2.2's rule set was *not* used; see the banner) |
+| **App Signing** | ✅ `~/keys/edgecase-release.jks` (RSA 4096, to 2054) + `signingConfigs` reading a gitignored `keystore.properties`. Signed APK and AAB both build | Back the key up off-machine; enable Play App Signing on first upload |
+| **Backup Rules** | ✅ `EdgeCasePrefs.xml` in both backup and device-transfer rules | — |
+| **Ads** | ✅ One anchored adaptive banner in the Plinth; UMP consent gating every request | Play Console declarations only (§7.8 of `Ads.md`) |
+| **Privacy Policy** | ✅ Live and verified 200, with the required delete-data companion | Register the URL in the listing |
+| **Overlay Disclosure** | ✅ Prominent disclosure dialog before the Settings redirect | — |
+| **Foreground Service** | ✅ `specialUse` + the required `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` | Write the matching Console justification (§5.2) |
+| **Dummy Button** | ✅ Became the Credits screen | — |
+| **Store Assets** | ❌ None except the app icon | Screenshots, feature graphic, descriptions (§6) |
+| **Testing** | ◐ Device pass done 2026-09-04 on a Pixel 9 Pro XL — 14/14 tests, signed release build verified running. **It caught an R8 launch crash** (`Docs/stats.md` §4). Small-screen pass still outstanding | Closed track, 20 testers (§7.1) |
+| **Version Code** | ✅ 4 (`versionName` 1.5.0) | — |
 
 ---
 
@@ -104,6 +128,10 @@ release {
 ```
 
 **Impact:** This enables R8 shrinking, obfuscation, and optimization on release builds. Reduces APK/AAB size and makes reverse engineering harder. `shrinkResources` removes unused drawables, layouts, etc.
+
+> **✅ Done (2026-09-04)**, with one correction: in this Kotlin-DSL build the property is
+> **`isShrinkResources`**, not `shrinkResources` as written above — the Groovy spelling fails to
+> compile. Measured result: **22.5 MB debug → 5.5 MB release**.
 
 ### 2.2 Write ProGuard/R8 Keep Rules
 
@@ -262,7 +290,10 @@ defaultConfig {
 }
 ```
 
-> As of 2026-07-10 the code is `versionCode = 2`, `versionName = "1.3.5"`, and the UI label shows `v1.3.5`, so the label now matches `versionName` (the earlier mismatch is resolved). It is still hardcoded in `layout_screen_main_menu.xml`; to avoid future drift, read it programmatically instead:
+> **✅ Done (2026-09-04).** The code is `versionCode = 4`, `versionName = "1.5.0"`. The snippet above
+> is stale on both counts. The label is no longer hardcoded either — `MainActivity` sets
+> `tvVersion` from `BuildConfig.VERSION_NAME`, which is simpler than the `getPackageInfo` approach
+> below and cannot drift. Retained for the record:
 
 ```kotlin
 // In MainActivity onCreate — set version dynamically
@@ -292,6 +323,9 @@ Assign `android:id="@+id/tvVersion"` to the version TextView in the layout.
 - Credits
 
 ### 2.8 Add `usesCleartextTraffic` Consideration
+
+> **✅ Done (2026-09-04)** — `android:usesCleartextTraffic="false"` is on `<application>`. AdMob is
+> HTTPS-only and the app makes no request of its own (policy claim P1), so nothing needed cleartext.
 
 If any ad networks or content needs to load over HTTP (not HTTPS), add to manifest:
 ```xml
@@ -586,9 +620,27 @@ The app must have a publicly accessible privacy policy URL. This is required bec
 
 ### 5.3 SYSTEM_ALERT_WINDOW Prominent Disclosure
 
+> **✅ Done (2026-09-04)** — `MainActivity.showOverlayDisclosureDialog()`. The shipped version differs
+> from the sketch below in three ways worth knowing:
+>
+> - It is built from `showDiscardDialog`, so it takes the `bg_temple_panel` window background and
+>   presses like every other modal in the app rather than showing a stock rounded system frame.
+> - It hides the Plinth banner while up and restores it on dismiss, the standing rule for any modal
+>   over the Activity.
+> - Its body is in `@string/overlay_disclosure_body`, not inline, and its closing sentence —
+>   *"The overlay only draws. It cannot read, record, or transmit anything on the screen beneath
+>   it."* — restates published privacy-policy claims **P4 and P5** (`Docs/stats.md` §9). It is a
+>   constraint on the code now, not just copy.
+>
+> **Not yet rendered on a device.** Fold it into the group C device pass.
+>
+> Note also that the battery-optimization redirect immediately afterwards still fires unannounced.
+> That is not a prominent-disclosure requirement — the rule covers `SYSTEM_ALERT_WINDOW`, not Doze
+> exemption — but it is the rougher half of the flow now.
+
 Your `checkAndRequestPermissions()` method already redirects the user to system Settings. However, Play Store policy requires a **prominent disclosure** *before* the system dialog appears — a custom dialog explaining why the permission is needed.
 
-**Add before the Settings redirect in `checkAndRequestPermissions()`:**
+**Original sketch — superseded by the shipped implementation above:**
 
 ```kotlin
 private fun showOverlayPermissionDialog() {
@@ -860,11 +912,11 @@ Google requires apps to target the latest Android API within one year. Check eac
 
 ### 🔴 Critical — Must Complete Before Submission
 
-- [ ] **Enable R8:** Set `isMinifyEnabled = true` and `shrinkResources = true` in `app/build.gradle.kts`
-- [ ] **Write ProGuard rules:** Copy the rules from Section 2.2 into `app/proguard-rules.pro`
+- [x] **Enable R8** — done 2026-09-04. Note the Kotlin-DSL property is `isShrinkResources`, not `shrinkResources` as written above
+- [x] **Write ProGuard rules** — done, but **not** §2.2's set. 44 lines; see the banner for why, and `Docs/stats.md` §4 for what shipped
 - [x] **Configure backup rules:** `backup_rules.xml` and `data_extraction_rules.xml` both include `EdgeCasePrefs.xml` (A-track)
-- [ ] **Generate release keystore:** See Section 4.1, follow instructions thoroughly
-- [ ] **Configure signing:** Add `signingConfigs` block to `app/build.gradle.kts` (Section 2.5)
+- [x] **Generate release keystore** — done 2026-09-04, `~/keys/edgecase-release.jks`, outside the repo
+- [x] **Configure signing** — `signingConfigs` reading a gitignored `keystore.properties`; degrades to an unsigned build when absent so a fresh clone still compiles
 - [x] **Create AdMob account** — done; publisher `pub-4587702028307036`, app + one banner unit registered
 - [x] **Add AdMob dependency** — done as B1, but per `Docs/Ads.md` §7.2 (GMA Next-Gen 1.4.0 + UMP 4.0.0), **not** §3.2's outdated `play-services-ads`
 - [x] **Add AdMob App ID meta-data** to `AndroidManifest.xml` — done as B1, resolved per build type
@@ -872,12 +924,15 @@ Google requires apps to target the latest Android API within one year. Check eac
 - [ ] ~~**Implement interstitial ads** on screen transitions~~ — **DROPPED, do not implement.** Back-triggered interstitials are a disruptive-ads pattern Play forbids (`Docs/Ads.md` §9)
 - [x] **Add ad unit IDs** — done as B1 via per-build-type `resValue`, so debug can never reach a live unit. Not hardcoded in `strings.xml` as §3.5 suggests
 - [x] **Initialize AdMob** — done as B2, **off the main thread** (Next-Gen ANRs otherwise) and gated on UMP `canRequestAds()`, not §3.3's main-thread call in `onCreate`
-- [ ] **Add prominent disclosure dialog** for SYSTEM_ALERT_WINDOW (Section 5.3)
+- [x] **Add prominent disclosure dialog** for SYSTEM_ALERT_WINDOW — `MainActivity.showOverlayDisclosureDialog()`. **Verified on device 2026-09-04.** Caveat: on Android 17 the Settings redirect lands on the *global* overlay list, not EdgeCase's own page (`Docs/stats.md` Known Limitations #12)
 - [x] **Write and host a Privacy Policy** — live at `https://anumey.xyz/legal/edgecase/privacy`, verified 200 on 2026-08-30, plus the required `/delete-data` companion
-- [ ] **Bump versionCode to 4 and versionName to "1.5.0"** (was "2 / 1.0.0" here — stale; the app is already at 3 / 1.4.1). See `Docs/Ads.md` §7.8
+- [x] **Bump versionCode to 4 and versionName to "1.5.0"** — done 2026-09-04
 - [x] **Fix version label** — reads `BuildConfig.VERSION_NAME`
 - [x] **Handle the Dummy button** — became the **Credits** screen (`Docs/stats.md` §6.1)
 - [ ] **Add the UMP privacy-options entry point** — done in code as B4; **still unproven under an EEA debug geography** (`Docs/stats.md` Appendix C, group C)
+- [x] **Set `usesCleartextTraffic="false"`** (Section 2.8) — done 2026-09-04
+- [x] **Declare `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`** — **missing from this document.** Required at targetSdk 34+ for `foregroundServiceType="specialUse"`; the app targets 36. Added 2026-09-04
+- [x] **Delete `DummyBannerView.kt`** — dead since B2, removed 2026-09-04
 
 ### 🟡 Important — Complete Before Submission
 

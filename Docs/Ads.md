@@ -2,9 +2,9 @@
 
 > **Document Type:** Monetization Architecture & Compliance Plan
 > **App:** EdgeCase · `com.dicereligion.edgecase`
-> **Current Version:** versionCode 3 / versionName 1.4.1
+> **Current Version:** versionCode 4 / versionName 1.5.0
 > **Author:** Engineering
-> **Last Updated:** 2026-08-28
+> **Last Updated:** 2026-08-28 (status annotations 2026-09-04)
 > **Supersedes:** `Docs/Publisher.md` §3 ("Ad Integration Strategy") — see [§9](#9-corrections-to-publishermd-3) for the list of corrections.
 
 ---
@@ -87,7 +87,7 @@ Read of the tree at `c4ff912` (branch `development`).
 | AGP / Kotlin | AGP 9.2.1, Kotlin 2.2.10 (AGP-9 built-in Kotlin; no explicit Kotlin plugin in `app/build.gradle.kts`) | Next-Gen requires Kotlin ≥ 1.9 ✅ |
 | Dependencies | `appcompat`, `recyclerview`, `core-ktx` only | **No coroutines on the classpath** — see [§7.3](#73-phase-2--the-adhost) |
 | `buildFeatures.buildConfig` | already `true` | We can use `resValue` / `buildConfigField` for debug-vs-release ad unit IDs |
-| R8 | `isMinifyEnabled = false` | GMA ships consumer ProGuard rules; **no extra keep rules are required** when minify is later enabled |
+| R8 | `isMinifyEnabled = true` **as of 2026-09-04** | GMA ships consumer ProGuard rules; this held — **no ad-specific keep rules were needed**. Verified by unzipping both AARs. The release APK has not yet been *run*, though |
 | Background threading idiom | raw `Thread { … }` (`preloadApps()`, `initShortcutsScreen()`) | Match it — use `Thread` for SDK init, not coroutines |
 
 ### 2.2 The screens, in ad terms
@@ -491,7 +491,7 @@ buildTypes {
         resValue("string", "admob_banner_unit", "ca-app-pub-3940256099942544/9214589741")
     }
     release {
-        isMinifyEnabled = false   // see Publisher.md §2.1 — flip to true separately
+        isMinifyEnabled = true    // flipped 2026-09-04; see Publisher.md §2.1
         proguardFiles(
             getDefaultProguardFile("proguard-android-optimize.txt"),
             "proguard-rules.pro"
@@ -921,7 +921,13 @@ Where the button is hidden, the main menu keeps a clean four-button stack, which
 4. **Data safety:** add *Device or other IDs → Advertising ID*, collected & shared, for Advertising. Keep the existing installed-apps disclosure.
 5. **Content rating:** re-run the questionnaire — it now asks about ads.
 6. **Not child-directed.** EdgeCase is a system utility. Do **not** set `TagForChildDirectedTreatment`; leave the default. If the content rating ever lands in a family bracket, the Families ads policy (certified SDKs, no interest-based ads) applies and this plan must be revisited.
-7. **Version bump:** `versionCode = 4`, `versionName = "1.5.0"`. The main-menu `tvVersion` picks it up automatically from `BuildConfig.VERSION_NAME`.
+7. **Version bump:** `versionCode = 4`, `versionName = "1.5.0"`. The main-menu `tvVersion` picks it up automatically from `BuildConfig.VERSION_NAME`. **✅ Done 2026-09-04.**
+
+> **Phase 7 status (2026-09-04).** Item 1 (privacy policy) and item 7 (version bump) are done. Items
+> 2–6 are all Play Console work and remain blocked on the developer account. See `Docs/stats.md`
+> Appendix C, B6 — including the two open questions that must be settled before the Data safety form
+> is filled: the `READ_BASIC_PHONE_STATE` disclosure gap, and whether installed apps count as
+> "collected" (`Publisher.md` §5.4 says yes; policy claim P2 says no).
 
 ### 7.9 Fallback: legacy SDK variant
 
@@ -972,7 +978,12 @@ Run this before every release that touches ads.
 - [ ] UMP 4.0.0 integrated; `requestConsentInfoUpdate` runs on **every** launch.
 - [ ] No ad is requested until `canRequestAds()` returns `true`.
 - [ ] A privacy-options entry point is visible whenever `PrivacyOptionsRequirementStatus == REQUIRED`.
-- [ ] EEA and US-states messages exist in the AdMob console.
+- [ ] EEA and US-states messages exist in the AdMob console. ⚠️ **Confirmed ABSENT 2026-09-04** —
+  UMP returns *"Publisher misconfiguration … no form(s) configured for the input app ID"*. Note what
+  this costs: the consent-failure path falls through to cached `canRequestAds()`, which is permissive
+  outside a consent regime, so a non-EEA test device still shows a banner and the fault is invisible.
+  **In the EEA it serves nothing.** This is the §11 "UMP not implemented → EEA ad serving restricted"
+  risk materialising through the console rather than the code.
 - [ ] Privacy policy is live, discloses AdMob + advertising ID + installed-app access, and its URL is in the Play listing.
 
 ### Play Console
@@ -987,6 +998,11 @@ Run this before every release that touches ads.
 - [ ] Nobody has clicked a live ad in a release build. Not once.
 - [ ] Banner auto-refresh is set to 60 s in the AdMob console; there is no client-side refresh or retry loop.
 - [ ] `APPLICATION_ID` meta-data present in the merged manifest (a missing one crashes at launch).
+- [x] **R8 has not broken the SDK.** Verified on device 2026-09-04: `Plinth banner loaded
+  (411×128dp)` from a signed release build. The ad AARs' own consumer rules were sufficient **for
+  the ad SDKs** — but not for what they drag in: R8 stripped a constructor from Room 2.2.5 (via
+  `androidx.work`) and the app crashed on launch until a keep rule was added
+  (`Docs/stats.md` §4). **Re-run this check by launching, not compiling, after any dependency bump.**
 
 ---
 
@@ -1055,7 +1071,7 @@ Ship v1.5.0 to internal testing first (which `Publisher.md` §7.1 requires anywa
 | **Accidental clicks from the drag surfaces + adjacent nav buttons** | Medium | Severe | 28 dp inert buffer (§6.3); watch CTR post-launch. |
 | **Self-clicking during development** | Medium | Severe (account-level) | Test IDs in debug via `resValue`; register test devices; a standing "never tap the ad" rule. |
 | **Missing/incorrect `APPLICATION_ID` meta-data** | Medium | App crashes at launch | Verify in the merged manifest during phase 1. |
-| **UMP not implemented → EEA ad serving restricted** | Medium | Revenue collapse in EU | UMP 4.0.0 gated on `canRequestAds()` from day one (phase 2). |
+| **UMP not implemented → EEA ad serving restricted** | **Materialised** (console side) | Revenue collapse in EU | The code is correct — UMP 4.0.0 gated on `canRequestAds()` — but **no consent messages exist in the AdMob console** (confirmed on device 2026-09-04), so UMP has nothing to serve. Mitigation is now a console task, not a code one. |
 | **Ad ID declaration mismatch in Play Console** | Medium | Ad ID zeroed → fill/CPM collapse | Phase 7 items 3–4; check the merged manifest. |
 | **Plinth squeezes the UI on small screens** | Medium | Poor reviews | §6.4 verification; shrink app chrome, never the buffer. |
 | **`SYSTEM_ALERT_WINDOW` + ads draws extra review scrutiny** | Medium | Review delay / rejection | Prominent disclosure (`Publisher.md` §5.3); the overlay is demonstrably ad-free (§4.2 grep check). |

@@ -45,8 +45,12 @@ deploymentTargetDropDown.xml
 render.experimental.xml
 
 ### Keystore files ###
+# The keystore itself lives OUTSIDE this repo; these patterns are a second line of
+# defence in case one is ever copied in. keystore.properties holds the passwords and
+# the path to it, and must never be committed.
 *.jks
 *.keystore
+keystore.properties
 
 ### Google Services ###
 google-services.json

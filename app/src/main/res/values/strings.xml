@@ -7,28 +7,30 @@
 
     <string name="credits_maker_heading">DICE RELIGION</string>
     <string name="credits_maker_lead">EdgeCase is designed and built by Dice Religion.</string>
-    <string name="credits_maker_body">An edge-mounted launcher: the apps you actually use live on a single fang at the side of the screen, out of the way until you reach for it.</string>
     <string name="credits_seal_hint">Tap for more from Dice Religion</string>
 
     <string name="credits_lettering_heading">LETTERING</string>
     <string name="credits_lettering_body">Cinzel — Natanael Gama\nSIL Open Font License 1.1\n\nGFS Neohellenic — Greek Font Society\nSIL Open Font License 1.1</string>
 
-    <string name="credits_libraries_heading">LIBRARIES</string>
-    <string name="credits_libraries_body">AndroidX — AppCompat, RecyclerView, Core-KTX\nThe Android Open Source Project\nApache License 2.0</string>
-
-    <!-- Shown only once the real SDK lands (Docs/stats.md Appendix C, B2) -->
-    <string name="credits_ads_heading">ADVERTISING</string>
-    <string name="credits_ads_body">Ads served by Google AdMob</string>
+    <!-- ══ Overlay permission — prominent disclosure ══
+         Play policy requires an in-app explanation BEFORE the system
+         "Display over other apps" screen appears (Docs/Publisher.md §5.3).
+         SYSTEM_ALERT_WINDOW alongside ads draws extra review scrutiny
+         (Docs/Ads.md §11), so this text is deliberately plain.
+         The final paragraph restates privacy-policy claims P4 and P5
+         (Docs/stats.md §9) — do not soften it without changing the policy. -->
+    <string name="overlay_disclosure_body">EdgeCase draws its fang and shortcut tray on top of whatever app you are using. Android calls this permission \"Display over other apps\", and it is off until you turn it on.\n\nThe next screen is Android\'s own settings page — EdgeCase cannot grant this for you.\n\nThe overlay only draws. It cannot read, record, or transmit anything on the screen beneath it.</string>
 
     <!-- ══ Outbound links ══
          · url_privacy_policy: LIVE — deployed and verified 200 on 2026-08-30, hosted on
            anumey.xyz beside the Mach2 and BOTCH policies. This exact URL must never move — a
            privacy-policy URL that 404s is itself a Play policy violation. Not yet registered in
            Play Console: no listing exists yet.
-         · url_developer_page: PLACEHOLDER. The canonical form is
-           https://play.google.com/store/apps/dev?id=<numeric publisher id>, taken from the Play
-           Console once the developer account exists. The name form below resolves too, but only
-           after the first app is published. -->
-    <string name="url_developer_page" translatable="false">https://play.google.com/store/apps/developer?id=Dice+Religion</string>
+         · url_developer_page: LIVE. Must be the numeric `dev?id=` form. The `developer?id=<name>`
+           form this previously used is NOT a developer page — Play treats the name as a search
+           term and lands the user on a results list, which is why the Seal went to the wrong
+           place. The numeric ID is the Dice Religion publisher ID from the Play Console and is
+           stable; do not "tidy" it back into a readable name. -->
+    <string name="url_developer_page" translatable="false">https://play.google.com/store/apps/dev?id=7276298746168757657</string>
     <string name="url_privacy_policy" translatable="false">https://anumey.xyz/legal/edgecase/privacy</string>
 </resources>
