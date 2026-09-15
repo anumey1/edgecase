@@ -33,6 +33,14 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
 
+        <!-- Ad inspector opens on a shake for any AdMob test device, in any build type, and
+             SidebarService keeps this process — and the SDK's gesture listener — alive after the
+             Activity is gone, so it fired over other apps. Key verified against the
+             ads-mobile-sdk 1.4.0 artifact. Docs/EdgeCase_Investigation_Brief.md, Task C. -->
+        <meta-data
+            android:name="com.google.android.libraries.ads.mobile.sdk.flag.DISABLE_AD_INSPECTOR"
+            android:value="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

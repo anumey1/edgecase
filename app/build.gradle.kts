@@ -27,8 +27,8 @@ android {
         applicationId = "com.dicereligion.edgecase"
         minSdk = 30
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.5.0"
+        versionCode = 6
+        versionName = "1.5.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

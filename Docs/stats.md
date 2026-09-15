@@ -1,27 +1,60 @@
 # EdgeCase — Project Status & Blueprint
 
-> **Last Updated:** 2026-09-05
+> **Last Updated:** 2026-09-15
 > **Project Root:** `/Users/anumey/Work/Android/EdgeCase`
 > **Package:** `com.dicereligion.edgecase`
 > **App Name:** EdgeCase
-> **Version:** 1.5.0 (versionCode 4) is the **submitted** build. The working tree is **ahead of it** —
-> the small-screen fix (group F) is committed to neither a version bump nor a release, and needs
-> **versionCode 5 / versionName 1.5.1**. The UI label reads `ΕΚΔ. 1.5.0` from `BuildConfig.VERSION_NAME`
+> **Version:** 1.5.0 (versionCode 4) is **live on Google Play** (published 2026-09-09). The tree is
+> bumped to **1.5.2 (versionCode 6)** — the small-screen fix (group F1) plus `DISABLE_AD_INSPECTOR`
+> (§6.6) — built, signed, launched on device and **submitted to production 2026-09-15** (group G), in
+> review. 1.5.1 / versionCode 5 was built and sideloaded for testing only and never uploaded, so the
+> gap in version codes is harmless. The UI label reads `ΕΚΔ. 1.5.2` from `BuildConfig.VERSION_NAME`
+> on tall screens
 >
-> **Latest change (2026-09-05) — documentation reconciliation, and two things that are genuinely
-> not in order.**
+> **Latest change (2026-09-15) — the listing is live, AdMob review passed, 1.5.2 is submitted, and
+> the privacy-policy correction is live.**
+>
+> - ⚠️ **Working tree ≠ `HEAD`.** 1.5.2's version bump (`app/build.gradle.kts`) and
+>   `DISABLE_AD_INSPECTOR` (`AndroidManifest.xml`) are **uncommitted**, as are this document,
+>   `Docs/FINDINGS.md` and `Docs/EdgeCase_Investigation_Brief.md`. The bundle submitted to Play was
+>   built from that uncommitted tree; `HEAD` is still `1626578` and builds 1.5.0 without the flag.
+>   Commit before anything else touches those files, or the released source exists only on this disk.
+>
+> - ✅ **AdMob linked to the Play listing** (B0, group E), on the shipping app ID `~3708305513`. AdMob
+>   found EdgeCase on Play by package name — so v1.5.0 has cleared review — and verified it.
+>   ✅ **AdMob's app review passed the same day: Ready, ad serving enabled.** A
+>   duplicate AdMob app (`~9509723699`) was created by mistake along the way; its store link was
+>   cleared and it is hidden. Its CMP prompt is already met by UMP + the existing
+>   EdgeCase messages; **no new message was created**. One check left: no auto-created
+>   *Maximize message coverage* message should now be assigned to EdgeCase.
+> - **1.5.2 / versionCode 6 submitted to production** (F1 + `DISABLE_AD_INSPECTOR`), full rollout,
+>   together with a new **store-listing icon** that intentionally differs from the launcher icon
+>   (group G). In Play review.
+> - **Android developer verification: all three apps registered** ahead of the 2026-09-30 deadline
+>   (group H). EdgeCase's three keys are Google-held; ◐ **adding the upload key is deferred** — needed
+>   before relying on sideloaded release builds again.
+> - **Investigation brief closed** (`Docs/FINDINGS.md`): ad inspector over other apps confirmed and
+>   fixed; the Recents task traced to the same launch; the WhatsApp blur ruled out as an EdgeCase bug.
+>
+> - ✅ **F2 closed.** The `READ_BASIC_PHONE_STATE` / `WAKE_LOCK` rows shipped in Anumey's Lair
+>   `9768cfa` (pushed 2026-09-05, on both `origin/main` and `origin/development`).
+>   `https://anumey.xyz/legal/edgecase/privacy` re-fetched **200 on 2026-09-15**, serving
+>   *4 September 2026* with both rows. The published policy now matches the merged manifest (§9).
+> - **F1 is committed, not working-tree.** The `menu_*` dimens, `values-h800dp/` and the
+>   `show_version_label` wiring landed in `1626578`. `versionCode` is still 4.
+> - **Internal staleness swept:** keep-rule line count (68, not 44), class count (19), per-file line
+>   counts in the Quick Reference, the `Ads.md` / `proguard-rules.pro` annotations in §3, the
+>   architecture diagram's removed LIBRARIES block, the `btnAdConsent` row in §5.1, and the feature
+>   table's ordering.
+>
+> **Previous change (2026-09-05) — documentation reconciliation.**
 >
 > All four documents (this one, `Publisher.md`, `Ads.md`, and the Anumey's Lair `docs/stats.md`) were
 > re-read against the actual state of the tree, the merged release manifest, and the live site, and
-> the stale claims left over from the submission day were removed. **Two real gaps surfaced, and
-> neither is closed:**
+> the stale claims left over from the submission day were removed. Two gaps surfaced:
 >
-> - 🔴 **The privacy-policy correction is written but still not live.** `https://anumey.xyz/legal/edgecase/privacy`
->   was re-fetched on 2026-09-05 and still serves *29 August 2026* with **no `READ_BASIC_PHONE_STATE`
->   and no `WAKE_LOCK` row**. The fix sits uncommitted in the Anumey's Lair working tree. This matters
->   more now than it did on 2026-09-04: the app is **already submitted** with that URL registered in
->   Play Console, so the published policy currently under-reports the app's own merged permission set.
->   One commit and one push to `main` fixes it (App Hosting auto-deploys).
+> - **The privacy-policy correction was written but not yet live** at the time of that re-read.
+>   *Since deployed — see the 2026-09-15 entry above.*
 > - ⚠️ **The merged manifest carries a sixth entry this document never listed:**
 >   `com.dicereligion.edgecase.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, self-defined by
 >   `androidx.core` at `protectionLevel="signature"`. It is app-private, grants nothing to anyone
@@ -61,14 +94,14 @@
 >
 > **The published privacy policy was corrected** in the Anumey's Lair repo: `READ_BASIC_PHONE_STATE`
 > and `WAKE_LOCK` were missing from a list that reads as exhaustive. Effective date moved to
-> 4 September 2026, as that document's own §12 requires. **Not yet deployed — it needs a push.**
+> 4 September 2026, as that document's own §12 requires. *(Deployed 2026-09-05 — see above.)*
 >
 > **Previous change (2026-09-04) — release prep: the code half of the launch checklist is done.**
 > Everything in `Publisher.md` §10's critical list that does not need an external account has landed
 > (Appendix C, **group D**), plus a Credits-screen trim. What changed:
 >
 > - **R8 is on.** `isMinifyEnabled` + `isShrinkResources` for release; the APK drops from
->   **22.5 MB to 5.5 MB**. The keep rules are 44 lines, not `Publisher.md` §2.2's set — that one is
+>   **22.5 MB to 5.5 MB**. The keep rules are 68 lines, not `Publisher.md` §2.2's set — that one is
 >   over-broad, carries `android.support.v7` rules for a namespace this app lacks, and names the
 >   **legacy** ads package. The rule that earns its place is the enum-constant keep: `SliverConfig`
 >   restores `ColorMode` with `valueOf()`, so obfuscated constants would throw on prefs written by
@@ -357,9 +390,11 @@ customize the sliver's appearance and geometry.
 │  ││ DICE RELIGION — prose      ││                               │
 │  ││ [ Seal ] ──→ Play Store    ││                               │
 │  ││  twin fangs                ││                               │
-│  ││ LETTERING / LIBRARIES      ││                               │
+│  ││ LETTERING                  ││                               │
 │  │└────────────────────────────┘│                               │
 │  │ [BACK] [PRIVACY] ──→ browser │                               │
+│  │ [AD CONSENT] (only if UMP    │                               │
+│  │  reports REQUIRED)           │                               │
 │  └──────────────────────────────┘                               │
 │                                                                 │
 │  Every screen: ObsidianCrackView backdrop + serpent pillars     │
@@ -502,10 +537,12 @@ EdgeCase/
 │
 ├── Docs/
 │   ├── stats.md                              # ← this document
-│   ├── Ads.md                                # AdMob integration plan (2026-08-28, not implemented)
+│   ├── Ads.md                                # AdMob integration plan (2026-08-28, fully implemented)
 │   ├── Dimensions.md                         # Stable ID/dimension addressing per page & element
 │   ├── SliverAnatomy.md                      # Fang geometry deep-dive (knobs → vertices)
 │   ├── Publisher.md                          # Google Play publication roadmap
+│   ├── EdgeCase_Investigation_Brief.md       # Overlay / Recents / ad-inspector brief (2026-09-15)
+│   ├── FINDINGS.md                           # Verdicts + evidence for that brief
 │   ├── fonts_licenses/
 │   │   ├── Cinzel-OFL.txt
 │   │   └── GFSNeohellenic-OFL.txt
@@ -518,7 +555,7 @@ EdgeCase/
 │
 └── app/
     ├── build.gradle.kts                      # Module build config
-    ├── proguard-rules.pro                    # ProGuard rules (stock, unused)
+    ├── proguard-rules.pro                    # R8 keep rules for release (68 lines, §4)
     ├── .gitignore                            # Ignores /build
     │
     └── src/
@@ -672,7 +709,8 @@ plugins {
 - **namespace / applicationId:** `com.dicereligion.edgecase`
 - **compileSdk:** 36 (with `minorApiLevel = 1`)
 - **minSdk:** 30 · **targetSdk:** 36
-- **versionCode:** 4 · **versionName:** `"1.5.0"` — bumped for the ads release (`Docs/Ads.md` §7.8)
+- **versionCode:** 6 · **versionName:** `"1.5.2"` — bumped 2026-09-15 for the small-screen fix
+  (group F1) and the ad-inspector disable (§6.6). 5 / `"1.5.1"` was a test-only build, never uploaded. 4 / `"1.5.0"` was the ads release (`Docs/Ads.md` §7.8) and is the build currently live on Play
 - **Java:** 11 (source & target)
 - **buildFeatures:** `buildConfig = true` — required by the version label, which reads
   `BuildConfig.VERSION_NAME` rather than a hardcoded string
@@ -706,7 +744,7 @@ plugins {
 > **The ad stack is complete (B1–B4).** The GMA Next-Gen SDK and UMP are on the classpath, the
 > `APPLICATION_ID` meta-data is in the manifest, a real `AdView` serves the Plinth, and UMP gates
 > every ad request. The SDK drags in Cronet and `androidx.work` transitively; the debug APK is
-> **22.5 MB**, and R8 cuts the release APK to **5.5 MB**.
+> **22.5 MB**, and R8 cuts the release APK to **5.5 MB** (1.5.0) / **5.6 MB** (1.5.2; AAB 5.9 MB).
 
 ### `app/proguard-rules.pro`
 
@@ -873,7 +911,7 @@ to guard).
 | `btnBackToMenuFromCredits` | `showScreen(MAIN_MENU)` |
 | `btnDeveloperSeal` | `openUrl(url_developer_page)` — the Play Store developer page |
 | `btnPrivacyPolicy` | `openUrl(url_privacy_policy)` — the privacy policy, in a browser |
-| `btnAdConsent` | `adHost.showPrivacyOptionsForm()` — reopens Google's consent form **in-app**. `GONE` unless `AdHost.isPrivacyOptionsRequired()`, which is always false until B3 |
+| `btnAdConsent` | `adHost.showPrivacyOptionsForm()` — reopens Google's consent form **in-app**. `GONE` unless `AdHost.isPrivacyOptionsRequired()` — i.e. UMP reports `REQUIRED` (EEA, UK, CH, applicable US states). Re-synced from `onConsentResolved` |
 | `btnBackToMenuFromPosition` | Return to main menu |
 
 **App-list preloading.** `preloadApps()` runs `getInstalledApps()` on a plain `Thread` during
@@ -1383,7 +1421,7 @@ dialog uses to paint the hue-spectrum track.
 
 ### 5.16 `ObsidianCrackView.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/ObsidianCrackView.kt` · **277 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/ObsidianCrackView.kt` · **278 lines**
 **Extends:** `View` (XML-instantiable — takes `AttributeSet`)
 
 **Purpose:** the living temple floor behind **every screen**: fractured obsidian with emerald gems
@@ -1419,7 +1457,7 @@ wall time.
 
 ### 5.17 `CrackFlashView.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/CrackFlashView.kt` · **109 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/CrackFlashView.kt` · **110 lines**
 **Extends:** `View`
 
 **Purpose:** a one-shot fracture flash — when a slab is pressed, 2–3 jagged cracks spider outward from
@@ -1437,7 +1475,7 @@ above `DustParticleView`.
 
 ### 5.18 `ServiceEyeView.kt`
 
-**Path:** `app/src/main/java/com/dicereligion/edgecase/ServiceEyeView.kt` · **155 lines**
+**Path:** `app/src/main/java/com/dicereligion/edgecase/ServiceEyeView.kt` · **156 lines**
 **Extends:** `View` (XML-instantiable — takes `AttributeSet`)
 
 **Purpose:** the **Serpent's Eye** — the overlay service's state indicator, one on each flank of the
@@ -1901,9 +1939,9 @@ still in Play and in Android's App info. `MainActivity` reads the bool and sets 
 
 Both URLs are `translatable="false"`. The privacy policy and its companion
 `https://anumey.xyz/legal/edgecase/delete-data` are **deployed and live** — both re-verified 200 on
-2026-09-05, with §6.2/§6.3/§6.4 present as the code and this document cite them. ⚠️ **The live copy
-is one revision behind the source**, though: the `READ_BASIC_PHONE_STATE` / `WAKE_LOCK` correction is
-written but unpushed, so the deployed page still reads *29 August 2026* (§9). `url_developer_page`
+2026-09-05, with §6.2/§6.3/§6.4 present as the code and this document cite them. The live privacy
+policy **matches the source**: the `READ_BASIC_PHONE_STATE` / `WAKE_LOCK` correction shipped in
+Anumey's Lair `9768cfa`, and the page served *4 September 2026* when re-fetched on 2026-09-15 (§9). `url_developer_page`
 was corrected to the numeric form on 2026-09-04, so **no placeholder URL remains**.
 `credits_libraries_*` and `credits_ads_*` were deleted the same day (§6.1). Long-form prose lives here rather than in the layout so there
 is exactly one place to edit the wording; every other UI label — screen titles, button text,
@@ -2004,6 +2042,11 @@ correctly in both standard and circular launcher modes. The manifest sets
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
 
+        <!-- Added 2026-09-15; ships in 1.5.2. -->
+        <meta-data
+            android:name="com.google.android.libraries.ads.mobile.sdk.flag.DISABLE_AD_INSPECTOR"
+            android:value="true" />
+
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -2024,6 +2067,33 @@ correctly in both standard and circular launcher modes. The manifest sets
 </manifest>
 ```
 
+**`DISABLE_AD_INSPECTOR` (2026-09-15, ships in 1.5.2; tested on the 1.5.1 test build).** Ad inspector opens on a shake for any
+AdMob **test device** in **any** build type — it is gated on console registration, not on debug vs
+release. Because `SidebarService` shares the app process and keeps it alive, the SDK's gesture
+listener outlived `MainActivity` and the inspector opened over other apps
+(`Docs/EdgeCase_Investigation_Brief.md`, symptom 3; symptom 2's black Recents task is suspected to
+be the same launch). The key was **verified against the `ads-mobile-sdk` 1.4.0 runtime jar** (the
+string and its "disabled in the AndroidManifest.xml" log line are both present), not taken from
+docs. Present in both merged manifests.
+
+**Verified on the Pixel 9 Pro XL (Android 17 beta), 2026-09-15**, same scenario before and after:
+
+- **1.5.0, baseline:** sliver running, app backgrounded, shake over YouTube → the inspector opened.
+  `ActivityTaskManager: START u0 {cmp=com.dicereligion.edgecase/…sdk.common.AdActivity} from uid
+  10520 (com.dicereligion.edgecase) (sr=<MainActivity>) (BAL_ALLOW_NON_APP_VISIBLE_WINDOW)`. The SDK
+  activity was placed into EdgeCase's **existing** task (#2026), which jumped to Recents #0 above
+  YouTube. Two details matter: the background-activity-launch exemption was granted **because the
+  sliver is a visible overlay window** — without the overlay, Android would have blocked the launch —
+  and the task was EdgeCase's own, now fronted by an SDK WebView activity. That is the likely source
+  of brief symptom 2.
+- **1.5.1, with the flag:** sliver running; shake in the foreground and shake over YouTube → nothing.
+  No `AdActivity` start, no inspector log line, no new EdgeCase task in Recents; the Plinth banner
+  still loaded (`411×128dp`).
+
+Do *not* remove the phone's
+test-device registration to fix this instead — that registration is what keeps the maintainer's
+own ad taps out of invalid-traffic accounting (group B0).
+
 **Two release-prep additions (2026-09-04):**
 
 - **`usesCleartextTraffic="false"`** (`Publisher.md` §2.8). AdMob is HTTPS-only and the app makes no
@@ -2041,7 +2111,7 @@ list onto a device missing some of those apps is safe: `ShortcutStateManager` fi
 packages on load, and `SidebarService.populateShortcuts` skips any package that fails to resolve.
 
 #### `proguard-rules.pro`
-44 lines of R8 keep rules as of 2026-09-04; minification is **on** for release. Fully described
+68 lines of R8 keep rules (including the D10 Room constructor rule); minification is **on** for release. Fully described
 under §4 → `app/proguard-rules.pro`.
 
 ---
@@ -2129,11 +2199,13 @@ under §4 → `app/proguard-rules.pro`.
 | 75 | **Privacy** button linking to the live hosted policy | ✅ | `btnPrivacyPolicy` |
 | 76 | Slab press behaviour generalised to any `View` | ✅ | `applyStoneButtonBehavior<T : View>` |
 | 77 | **AD CONSENT** entry point, hidden unless a consent regime applies | ✅ | `btnAdConsent`, `AdHost.isPrivacyOptionsRequired()` — real UMP body as of B4 |
+| 78 | Published **privacy policy** and **data-deletion** pages | ✅ | `anumey.xyz/legal/edgecase/*` — permission list complete since 2026-09-05 |
 | 79 | **UMP consent resolved before any ad request** (`canRequestAds()` gate) | ✅ | `AdHost.start()` |
 | 80 | Real GMA Next-Gen banner in the Plinth, adaptive-sized | ✅ | `AdHost.attachBanner()` |
-| 78 | Published **privacy policy** and **data-deletion** pages | ✅ | `anumey.xyz/legal/edgecase/*` |
 | 81 | **Prominent disclosure** before the overlay-permission redirect | ✅ | `MainActivity.showOverlayDisclosureDialog()` |
 | 82 | **R8** shrink + resource shrink on release builds | ✅ | `build.gradle.kts`, `proguard-rules.pro` — 22.5 MB debug → 5.5 MB release. Re-verified building green 2026-09-05 |
+| 83 | **Compact main-menu metrics** below 800dp tall; version caption hidden there | ⏳ in 1.5.2, **submitted 2026-09-15** | `values/` + `values-h800dp/` `menu_*` dimens, `show_version_label` — group F1, needs 1.5.1 |
+| 84 | **Ad inspector disabled** — no shake-to-open over other apps, in any build | ⏳ in 1.5.2, **submitted 2026-09-15** | `AndroidManifest.xml` `DISABLE_AD_INSPECTOR` meta-data (§6.6), device-verified; `Docs/FINDINGS.md` |
 
 ### Planned / Stub Features
 
@@ -2141,7 +2213,7 @@ under §4 → `app/proguard-rules.pro`.
 |---|---|---|
 | 1 | Dummy button (third menu option) | ✅ **Gone** — became **CREDITS** (features 73–75) |
 | 2 | Monochrome themed icon (Android 13+) | ❌ Removed — incompatible with a raster PNG foreground |
-| 3 | AdMob monetization | ✅ **Complete** (B0–B6) — real SDK, real banner, UMP consent, live ad unit, and every Play Console declaration filed (2026-09-04). Post-launch only: relink AdMob to the listing, and start the CTR watch |
+| 3 | AdMob monetization | ✅ **Complete** (B0–B6) — real SDK, real banner, UMP consent, live ad unit, and every Play Console declaration filed (2026-09-04). AdMob linked to the live listing and **review passed 2026-09-15 — Ready, ad serving enabled**. Now: the CTR watch |
 | 4 | Overlay suspension while the Activity is foreground | ✅ **Done** — feature 68 |
 | 5 | UMP **privacy options** entry point | ✅ **Done** (B3/B4) — real `UserMessagingPlatform` bodies. Permanently unproven under an actual consent regime: **closed as an accepted risk**, not an open task (§9, Appendix C group C) |
 | 6 | In-app AdMob attribution | ❌ **Removed** 2026-09-04. Never an obligation — no GMA SDK term, AdMob policy or Play policy requires it, and the real ad disclosures live in the hosted policy, the UMP flow and the Console declaration (§6.1) |
@@ -2264,7 +2336,7 @@ under §4 → `app/proguard-rules.pro`.
 
 **Six more entries arrive by manifest merge (B1).** None is declared in this app's manifest; all are
 contributed by the ad libraries and their transitive dependencies, and appear only in the *merged*
-manifest. **Re-verified against the merged release manifest on 2026-09-05** — all six still present,
+manifest. **Re-verified against the merged release manifest on 2026-09-15, for 1.5.2** — all six still present,
 `AD_ID` and `APPLICATION_ID` included. Reproduce with:
 
 ```bash
@@ -2277,23 +2349,21 @@ grep -o '<uses-permission[^>]*android:name="[^"]*"' \
 | `INTERNET` | `ads-mobile-sdk:1.4.0` (also Cronet) | **Confirms policy claim P1** — the app declares no networking of its own; it arrives solely with the ad SDK |
 | `ACCESS_NETWORK_STATE` | `ads-mobile-sdk:1.4.0` (also `androidx.work`) | Connectivity checks before an ad request |
 | `AD_ID` | `ads-mobile-sdk:1.4.0` (also `play-services-ads-identifier`) | Required at `targetSdk` > 33. **Must match the Play Console Advertising ID declaration**, or the ad ID is zeroed and fill/CPM collapse |
-| `READ_BASIC_PHONE_STATE` | `ads-mobile-sdk:1.4.0` | Normal-level, no runtime prompt — but it **is** listed publicly on the Play listing. 🔴 **Missing from the *published* policy, still, as of 2026-09-05.** Worse than a silent omission: the policy enumerates the other merged permissions (`INTERNET`, `ACCESS_NETWORK_STATE`, `AD_ID`), so the list reads as complete and is not. `WAKE_LOCK` is missing from it too. **The fix is written in the Anumey's Lair working tree and has not been pushed** — see the note below the table |
-| `WAKE_LOCK` | `androidx.work:2.7.0`, pulled in transitively by the ad SDK | Not requested by EdgeCase or by AdMob directly. Also absent from the published policy's permission list — see the row above |
+| `READ_BASIC_PHONE_STATE` | `ads-mobile-sdk:1.4.0` | Normal-level, no runtime prompt — but it **is** listed publicly on the Play listing. ✅ **Disclosed in the published policy since 2026-09-05** (Anumey's Lair `9768cfa`). It was missing until then, which mattered because the policy enumerates the other merged permissions and so reads as complete — see the note below the table |
+| `WAKE_LOCK` | `androidx.work:2.7.0`, pulled in transitively by the ad SDK | Not requested by EdgeCase or by AdMob directly. ✅ Disclosed in the published policy alongside the row above |
 | `…edgecase.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | `androidx.core`, via the ad SDK | **Self-defined**, not a platform permission: the merged manifest declares it *and* uses it, at `protectionLevel="signature"`. It exists so `ContextCompat.registerReceiver` can guard a non-exported dynamic receiver against other apps. Namespaced under this app's own package, grants nothing to anyone else, and **is not shown on the Play listing or in App info** — so it is not a disclosure gap and is deliberately absent from the privacy policy. Listed here only so a future merged-manifest diff does not read as an eleventh unexplained permission |
 
 Do **not** hand-add any of these — they merge automatically, and a hand-added duplicate diverges
 silently when the SDK version changes.
 
-> 🔴 **Open item — the published policy is one revision behind.** The permission table on
-> `https://anumey.xyz/legal/edgecase/privacy` reads as exhaustive and omits `READ_BASIC_PHONE_STATE`
-> and `WAKE_LOCK`. Rows for both, plus the effective-date bump to *4 September 2026* that the
-> document's own §12 requires, are **written and typechecked in the Anumey's Lair repo but
-> uncommitted**; the live page still served *29 August 2026* when re-fetched on 2026-09-05.
+> ✅ **Closed 2026-09-05 — the published policy matches the merged manifest.** The permission table on
+> `https://anumey.xyz/legal/edgecase/privacy` reads as exhaustive, and until 2026-09-05 it omitted
+> `READ_BASIC_PHONE_STATE` and `WAKE_LOCK`. Rows for both, plus the effective-date bump to
+> *4 September 2026* that the document's own §12 requires, shipped in Anumey's Lair `9768cfa`.
+> Re-fetched **200 on 2026-09-15** with both rows present. Appendix C, **F2**.
 >
-> This was a paperwork item on 2026-09-04. It is not any more: **the app is submitted and that URL is
-> registered in Play Console**, so a published policy under-reporting the app's own merged
-> permissions is now a live inconsistency between the listing and the document it points at. It is
-> one commit and one push to `main` — App Hosting deploys on push. Track it as Appendix C, **F2**.
+> **Keep it that way:** any SDK bump that changes the merged permission set means re-running the grep
+> above and updating the policy in the same pass — the URL is registered in Play Console.
 
 **Manifest `<queries>`:** declares the `MAIN`/`LAUNCHER` intent so `queryIntentActivities()` can
 enumerate launchable apps under package-visibility restrictions.
@@ -2410,9 +2480,9 @@ setting, and the correction is in group C.
 ### Potential Future Enhancements
 
 - ~~**AdMob monetization**~~ — **done end to end.** The Plinth, the real SDK, the ad unit, the UMP
-  consent flow and every Play Console declaration have all landed (Appendix C, groups B and E). What
-  is left is post-launch and blocked on the listing going live: relink AdMob to the Play listing,
-  let app-ads.txt self-verify, and watch CTR (`Docs/Ads.md` §11).
+  consent flow and every Play Console declaration have all landed (Appendix C, groups B and E), and
+  AdMob was linked to the live Play listing and passed its app review on 2026-09-15. What is left:
+  app-ads.txt verification and the CTR watch (`Docs/Ads.md` §11).
 - Finish the palette reconciliation (#1) — the vector `pathData` hex and the alpha-composited one-offs
 - Scope the included-header IDs safely, or give each screen its own header ID (#2)
 - Call `mutate()` on tray icons so the desaturation filter cannot leak between ImageViews (#3)
@@ -2461,8 +2531,8 @@ setting, and the correction is in group C.
 | `AvailableAppsAdapter.kt` | 50 | Archives RecyclerView adapter |
 | `SliverShape.kt` | 50 | Shared parametric fang-path builder |
 | `AppInfoData.kt` | 9 | Data class for installed app info |
-| | **3,783** | **total Kotlin (main)** |
-| `androidTest/*.kt` | 246 | 14 instrumented tests |
+| | **3,710** | **total Kotlin (main), 19 files — re-counted 2026-09-15** |
+| `androidTest/*.kt` | 241 | 14 instrumented tests |
 
 ### Color Hex Quick Reference
 
@@ -2509,7 +2579,13 @@ seam. **Updated 2026-08-30 for the ad integration proper (B1–B4)**: the legal 
 and verified live; the GMA Next-Gen SDK and UMP were added with per-build-type ad IDs; the
 placeholder banner was replaced by a real adaptive `AdView`; and the UMP consent flow was wired,
 closing the last published-policy commitment the code had not met. Two items are implemented but
-unproven — the EEA consent path and the small-screen pass at the measured 128dp banner.*
+unproven — the EEA consent path and the small-screen pass at the measured 128dp banner.
+**Updated 2026-09-04–05** for release prep (R8, disclosure, signing), the v1.5.0 submission, the
+small-screen fix and a documentation reconciliation. **Updated 2026-09-15** for: the privacy-policy
+fix going live; AdMob linking (and the duplicate-app cleanup) and AdMob's review passing; the
+investigation brief and `DISABLE_AD_INSPECTOR`; 1.5.2's build, device pass and submission alongside a
+new store-listing icon; Android developer verification; the Anumey's Lair project-card links; and a
+freshness audit that re-ran the standing checks and corrected stale counts, dates and cross-references.*
 
 ---
 
@@ -2517,10 +2593,12 @@ unproven — the EEA consent path and the small-screen pass at the measured 128d
 
 | Document | Status | Purpose |
 |---|---|---|
-| `~/Work/Web/Anumey's Lair` | External repo | The website that **hosts EdgeCase's legal pages**: `/legal/edgecase/privacy` and `/legal/edgecase/delete-data`, beside the existing Mach2 and BOTCH policies. Next.js on Firebase App Hosting; **every push to `main` deploys**. Its `docs/stats.md` §4 → *Legal routes* is the authority on the URL constraints. The publisher-level `public/app-ads.txt` already carries the AdMob publisher ID EdgeCase uses — no change needed there. 🔴 **It currently holds one uncommitted EdgeCase change: the privacy-policy permission-list fix (group F2), which is not deployed.** Its `docs/stats.md` §0 carries the mirror of this note |
+| `~/Work/Web/Anumey's Lair` | External repo | The website that **hosts EdgeCase's legal pages**: `/legal/edgecase/privacy` and `/legal/edgecase/delete-data`, beside the existing Mach2 and BOTCH policies. Next.js on Firebase App Hosting; **every push to `main` deploys**. Its `docs/stats.md` §4 → *Legal routes* is the authority on the URL constraints. The publisher-level `public/app-ads.txt` already carries the AdMob publisher ID EdgeCase uses — no change needed there. The privacy-policy permission-list fix (group F2) shipped there in `9768cfa` and is live. `0f51cc8` "Fixes and Live Links" (2026-09-15, pushed) added real **Google Play** links to the EdgeCase and BOTCH cards on `https://anumey.xyz/ursa-major` and a new **Mach2** card. The EdgeCase card's copy (unchanged) describes EdgeCase's behaviour publicly (overlay, launcher-only package query, one banner on its own screens, no accounts) — a second place, after the privacy policy, to update if those change. Nothing EdgeCase-related is pending in that repo. Its `docs/stats.md` §0 carries the mirror of this note |
+| `Docs/EdgeCase_Investigation_Brief.md` | **Closed** | Maintainer-supplied brief (2026-09-15) on three reported symptoms: the WhatsApp reaction-tray blur, an unprompted black EdgeCase task in Recents, and ad inspector opening on a shake over other apps. Written without the codebase in hand — several premises are wrong for EdgeCase (Compose, bottom-right gravity, `Application.onCreate` init, "disabled in production builds"); the corrections are tabled at the top of `FINDINGS.md`. **Do not apply its A4 gravity item** |
+| `Docs/FINDINGS.md` | **Current** | Verdicts and evidence for the brief: symptom 3 confirmed and fixed (`DISABLE_AD_INSPECTOR`, §6.6, shipping in 1.5.2); symptom 2 traced to the same launch; symptom 1 ruled out as an EdgeCase bug (blur enabled system-wide) |
 | `Docs/SliverAnatomy.md` | Current | Deep-dive on the fang geometry: named parts, vertices, tuning knobs, and how they map to `SliverConfig`/`SliverShape` |
 | `Docs/Dimensions.md` | Current | Stable ID/dimension addressing for every page and element; §6 covers the sliver anatomy and tuning knobs. Predates the v1.4 rehaul — verify IDs against the layouts before relying on it |
-| `Docs/Publisher.md` | **Superseded and fully discharged** | Google Play publication roadmap / pre-launch checklist. Its §3 ("Ad Integration Strategy") is superseded by `Docs/Ads.md` §9, and its §2.2 keep rules were rejected in favour of the 44-line set in §4 above. **Nothing in it is outstanding:** §2.5/§4.1 (keystore), §6 (store assets) and the whole declaration set are done, and §7.1's closed-testing gate never applied — that rule targets accounts created after ~Nov 2023, and this one already publishes Mach2. Its §5.4 "declare installed apps as collected" row is **wrong** and was deliberately not followed (group B6). It has no item for `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, which was a real gap. Read it now as history plus §9.1's post-launch routine |
+| `Docs/Publisher.md` | **Superseded and fully discharged** | Google Play publication roadmap / pre-launch checklist. Its §3 ("Ad Integration Strategy") is superseded by `Docs/Ads.md` §9, and its §2.2 keep rules were rejected in favour of the 68-line set in §4 above. **Nothing in it is outstanding:** §2.5/§4.1 (keystore), §6 (store assets) and the whole declaration set are done, and §7.1's closed-testing gate never applied — that rule targets accounts created after ~Nov 2023, and this one already publishes Mach2. Its §5.4 "declare installed apps as collected" row is **wrong** and was deliberately not followed (group B6). It has no item for `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`, which was a real gap. Read it now as history plus §9.1's post-launch routine |
 | `Docs/Ads.md` | **Fully implemented** | AdMob integration plan (2026-08-28): the "Plinth" bordered-banner architecture, the overlay-service compliance hazard and its fix, a 7-phase implementation plan, and a compliance checklist. §5–§6 (architecture, visual spec) and §7.1–§7.8 (account, SDK, AdHost, layout, wiring, overlay suspension, privacy entry point, Play Console) are all built and filed. What survives it as live material: **§8** (the pre-release compliance checklist), **§10.3** (rollout — 100% was chosen, so its staged-rollout advice is moot) and **§11** (the post-launch risk list, and the CTR watch that starts when the listing goes live). **Caveat: §7.3's code listing has drifted from the shipped SDK** and must not be pasted verbatim; verify symbols against the AAR |
 | `Docs/Legacy/NewTheme.md` | **Implemented** | The v1.4.0 "Obsidian Serpent" blueprint. Its Phases 1–7 and §12 functional changes are all present in the code described above; retained for the design rationale behind the Design Laws referenced in source comments |
 | `Docs/Legacy/EdgeCaseTD.md`, `EdgecaseTheme.md`, `EdgeNextPDP.md`, `IMPLEMENTATION_PLAN.md` | Historical | Superseded early design and planning documents |
@@ -2543,17 +2621,17 @@ external setup first.
 | A5 ✅ | Prune dead resources; reconcile the palette | Removed 4 drawables, 3 styles and 10 dimens; pointed the manifest at `Theme.EdgeCase`; replaced 18 colour literals in the custom views with `@color` refs and named `stele_marble` |
 | A6 ✅ | Backup rules for `EdgeCasePrefs` | Cloud backup and device transfer both include the prefs file, so a reinstall keeps shortcuts, position and every style key |
 
-### B. Ad integration proper — ✅ **COMPLETE**, except two post-launch relinks (B0)
+### B. Ad integration proper — ✅ **COMPLETE** (AdMob linked to Play and review passed 2026-09-15)
 
 | # | Task | Blocking? | Notes |
 |---|---|---|---|
-| B0 ◐ | **AdMob account, app registration, one banner unit** | console work done; **two post-launch steps remain, both blocked on the listing going live** | `Docs/Ads.md` §7.1. Publisher **pub-4587702028307036** (shared with the sibling apps, so any enforcement here hits them too). App registered as "Edgecase"/Android, *not listed on a store yet* — **relink to the Play listing after publication**, the unlinked path costs fill rate. One unit, `EdgeCase — Plinth Banner`, `…/8470994251`, format Banner, **auto-refresh 60s** ✅. Test device (Pixel 9 Pro XL) registered account-wide at Settings → Test devices, keyed to its advertising ID — resetting that ID silently de-registers it. ~~**Outstanding: EU + US-states consent messages.**~~ ✅ **Both created and published 2026-09-04**, scoped to EdgeCase. Deliberately **separate messages from Mach2's**, not a shared one: a consent message carries a single privacy-policy URL, so reusing Mach2's would have shown EdgeCase users Mach2's policy. ✅ **Re-verified on device the same day:** the error is gone and `requestConsentInfoUpdate` now *succeeds* — `required` resolves to a real `NOT_REQUIRED` (previously `UNKNOWN`), and the banner loads via the success callback rather than the failure fallback. Correct healthy state for a non-EEA IP. **Still open (post-launch, group E):** relink the AdMob app to the Play listing once it is live — the unlinked path costs fill rate, and AdMob then runs its own ad-serving review separate from Play's. app-ads.txt self-verifies at the same moment (the file itself is correct and serving 200) |
+| B0 ✅ | **AdMob account, app registration, one banner unit** | done; **linked to the Play listing and review passed 2026-09-15** — Ready, ad serving enabled | `Docs/Ads.md` §7.1. Publisher **pub-4587702028307036** (shared with the sibling apps, so any enforcement here hits them too). App originally registered as "Edgecase"/Android, *not listed on a store*; ✅ **linked to Google Play 2026-09-15** on the correct app, `~3708305513` (the ID the release build ships). ⚠️ **Duplicate created and cleaned up the same day:** the first *Finish app setup* pass added EdgeCase as a **new** AdMob app, `~9509723699`, and attached the Play listing to it — so the shipping ID stayed unlinked. AdMob allows a listing on only one app, so the fix was *Clear store details* on `~9509723699`, then *Add store* on `~3708305513`. The duplicate has 0 ad units and nothing references it; ✅ **hidden 2026-09-15** — never add a unit to it, and never point the app at it. One unit, `EdgeCase — Plinth Banner`, `…/8470994251`, format Banner, **auto-refresh 60s** ✅ — re-confirmed under the linked app on 2026-09-15 (0 mediation groups, 0 campaigns, as expected). Test device (Pixel 9 Pro XL) registered account-wide at Settings → Test devices, keyed to its advertising ID — resetting that ID silently de-registers it. ~~**Outstanding: EU + US-states consent messages.**~~ ✅ **Both created and published 2026-09-04**, scoped to EdgeCase. Deliberately **separate messages from Mach2's**, not a shared one: a consent message carries a single privacy-policy URL, so reusing Mach2's would have shown EdgeCase users Mach2's policy. ✅ **Re-verified on device the same day:** the error is gone and `requestConsentInfoUpdate` now *succeeds* — `required` resolves to a real `NOT_REQUIRED` (previously `UNKNOWN`), and the banner loads via the success callback rather than the failure fallback. Correct healthy state for a non-EEA IP. ✅ **AdMob app review passed 2026-09-15 — Ready, ad serving enabled.** **Still open (group E):** the app-ads.txt verification (the file itself is correct and serving 200), and a one-time check that *Maximize message coverage* did not assign an extra auto-created consent message to EdgeCase |
 | B1 ✅ | Add GMA Next-Gen + UMP dependencies, `APPLICATION_ID` meta-data, per-build-type ad IDs | done 2026-08-30 | §7.2. `ads-mobile-sdk:1.4.0` + `user-messaging-platform:4.0.0`; meta-data reads `@string/admob_app_id`; debug→test IDs, release→live IDs. Needed `resValues = true` (AGP 9 gates it, undocumented in §7.2). Both variants build; `APPLICATION_ID` and `AD_ID` confirmed in both merged manifests. Four other permissions merged in too — see §9 |
 | B2 ✅ | Replace the marked block in `AdHost.attachBanner()` with the real `AdView` | done 2026-08-30 | §7.3. Real `AdView` + `MobileAds.initialize` off the main thread; `doOnLayout` for the measured width, with a **two-stage** reservation (nominal before layout so the well never pops, exact `AdSize` after). ADVERTISING credit un-hidden *(and since deleted — D8; it was never an obligation)*. Verified on device: `Plinth banner loaded (411×128dp)`, no crash, overlay grep clean. Two API corrections vs §7.3 — see below |
 | B3 ✅ | UMP consent flow in `AdHost.start()`, gated on `canRequestAds()` | done 2026-08-30 | §7.3. `requestConsentInfoUpdate` on every launch → `loadAndShowConsentFormIfRequired` → `canRequestAds()` gate on all three paths into `initializeAndLoad()`. Verified on device: `canRequestAds=true required=NOT_REQUIRED formAvailable=false`, both callbacks firing. UMP 4.0.0's API matched the doc exactly, unlike the ads SDK. **The §7.3 listing has drifted from the shipped SDK** — verify every symbol against the AAR (`javap` on the artifact in `~/.gradle/caches`) before trusting it. Two errors found at B2: `InitializationConfig` is in `…sdk.initialization`, **not** `…sdk.common`; and `LoadAdError.code`/`.message` are Kotlin properties, not `getCode()`/`getMessage()`. `MobileAds.initialize` also needs an explicit `object : OnAdapterInitializationCompleteListener` rather than the trailing lambda §7.3 shows |
 | B4 ✅ | Fill in the two UMP consent stubs in `AdHost` | done 2026-08-30 | §7.7. Done with B3 — inseparable: B3 makes `consentInformation` live and B4 is the code that reads it, so B3 alone would have left the entry point permanently hidden even where Google requires it. `showPrivacyOptionsForm` also re-fires `onConsentResolved` on dismissal, since withdrawing consent can change the requirement status. **Still needs the EEA debug-geography run** (group C): the published policy §6.2/§6.4 promises this control, so it must be *seen* working, not assumed |
 | B5 ✅ | Delete `DummyBannerView.kt` | done 2026-09-04 | 106 lines removed; no references anywhere in `app/src`. The source tree is now 19 Kotlin files (§5.20) |
-| B6 ✅ | Play Console declarations, bump to v1.5.0 | done 2026-09-04 | §7.8. **Every declaration is filed and the bundle is submitted — the answer-by-answer record is group E.** The developer account was never the obstacle: EdgeCase is a second app under an account that already publishes Mach2. *Contains ads*, the **Advertising ID** declaration (matched to the merged `AD_ID`, §9, or the ad ID is zeroed), Data safety, content ratings and target audience are all in; `TagForChildDirectedTreatment` is left unset; `versionCode = 4` / `versionName = "1.5.0"` and the numeric `url_developer_page` both landed 2026-09-04. Two decisions worth keeping: **installed apps are NOT declared as collected** — Play's "collected" means transmitted off-device and claim P2 (§9) says the list never leaves the phone, so `Publisher.md` §5.4 is wrong and following it would have made a published legal document false; and the content-rating questionnaire **never asked about ads**, so that declaration lives only in the separate Ads section. ⚠️ **Carried forward, not closed:** the `READ_BASIC_PHONE_STATE` / `WAKE_LOCK` disclosure gap in the published policy (§9, group F2) |
+| B6 ✅ | Play Console declarations, bump to v1.5.0 | done 2026-09-04 | §7.8. **Every declaration is filed and the bundle is submitted — the answer-by-answer record is group E.** The developer account was never the obstacle: EdgeCase is a second app under an account that already publishes Mach2. *Contains ads*, the **Advertising ID** declaration (matched to the merged `AD_ID`, §9, or the ad ID is zeroed), Data safety, content ratings and target audience are all in; `TagForChildDirectedTreatment` is left unset; `versionCode = 4` / `versionName = "1.5.0"` and the numeric `url_developer_page` both landed 2026-09-04. Two decisions worth keeping: **installed apps are NOT declared as collected** — Play's "collected" means transmitted off-device and claim P2 (§9) says the list never leaves the phone, so `Publisher.md` §5.4 is wrong and following it would have made a published legal document false; and the content-rating questionnaire **never asked about ads**, so that declaration lives only in the separate Ads section. ✅ The `READ_BASIC_PHONE_STATE` / `WAKE_LOCK` disclosure gap carried forward from here was closed on 2026-09-05 (§9, group F2) |
 
 ### C. Verification before any release with ads
 
@@ -2615,7 +2693,10 @@ external setup first.
 >    STOP was off-screen at 360×640dp. Fixed via the `menu_*` dimens (§6.3) and verified at both
 >    360×640dp and 360×720dp. **The fix is not in the submitted v1.5.0 build** — group F.
 
-**Standing checks — re-run before every release that touches ads.** Last run 2026-09-05.
+**Standing checks — re-run before every release that touches ads.** Last run **2026-09-15**, against
+1.5.2: overlay grep empty; `AdHost` referenced only from `MainActivity`; no networking, file-output,
+accessibility-service or `QUERY_ALL_PACKAGES` usage in `app/src/main/java`; merged release manifest
+permissions unchanged from 1.5.0 (the eleven in §9); privacy, delete-data and `app-ads.txt` all 200.
 
 - ✅ Run the full compliance checklist in `Docs/Ads.md` §8.
 - ✅ Confirm the overlay grep is clean: no ad imports in `SidebarService.kt`, `ArcSliverView.kt`,
@@ -2624,14 +2705,16 @@ external setup first.
 - ✅ Re-run the small-screen pass at 360×640dp and 360×720dp on all four screens **and** the
   Customize dialog. Done at the real 174dp plinth cost; the `menu_*` fix came out of it.
 - ⏳ Watch CTR from day one. On a utility app, anything above ~2–3% means accidental clicks — widen
-  the buffer before Google acts. **Not startable until the listing is live**, and at 100% rollout
+  the buffer before Google acts. **Started 2026-09-15** — AdMob review passed, ad serving
+  enabled (group E). At 100% rollout
   there is no staged blast radius, so the response is to act immediately rather than wait.
 - ✅ **Re-verify the six claims in §9** against the shipping build. The privacy policy asserts them
   publicly, and the ad SDK is the one change most likely to disturb P1 and P6. Re-checked
   2026-09-05: `AdHost` is still referenced only from `MainActivity`, and no networking class appears
   anywhere in `app/src/main/java`.
 - ✅ Confirm `https://anumey.xyz/legal/edgecase/privacy` and `/delete-data` return **200**. Both did
-  on 2026-09-05 — but note the live copy is **one revision behind the source** (§9, group F2).
+  on 2026-09-05; the privacy page was re-fetched on 2026-09-15 and now carries the full permission
+  list (§9, group F2).
 
 ---
 
@@ -2641,8 +2724,8 @@ The code half of `Publisher.md` §10's critical list. None of it needed an exter
 
 | # | Task | Outcome |
 |---|---|---|
-| D1 ✅ | Enable R8 | `isMinifyEnabled = true` + `isShrinkResources = true`. Release APK **22.5 MB → 5.5 MB**. All 20 classes survive; the four renamed ones are code-instantiated only, confirmed absent from every layout XML |
-| D2 ✅ | Write keep rules | 44 lines, not `Publisher.md` §2.2's set — see §4. The one rule that actually matters is the enum-constant keep protecting `ColorMode.valueOf()` against prefs written by v1.4.1 |
+| D1 ✅ | Enable R8 | `isMinifyEnabled = true` + `isShrinkResources = true`. Release APK **22.5 MB → 5.5 MB**. All 19 classes survive; the four renamed ones are code-instantiated only, confirmed absent from every layout XML |
+| D2 ✅ | Write keep rules | 68 lines (the D10 Room rule included), not `Publisher.md` §2.2's set — see §4. The one rule that actually matters is the enum-constant keep protecting `ColorMode.valueOf()` against prefs written by v1.4.1 |
 | D3 ✅ | Prominent disclosure for `SYSTEM_ALERT_WINDOW` | `showOverlayDisclosureDialog()` (§5.1). Built from the discard dialog so it presses and frames identically |
 | D4 ✅ | Delete `DummyBannerView.kt` | B5, above |
 | D5 ✅ | `usesCleartextTraffic="false"` | §6.6 |
@@ -2673,7 +2756,10 @@ Everything below was run against the **signed release build**, not debug.
 against the measured 174dp rather than the 146dp everything had been sized for. It found one defect,
 now fixed — group F, and group C item 2.
 
-### E. Play Console submission — ✅ **SUBMITTED 2026-09-04**
+### E. Play Console submission — ✅ **SUBMITTED 2026-09-04 · LIVE (published 2026-09-09)**
+
+*The publish date is Play Console's "Last published on September 9, 2026" on Publishing overview,
+read on 2026-09-15.*
 
 Production track, **100% rollout** (staged rollout declined), 176 countries + rest of world.
 versionCode 4 / versionName 1.5.0.
@@ -2704,32 +2790,113 @@ Video: `https://youtube.com/shorts/T_qOdUcj3ns` (unlisted; verified reachable un
 Recorded on the emulator, not the physical device — the first take was reshot because it captured
 the maintainer's real home screen, calendar entries and contacts.
 
-**Post-launch, blocked until the listing is live and searchable:**
+**Post-launch — the listing is live (2026-09-15).** AdMob's *Finish app setup* flow found EdgeCase
+on Google Play **by package name**, which it can only do for a published listing.
 
-1. **Link AdMob to the Play listing** (AdMob → Apps → EdgeCase → App settings). Unlinked apps earn
-   materially less. AdMob then runs its **own** app review for ad-serving eligibility, separate from
-   Play's.
-2. **app-ads.txt** verifies itself once the listing exists; the publisher-level file already carries
-   `pub-4587702028307036`.
-3. **Watch CTR from day one** (§`Docs/Ads.md` §11). Above ~2–3% on a utility app means accidental
-   clicks. 100% rollout means there is no staged blast radius, so the response is to widen the
-   plinth buffer immediately rather than wait.
+1. ✅ **AdMob linked to the Play listing — 2026-09-15, on app `~3708305513`.** Result screen: *"You've
+   successfully verified EdgeCase (Android)"*; the Apps list then showed that row as Google Play ·
+   `com.dicereligion.edgecase` · *Getting ready / Review in progress* · 1 active unit. (The first
+   attempt linked a newly created duplicate, `~9509723699`, instead — unlinked and superseded; see
+   B0. ✅ Duplicate hidden.) ✅ **AdMob's own app review PASSED — same day, 2026-09-15.** The Apps list
+   now shows EdgeCase `~3708305513` as **Ready · Ad serving enabled** · Google Play ·
+   `com.dicereligion.edgecase` · 1 active unit; the hidden duplicate no longer appears. Serving is no
+   longer limited — live users get full fill from here.
+   - The same screen asks for a Google-certified CMP. **Already satisfied, and no new message was
+     created:** UMP 4.0.0 is in the app (§5.19) and EdgeCase's own EU + US-states messages exist
+     (group B0). *Create a message* would only have produced duplicates.
+   - ⚠️ **To check once:** *Maximize message coverage* (an account setting, on by default)
+     auto-creates a Google CMP message for new apps. Confirm under Privacy & messaging → European
+     regulations that no auto-created message is now assigned to EdgeCase alongside the two
+     deliberate ones — and that whatever EdgeCase users see links to
+     `https://anumey.xyz/legal/edgecase/privacy`, not Mach2's policy (the reason B0 kept the messages
+     separate).
+2. ⏳ **app-ads.txt** should now self-verify (AdMob → Apps → **app-ads.txt tab**). The file is
+   correct: `https://anumey.xyz/app-ads.txt` re-fetched **200, `text/plain`** on 2026-09-15 with
+   `google.com, pub-4587702028307036, DIRECT, f08c47fec0942fa0`. **The crawler finds it through the
+   Play listing's developer *Website* field**, so that field on *EdgeCase's* listing (Grow users →
+   Store presence → Store settings → Contact details) must be `https://anumey.xyz` — unverified for
+   EdgeCase. Crawling can take a day or more after it is set.
+3. ⏳ **Watch CTR from day one** (`Docs/Ads.md` §11) — **live from 2026-09-15**, now that serving is
+   enabled. Check AdMob → Reports after a few days of real traffic. Above ~2–3% on a utility app means accidental clicks. 100% rollout means
+   there is no staged blast radius, so the response is to widen the plinth buffer immediately
+   rather than wait.
 
 *The "Geo-blocking regulation" banner on Publishing overview is a standing EU informational notice
 (Regulation (EU) 2018/302) shown to every developer distributing in the EU. It is not about this app
 and requires no action.*
 
-### F. Post-submission fixes — ⚠️ **NEITHER IS LIVE**
+### F. Post-submission fixes — F2 ✅ **LIVE** · F1 ⏳ **SUBMITTED as 1.5.2**
 
-Both landed after v1.5.0 went to review. They are the only outstanding work on the app.
+Both landed after v1.5.0 went to review. Neither needs further work; F1 is waiting on Play review.
 
 | # | Fix | State | What it still needs |
 |---|---|---|---|
-| F1 | Main-menu small-screen defect | **Code done**, in the working tree | §6.1, §6.3. Verified at 360×640dp and 360×720dp; native 448×997dp is pixel-identical to v1.5.0, and 14/14 instrumented tests still pass. **Not shipped:** it needs `versionCode = 5` / `versionName = "1.5.1"` in `app/build.gradle.kts` and a new bundle. Not bumped as of 2026-09-05. **Recommendation, not a recorded decision: wait for v1.5.0 to clear review** — a new bundle pushed to the same production release replaces the one under review rather than queueing behind it, which restarts the clock on an app that is otherwise about to be live |
-| F2 | Privacy-policy permission list | **Written, uncommitted, NOT deployed** | `READ_BASIC_PHONE_STATE` and `WAKE_LOCK` rows added and the effective date moved to 4 September 2026, in the Anumey's Lair repo (`src/app/legal/edgecase/privacy/page.tsx`). Typechecked. 🔴 **The live page still served the old list on 2026-09-05.** Needs a commit and a push to `main`; App Hosting deploys on push. This is independent of the app release and should not wait for it — see §9 |
+| F1 ⏳ | Main-menu small-screen defect | **Submitted to production 2026-09-15** as 1.5.2 (code in `1626578`) | §6.1, §6.3. Verified at 360×640dp and 360×720dp; native 448×997dp is pixel-identical to v1.5.0, and 14/14 instrumented tests still pass. **Ships as 1.5.2 / versionCode 6** (with `DISABLE_AD_INSPECTOR`, §6.6). Clean `assembleRelease` + `bundleRelease` 2026-09-15: APK 5.6 MB, AAB 5.9 MB, signed with the upload key (`CN=Dice Religion, OU=EdgeCase`), R8 mapping embedded in the bundle (`BUNDLE-METADATA/…/proguard.map`), merged manifest confirms 6 / 1.5.2. **Launched on the Pixel 9 Pro XL** — no crash, `MainActivity` resumed, `Plinth banner loaded (411×128dp)`. ✅ **Submitted 2026-09-15** — see group G. Remaining: Play review only |
+| F2 ✅ | Privacy-policy permission list | **Deployed** — Anumey's Lair `9768cfa`, pushed 2026-09-05 | `READ_BASIC_PHONE_STATE` and `WAKE_LOCK` rows added and the effective date moved to 4 September 2026 (`src/app/legal/edgecase/privacy/page.tsx`). On both `origin/main` and `origin/development`; the live page re-fetched **200 on 2026-09-15** with both rows and the new date. Nothing further — see §9 |
 
-**Sequencing, if both are done at once.** F2 first and on its own: it is a one-file push with no app
-dependency, and it closes a live inconsistency between the published policy and the listing that
-points at it. F1 waits for v1.5.0 to clear review, then goes out as 1.5.1 — at which point
-`Publisher.md` §9.1's version-management routine applies, and this document's version banner, §4's
-size figures and group D′'s device pass all want re-running against the new build.
+**Sequencing.** F2 is done. F1 went out as 1.5.2 (group G). §4's size figures and the version banner
+are already current for 1.5.2; the device launch was run against the signed build before upload.
+
+### G. v1.5.2 update — ⏳ **SUBMITTED 2026-09-15**
+
+Production track, **full rollout (100%)**. Managed publishing **off**, so each change goes live as soon
+as its own review passes. v1.5.0 was last published **2026-09-09**.
+
+Submitted together from Publishing overview as **"Submit 2 changes for review"**:
+
+| Item | Change |
+|---|---|
+| Production | **6 (1.5.2)** — *Start full rollout*. `app-release.aab` from the clean 2026-09-15 build (group F1): small-screen main-menu fix + `DISABLE_AD_INSPECTOR` (§6.6). Release notes: *"Fixes the main menu on smaller screens, where the Start and Stop buttons could be cut off."* — the ad-inspector fix is omitted, since no regular user can trigger it |
+| Store listing (en-US, default) | **Change app icon** — the Play Store listing icon only. **Deliberately different from the in-app launcher icon**; the APK's `icon_round.png` / mipmaps were not changed and are not meant to match it. Do not "fix" the mismatch |
+
+Bundled into one submission rather than two back-to-back reviews. AdMob's app review (group E) runs
+independently and neither gates nor is gated by this update.
+
+**After it goes live:**
+
+1. **Swap the maintainer's phone to the Play build.** It currently runs a sideloaded 1.5.2 signed with
+   the *upload* key; Play serves the Google-re-signed build, so Play cannot update over it.
+   `adb uninstall com.dicereligion.edgecase`, then install from Play. Shortcuts and sliver settings on
+   that device reset unless restored from backup (A6).
+2. Confirm on the Play build: the banner loads, a shake does nothing, and the main menu fits.
+3. Continue the group E watch items: AdMob review email, app-ads.txt, CTR.
+
+### H. Android developer verification — ✅ **REGISTERED** · ◐ upload key not yet added (deferred)
+
+Play announced on July 15 that apps not registered by **September 30, 2026** are removed from Google
+Play globally, and unregistered apps from other stores stop installing on certified devices in
+select countries. Checked 2026-09-15 in Play Console → **Android developer verification**:
+
+| App | Package | Status | Keys | Last updated |
+|---|---|---|---|---|
+| Mach2 | `com.DeathMechanics.Mach2` | ✅ Registered | 1 | 2026-03-04 |
+| BOTCH – Storyteller Edition | `com.DiceReligion.BOTCH` | ✅ Registered | 1 | 2026-03-04 |
+| **EdgeCase** | `com.dicereligion.edgecase` | ✅ Registered | **3** | 2026-09-04 (the submission day) |
+
+**EdgeCase's three registered keys**, all *Verified*:
+
+```
+50:B3:1B:49:80:BC:93:77:E4:F5:F0:62:2C:56:F2:E7:AC:13:09:FD:17:EC:71:92:E1:7D:61:B9:69:59:14:15
+AC:13:C4:29:76:C7:32:D5:A3:A9:D1:7A:44:B5:B9:B4:FC:E2:B7:2B:7C:8C:B5:6E:96:8F:87:66:58:9D:99:B0
+1B:29:E1:04:BA:6E:F3:5A:1D:ED:9A:09:8F:B9:93:41:50:A8:BD:29:BF:75:D2:4C:A0:D4:9D:43:1B:9F:60:39
+```
+
+**None of them is a key on the maintainer's machine** — checked against the upload keystore
+(`~/keys/edgecase-release.jks`, alias `edgecase`) and `~/.android/debug.keystore`. They are
+Google-held certificates registered automatically at submission; the likely set is the Play
+app-signing key and the internal app sharing certificate, with the third unconfirmed. **Unverified
+mapping:** compare against App integrity → App signing, which lists the app-signing, upload and
+internal-app-sharing SHA-256s.
+
+**Deferred (maintainer's decision, 2026-09-15): add the upload key.** The key Play distributes with is
+registered, so the listing is safe. What is *not* registered is the **upload key**:
+
+```
+22:09:30:95:AA:7A:3D:EC:FC:3C:EA:8A:16:78:0A:06:F2:DE:F1:59:59:9B:CE:16:70:9E:6D:41:43:C1:1D:DC
+```
+
+It signs every locally built release APK — the builds sideloaded onto the Pixel for pre-upload
+device passes (§4's R8 lesson makes those mandatory). Once verification is enforced, those
+installs may be refused on a certified device. **To do:** Android developer verification → EdgeCase
+→ **Add key** → paste the fingerprint above. Harmless to add; it is the maintainer's own key and
+grants nothing to anyone else. Do it before relying on a sideloaded release build again.
