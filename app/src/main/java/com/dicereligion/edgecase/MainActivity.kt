@@ -2,11 +2,14 @@ package com.dicereligion.edgecase
 
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -25,16 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
-
-    companion object {
-        /**
-         * Whether this Activity is currently in the foreground. Read by [SidebarService.onCreate]
-         * so a service started *from* the settings screen does not attach its overlay on top of
-         * our own UI. Mirrors [SidebarService.isRunning] in the opposite direction.
-         */
-        @Volatile
-        var isForeground = false
-    }
 
     // ── Screen views ───────────────────────────────────
     private lateinit var screenMainMenu: View
@@ -66,6 +59,48 @@ class MainActivity : AppCompatActivity() {
 
     // ── Ad plinth (Docs/Ads.md §5, §7.5) ────────────────
     private var adHost: AdHost? = null
+
+    // ── Overlay binding (Docs/RAMIssuePDP.md §5.2, D5) ────
+    // SidebarService runs in its own `:overlay` process. We bind to it while resumed, WITHOUT
+    // BIND_AUTO_CREATE, so binding never starts it: being bound is what tells it to keep the sliver
+    // off our screen, and a live connection is how we know it is running.
+    private var overlayConnected = false
+    private var overlayBound = false   // unbindService throws on a connection that is not bound
+    private var resumed = false
+
+    private val overlayConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            overlayConnected = true
+            serviceEyes.forEach { it.setRunning(true) }
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            // The overlay process died. The binding stays registered and reconnects when Android
+            // restarts the sticky service.
+            overlayConnected = false
+            serviceEyes.forEach { it.setRunning(false) }
+        }
+
+        override fun onBindingDied(name: ComponentName?) {
+            // Happens on STOP. This binding will never connect again, so replace it — otherwise a
+            // second START during the same visit would not know we are in front.
+            overlayConnected = false
+            serviceEyes.forEach { it.setRunning(false) }
+            unbindOverlay()
+            if (resumed) bindOverlay()
+        }
+    }
+
+    private fun bindOverlay() {
+        if (overlayBound) return
+        overlayBound = bindService(Intent(this, SidebarService::class.java), overlayConnection, 0)
+    }
+
+    private fun unbindOverlay() {
+        if (overlayBound) unbindService(overlayConnection)
+        overlayBound = false
+        overlayConnected = false
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -156,36 +191,36 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        isForeground = true
-        // Sync the Serpent's Eyes with the actual service state (Phase 7 #1)
-        serviceEyes.forEach { it.setRunning(SidebarService.isRunning) }
-        // Take the edge back while our own UI is on screen (Docs/Ads.md §4.3)
-        setOverlaySuspended(true)
+        resumed = true
+        // Sync the Serpent's Eyes with the actual service state (Phase 7 #1); the binding
+        // callbacks keep them right from here on.
+        serviceEyes.forEach { it.setRunning(SidebarService.isRunning(this)) }
+        // Take the edge back while our own UI is on screen (Docs/Ads.md §4.3): being bound is the
+        // signal. Never starts the service, so a stopped overlay stays stopped.
+        bindOverlay()
     }
 
     override fun onPause() {
         super.onPause()
-        isForeground = false
+        resumed = false
         // Hand the edge back to the user
-        setOverlaySuspended(false)
+        unbindOverlay()
     }
 
     /**
-     * Signals the running service to detach or re-attach its overlay windows.
+     * Sends the current settings to a running overlay.
      *
-     * Never *starts* the service: the guard means a stopped service stays stopped, so opening the
-     * settings screen can't resurrect an overlay the user turned off.
+     * Only while connected: sending an Intent to a stopped service would start it, which is how
+     * saving settings used to resurrect an overlay the user had stopped.
      */
-    private fun setOverlaySuspended(suspended: Boolean) {
-        if (!SidebarService.isRunning) return
-        startService(Intent(this, SidebarService::class.java).apply {
-            action = if (suspended) SidebarService.ACTION_SUSPEND_OVERLAY
-                     else SidebarService.ACTION_RESUME_OVERLAY
-        })
+    private fun syncOverlay() {
+        if (!overlayConnected) return
+        startService(OverlaySnapshot.fromPrefs(this).writeTo(
+            Intent(this, SidebarService::class.java).setAction(SidebarService.ACTION_SYNC_STATE)
+        ))
     }
 
     override fun onDestroy() {
-        isForeground = false
         adHost?.destroy()
         adHost = null
         super.onDestroy()
@@ -396,10 +431,7 @@ class MainActivity : AppCompatActivity() {
             onApplied = { applied ->
                 // Reflect on the positioning preview and hot-reload the running overlay.
                 positioningView?.setSliverConfig(applied)
-                val intent = Intent(this, SidebarService::class.java).apply {
-                    action = SidebarService.ACTION_UPDATE_STYLE
-                }
-                startService(intent)
+                syncOverlay()
                 Toast.makeText(this, "THE FANG IS FORGED", Toast.LENGTH_SHORT).show()
             },
             onDismissed = { adHost?.setAdVisible(true) }
@@ -578,10 +610,7 @@ class MainActivity : AppCompatActivity() {
             updatePositionInfoText(newSide, newYBias)
 
             // Hot-reload: notify running service of new position
-            val posIntent = Intent(this, SidebarService::class.java).apply {
-                action = SidebarService.ACTION_UPDATE_POSITION
-            }
-            startService(posIntent)
+            syncOverlay()
         }
     }
 
@@ -604,10 +633,7 @@ class MainActivity : AppCompatActivity() {
         updateAltarEmptyState()
 
         // Notify the running service
-        val updateIntent = Intent(this, SidebarService::class.java).apply {
-            action = SidebarService.ACTION_UPDATE_SHORTCUTS
-        }
-        startService(updateIntent)
+        syncOverlay()
 
         Toast.makeText(this, "CARVED IN STONE", Toast.LENGTH_SHORT).show()
     }
@@ -664,7 +690,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startEdgeService() {
-        val intent = Intent(this, SidebarService::class.java)
+        val intent = OverlaySnapshot.fromPrefs(this).writeTo(
+            Intent(this, SidebarService::class.java).setAction(SidebarService.ACTION_START)
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {

@@ -2,6 +2,7 @@ package com.dicereligion.edgecase
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Bundle
 
 /**
  * All user-customizable properties of the sliver: color, opacity, fang geometry, and size.
@@ -65,6 +66,29 @@ data class SliverConfig(
             .apply()
     }
 
+    /**
+     * The same 15 fields [save] writes, under the same keys, for handing the config to the overlay
+     * process inside an Intent. SidebarService runs in its own process and cannot read our prefs
+     * cache (Docs/RAMIssuePDP.md §5.3).
+     */
+    fun toBundle(): Bundle = Bundle().apply {
+        putFloat(K_OPACITY, opacity)
+        putString(K_COLOR_MODE, colorMode.name)
+        putFloat(K_HUE, customHue)
+        putFloat(K_T1_THICK, tooth1Thickness)
+        putFloat(K_T2_THICK, tooth2Thickness)
+        putFloat(K_T1_LEN, tooth1Length)
+        putFloat(K_T2_LEN, tooth2Length)
+        putFloat(K_T1_TIPY, tooth1TipY)
+        putFloat(K_T2_TIPY, tooth2TipY)
+        putFloat(K_GUMS, gumsDepth)
+        putFloat(K_GAP, gap)
+        putFloat(K_WIDTH, widthDp)
+        putFloat(K_HEIGHT, heightDp)
+        putFloat(K_TRAY_WIDTH, trayWidthDp)
+        putFloat(K_TRAY_HEIGHT, trayHeightDp)
+    }
+
     companion object {
         const val PREFS = "EdgeCasePrefs"
         val DEFAULT_GREY: Int = Color.parseColor("#808080")
@@ -101,16 +125,37 @@ data class SliverConfig(
         private const val K_TRAY_WIDTH = "tray_width_dp"
         private const val K_TRAY_HEIGHT = "tray_height_dp"
 
+        /** Restores by name, so an unknown or missing value falls back to DEFAULT rather than throwing. */
+        private fun parseColorMode(name: String?): ColorMode = try {
+            ColorMode.valueOf(name ?: ColorMode.DEFAULT.name)
+        } catch (_: Exception) {
+            ColorMode.DEFAULT
+        }
+
+        /** Inverse of [toBundle]. Missing keys take the defaults, exactly as a fresh install would. */
+        fun fromBundle(b: Bundle): SliverConfig = SliverConfig(
+            opacity = b.getFloat(K_OPACITY, DEF_OPACITY),
+            colorMode = parseColorMode(b.getString(K_COLOR_MODE)),
+            customHue = b.getFloat(K_HUE, DEF_HUE),
+            tooth1Thickness = b.getFloat(K_T1_THICK, DEF_T1_THICKNESS),
+            tooth2Thickness = b.getFloat(K_T2_THICK, DEF_T2_THICKNESS),
+            tooth1Length = b.getFloat(K_T1_LEN, DEF_T1_LENGTH),
+            tooth2Length = b.getFloat(K_T2_LEN, DEF_T2_LENGTH),
+            tooth1TipY = b.getFloat(K_T1_TIPY, DEF_T1_TIPY),
+            tooth2TipY = b.getFloat(K_T2_TIPY, DEF_T2_TIPY),
+            gumsDepth = b.getFloat(K_GUMS, DEF_GUMS_DEPTH),
+            gap = b.getFloat(K_GAP, DEF_GAP),
+            widthDp = b.getFloat(K_WIDTH, DEF_WIDTH_DP),
+            heightDp = b.getFloat(K_HEIGHT, DEF_HEIGHT_DP),
+            trayWidthDp = b.getFloat(K_TRAY_WIDTH, DEF_TRAY_WIDTH_DP),
+            trayHeightDp = b.getFloat(K_TRAY_HEIGHT, DEF_TRAY_HEIGHT_DP)
+        )
+
         fun load(context: Context): SliverConfig {
             val p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val mode = try {
-                ColorMode.valueOf(p.getString(K_COLOR_MODE, ColorMode.DEFAULT.name) ?: ColorMode.DEFAULT.name)
-            } catch (_: Exception) {
-                ColorMode.DEFAULT
-            }
             return SliverConfig(
                 opacity = p.getFloat(K_OPACITY, DEF_OPACITY),
-                colorMode = mode,
+                colorMode = parseColorMode(p.getString(K_COLOR_MODE, ColorMode.DEFAULT.name)),
                 customHue = p.getFloat(K_HUE, DEF_HUE),
                 tooth1Thickness = p.getFloat(K_T1_THICK, DEF_T1_THICKNESS),
                 tooth2Thickness = p.getFloat(K_T2_THICK, DEF_T2_THICKNESS),

@@ -1,5 +1,6 @@
 package com.dicereligion.edgecase
 
+import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -10,8 +11,11 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.os.Binder
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -29,18 +33,27 @@ import java.util.Collections
 
 class SidebarService : Service() {
     companion object {
-        /** Whether the overlay service is currently alive — read by the Serpent's Eye indicator (Phase 7 #1). */
-        @Volatile
-        var isRunning = false
-        const val ACTION_UPDATE_SHORTCUTS = "com.dicereligion.edgecase.UPDATE_SHORTCUTS"
-        const val ACTION_UPDATE_POSITION = "com.dicereligion.edgecase.UPDATE_POSITION"
-        const val ACTION_UPDATE_STYLE = "com.dicereligion.edgecase.UPDATE_STYLE"
-        /** Detach the overlay windows without stopping the service (Docs/Ads.md §7.6). */
-        const val ACTION_SUSPEND_OVERLAY = "com.dicereligion.edgecase.SUSPEND_OVERLAY"
-        /** Re-attach the sliver after a suspend. */
-        const val ACTION_RESUME_OVERLAY = "com.dicereligion.edgecase.RESUME_OVERLAY"
+        /** Start the overlay. Carries an [OverlaySnapshot]. */
+        const val ACTION_START = "com.dicereligion.edgecase.START"
+        /** Settings changed while running. Carries an [OverlaySnapshot]. */
+        const val ACTION_SYNC_STATE = "com.dicereligion.edgecase.SYNC_STATE"
         private const val CHANNEL_ID = "EdgeCaseEngineChannel"
         private const val NOTIFICATION_ID = 9182
+
+        /**
+         * Whether the service is running, for the Serpent's Eyes when the settings screen resumes.
+         *
+         * This service lives in the `:overlay` process, so a static flag here would be invisible
+         * to MainActivity. `getRunningServices` is deprecated for other apps' services but still
+         * returns the caller's own. Measured on device (Docs/RAMIssuePDP.md Phase 1): exact once
+         * the service is up, but blind for the ~70-100 ms after START while its process launches.
+         * So it is used only for the eyes on resume; everything else goes through the binding.
+         */
+        @Suppress("DEPRECATION")
+        fun isRunning(context: Context): Boolean =
+            context.getSystemService(ActivityManager::class.java)
+                .getRunningServices(Int.MAX_VALUE)
+                .any { it.service.className == SidebarService::class.java.name && it.started }
     }
 
     private lateinit var windowManager: WindowManager
@@ -54,9 +67,50 @@ class SidebarService : Service() {
     private var config: SliverConfig = SliverConfig()
     private var screenHeight: Int = 0
     private var vibrator: Vibrator? = null
-    private var sliverAdded = false
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    // Window bookkeeping. Set at the moment of addView/removeView, never inferred from
+    // isAttachedToWindow: a view only reports attached after its next frame, so a removal checked
+    // that way straight after an add is skipped and the window leaks (seen on device when STOP's
+    // onUnbind and onDestroy ran back to back — Docs/RAMIssuePDP.md Phase 2, V4).
+    private var sliverAdded = false
+    private var trayAdded = false
+    private var destroyed = false
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var shortcuts: List<String> = emptyList()
+
+    /** False until the first [OverlaySnapshot] has built the views. */
+    private var stateApplied = false
+
+    /**
+     * True while MainActivity is resumed and bound to us: the settings screen is in front, so the
+     * overlay stays off (Docs/Ads.md §4.3 — never draw over our own UI or the ad).
+     *
+     * The Activity binds WITHOUT BIND_AUTO_CREATE, so binding never starts us. Android delivers
+     * onBind before onStartCommand (verified on device, Docs/RAMIssuePDP.md Phase 1 S7), so a START
+     * or a sticky restart that happens while the app is open already knows to stay hidden.
+     */
+    private var bound = false
+    private val binder = Binder()
+
+    override fun onBind(intent: Intent?): IBinder {
+        bound = true
+        detachOverlayWindows()
+        return binder
+    }
+
+    override fun onRebind(intent: Intent?) {
+        bound = true
+        detachOverlayWindows()
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        bound = false
+        // Posted, not immediate: on STOP Android unbinds and then destroys us back to back, and the
+        // destroy is already queued, so it runs first and the sliver never flashes up. On an ordinary
+        // unbind (the user left the settings screen) nothing is queued and the sliver returns at once.
+        mainHandler.post { if (stateApplied) addSliverIfNeeded() }
+        return true   // later binds arrive through onRebind
+    }
 
     // ──────────────────────────────────────────────
     // 4.11  Lifecycle
@@ -64,7 +118,6 @@ class SidebarService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        isRunning = true
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         densityDpi = resources.displayMetrics.density
 
@@ -76,10 +129,6 @@ class SidebarService : Service() {
             resources.displayMetrics.heightPixels
         }
 
-        // Load saved position + style before building views
-        loadPositionFromPrefs()
-        config = SliverConfig.load(this)
-
         // Haptics engine
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -89,43 +138,47 @@ class SidebarService : Service() {
             getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
 
+        // startForeground must happen here, within the foreground-service start deadline.
         buildSystemNotification()
-        instantiateWindowParameters()
-        assembleSliverView()
-        assembleTrayView()
 
-        if (Settings.canDrawOverlays(this)) {
-            // If the user started us from the settings screen, the Activity is in front right now.
-            // Attaching here would put the fang over our own UI (and, later, over the banner), so
-            // stay detached until onPause sends ACTION_RESUME_OVERLAY. Checking the flag rather
-            // than relying on a suspend intent arriving after onCreate avoids a start-up race.
-            if (!MainActivity.isForeground) addSliverIfNeeded()
-        } else {
-            stopSelf()
-        }
+        if (!Settings.canDrawOverlays(this)) stopSelf()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_UPDATE_SHORTCUTS -> refreshTrayUiElements()
-            ACTION_UPDATE_POSITION -> applySliverUpdate()
-            ACTION_UPDATE_STYLE -> applySliverUpdate()
-            ACTION_SUSPEND_OVERLAY -> detachOverlayWindows()
-            ACTION_RESUME_OVERLAY -> addSliverIfNeeded()
+            // A null intent is a START_STICKY restart. That always happens in a fresh process, whose
+            // prefs cache is read from disk, so prefs are current there and only there.
+            ACTION_START, ACTION_SYNC_STATE, null ->
+                applyState(OverlaySnapshot.fromIntent(intent) ?: OverlaySnapshot.fromPrefs(this))
         }
         return START_STICKY
     }
 
+    /** Takes on a new snapshot: builds the overlay the first time, updates it in place after that. */
+    private fun applyState(snapshot: OverlaySnapshot) {
+        if (!Settings.canDrawOverlays(this)) return
+        currentSide = snapshot.side
+        currentYBias = snapshot.yBias
+        config = snapshot.config
+        shortcuts = snapshot.shortcuts
+
+        if (!stateApplied) {
+            instantiateWindowParameters()
+            assembleSliverView()
+            assembleTrayView()
+            stateApplied = true
+            addSliverIfNeeded()
+        } else {
+            applySliverUpdate()
+        }
+    }
+
     override fun onDestroy() {
+        destroyed = true
+        mainHandler.removeCallbacksAndMessages(null)
+        removeSliver()
+        removeTray()
         super.onDestroy()
-        isRunning = false
-        if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
-            windowManager.removeView(sliverView)
-            sliverAdded = false
-        }
-        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
-            windowManager.removeView(trayView)
-        }
     }
 
     // ──────────────────────────────────────────────
@@ -226,18 +279,32 @@ class SidebarService : Service() {
     // 4.4b  Position loading & hot-reload
     // ──────────────────────────────────────────────
 
-    /** Adds the sliver to the window if not already showing. Idempotent guard. */
+    /**
+     * Adds the sliver unless it is already up, the settings screen is in front ([bound]), or the
+     * service is going away. Every attach goes through here, so those rules hold everywhere.
+     */
     private fun addSliverIfNeeded() {
-        if (!sliverAdded && ::sliverView.isInitialized && !sliverView.isAttachedToWindow) {
-            windowManager.addView(sliverView, sliverParams)
-            sliverAdded = true
-        }
+        if (destroyed || bound || sliverAdded || !::sliverView.isInitialized) return
+        windowManager.addView(sliverView, sliverParams)
+        sliverAdded = true
+    }
+
+    private fun removeSliver() {
+        if (!sliverAdded) return
+        try { windowManager.removeView(sliverView) } catch (_: Exception) {}
+        sliverAdded = false
+    }
+
+    private fun removeTray() {
+        if (!trayAdded) return
+        try { windowManager.removeView(trayView) } catch (_: Exception) {}
+        trayAdded = false
     }
 
     /**
      * Detaches the sliver, and any open tray, without stopping the service.
      *
-     * Called while MainActivity is in the foreground. Three independent reasons (Docs/Ads.md §4.3):
+     * Called while MainActivity is in the foreground (bound). Three independent reasons (Docs/Ads.md §4.3):
      *  • **Compliance** — an overlay window sitting above an ad is an obstruction; impressions
      *    beneath it are not viewable, and EdgeCase's sliver can be positioned at 90% of screen
      *    height, exactly where the Plinth's banner lives.
@@ -248,24 +315,12 @@ class SidebarService : Service() {
      * Idempotent, and deliberately leaves the service running: only the windows go away.
      */
     private fun detachOverlayWindows() {
-        if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
-            try { windowManager.removeView(sliverView) } catch (_: Exception) {}
-        }
-        sliverAdded = false
-        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
-            try { windowManager.removeView(trayView) } catch (_: Exception) {}
-        }
-    }
-
-    private fun loadPositionFromPrefs() {
-        val prefs = getSharedPreferences("EdgeCasePrefs", Context.MODE_PRIVATE)
-        val sideStr = prefs.getString("sliver_side", "right") ?: "right"
-        currentSide = if (sideStr == "left") ArcSliverView.Side.LEFT else ArcSliverView.Side.RIGHT
-        currentYBias = prefs.getFloat("sliver_y_bias", 0.5f).coerceIn(0f, 1f)
+        removeSliver()
+        removeTray()
     }
 
     /**
-     * Re-read position + style prefs and update the single sliver overlay **in place**.
+     * Update the single sliver overlay **in place** from the state [applyState] just set.
      *
      * We deliberately do NOT destroy/recreate the sliver window here: recreating and re-adding it left a
      * race where the previous window (still showing the old/default appearance) was not removed before the
@@ -273,13 +328,11 @@ class SidebarService : Service() {
      * [ArcSliverView.applyConfig] + [WindowManager.updateViewLayout] keeps exactly one sliver on screen.
      */
     private fun applySliverUpdate() {
-        loadPositionFromPrefs()
-        config = SliverConfig.load(this)
         instantiateWindowParameters()
 
         if (::sliverView.isInitialized) {
             (sliverView as? ArcSliverView)?.applyConfig(config, currentSide)
-            if (sliverView.isAttachedToWindow) {
+            if (sliverAdded) {
                 try {
                     windowManager.updateViewLayout(sliverView, sliverParams)
                 } catch (_: Exception) {
@@ -293,12 +346,7 @@ class SidebarService : Service() {
         }
 
         // Rebuild the tray so its size/side/position match the update (only shown on swipe).
-        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
-            try {
-                windowManager.removeView(trayView)
-            } catch (_: Exception) {
-            }
-        }
+        removeTray()
         assembleTrayView()
     }
 
@@ -366,13 +414,7 @@ class SidebarService : Service() {
     // ──────────────────────────────────────────────
 
     private fun populateShortcuts(container: LinearLayout) {
-        val prefs = getSharedPreferences("EdgeCasePrefs", Context.MODE_PRIVATE)
-        val orderStr = prefs.getString("saved_shortcuts_order", null)
-        val orderedList: List<String> = if (!orderStr.isNullOrEmpty()) {
-            orderStr.split(",").filter { it.isNotEmpty() }
-        } else {
-            (prefs.getStringSet("saved_shortcuts", emptySet()) ?: emptySet()).toList()
-        }
+        val orderedList = shortcuts
         val pm = packageManager
         container.removeAllViews()
 
@@ -429,11 +471,9 @@ class SidebarService : Service() {
     // ──────────────────────────────────────────────
 
     private fun transitionToExpandedTray() {
-        if (::sliverView.isInitialized && sliverView.isAttachedToWindow) {
-            windowManager.removeView(sliverView)
-            sliverAdded = false
-        }
-        if (::trayView.isInitialized && !trayView.isAttachedToWindow) {
+        if (destroyed || bound) return
+        removeSliver()
+        if (::trayView.isInitialized && !trayAdded) {
             refreshTrayUiElements()
 
             // Stone door unfurl: scale from 0 at edge → 1
@@ -448,6 +488,7 @@ class SidebarService : Service() {
                 .start()
 
             windowManager.addView(trayView, trayParams)
+            trayAdded = true
 
             // Swipe haptic: escalating vibration
             triggerHaptic(40, 200)
@@ -455,9 +496,7 @@ class SidebarService : Service() {
     }
 
     private fun transitionToSliverState() {
-        if (::trayView.isInitialized && trayView.isAttachedToWindow) {
-            windowManager.removeView(trayView)
-        }
+        removeTray()
         addSliverIfNeeded()
     }
 

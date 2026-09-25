@@ -33,10 +33,12 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/admob_app_id" />
 
-        <!-- Ad inspector opens on a shake for any AdMob test device, in any build type, and
-             SidebarService keeps this process — and the SDK's gesture listener — alive after the
-             Activity is gone, so it fired over other apps. Key verified against the
-             ads-mobile-sdk 1.4.0 artifact. Docs/EdgeCase_Investigation_Brief.md, Task C. -->
+        <!-- Ad inspector opens on a shake for any AdMob test device, in any build type. Up to 1.5.2
+             SidebarService shared this process and kept it — and the SDK's gesture listener — alive
+             after the Activity was gone, so it fired over other apps. The service now runs in
+             :overlay, but this process can still outlive the Activity as a cached process, so the
+             flag stays. Key verified against the ads-mobile-sdk 1.4.0 artifact.
+             Docs/EdgeCase_Investigation_Brief.md, Task C. -->
         <meta-data
             android:name="com.google.android.libraries.ads.mobile.sdk.flag.DISABLE_AD_INSPECTOR"
             android:value="true" />
@@ -53,8 +55,14 @@
         <!-- specialUse requires a declared subtype from targetSdk 34 onward, and Play reviews
              this string against the service's actual behaviour. Keep it factual and keep it in
              step with the foreground-service justification in the Play Console listing. -->
+        <!-- Runs in its own process so the always-on overlay does not keep the ads SDK, Chromium and
+             the settings UI resident: once the user leaves, the main process is an ordinary cached
+             app that Android can reclaim. Measured: ~26 MB PSS here, against ~185 MB held
+             permanently when this shared the main process (Docs/RAMIssuePDP.md, Phase 1).
+             Nothing in this process may touch ads or WebView (policy claim P6). -->
         <service
             android:name=".SidebarService"
+            android:process=":overlay"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">

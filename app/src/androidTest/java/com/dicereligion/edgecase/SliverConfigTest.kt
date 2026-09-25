@@ -2,6 +2,7 @@ package com.dicereligion.edgecase
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Bundle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
@@ -118,6 +119,35 @@ class SliverConfigTest {
         val high = SliverConfig(colorMode = SliverConfig.ColorMode.CUSTOM, customHue = 999f)
         assertEquals(Color.RED, low.baseColor())
         assertEquals(Color.HSVToColor(floatArrayOf(360f, 1f, 1f)), high.baseColor())
+    }
+
+    @Test
+    fun bundleRoundTripsEveryField() {
+        val original = SliverConfig(
+            opacity = 0.31f,
+            colorMode = SliverConfig.ColorMode.CUSTOM,
+            customHue = 123f,
+            tooth1Thickness = 0.21f, tooth2Thickness = 0.22f,
+            tooth1Length = 0.71f, tooth2Length = 0.72f,
+            tooth1TipY = 0.11f, tooth2TipY = 0.91f,
+            gumsDepth = 0.33f, gap = 0.55f,
+            widthDp = 41f, heightDp = 57f,
+            trayWidthDp = 111f, trayHeightDp = 222f
+        )
+        assertEquals(original, SliverConfig.fromBundle(original.toBundle()))
+        assertEquals(SliverConfig(), SliverConfig.fromBundle(SliverConfig().toBundle()))
+    }
+
+    @Test
+    fun emptyBundleGivesTheDefaults() {
+        assertEquals(SliverConfig(), SliverConfig.fromBundle(Bundle()))
+    }
+
+    @Test
+    fun unreadableColorModeInABundleFallsBackToDefault() {
+        val b = SliverConfig(colorMode = SliverConfig.ColorMode.CUSTOM).toBundle()
+        b.putString("sliver_color_mode", "NOT_A_MODE")
+        assertEquals(SliverConfig.ColorMode.DEFAULT, SliverConfig.fromBundle(b).colorMode)
     }
 
     @Test
