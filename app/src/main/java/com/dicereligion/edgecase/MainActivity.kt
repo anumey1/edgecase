@@ -49,7 +49,6 @@ class MainActivity : AppCompatActivity() {
 
     // ── Dust particles (Phase 6) ───────────────────────
     private var dustView: DustParticleView? = null
-    private var crackView: CrackFlashView? = null
 
     // ── Serpent's Eyes service indicator (Phase 7 #1) — one on each flank ────
     private val serviceEyes = mutableListOf<ServiceEyeView>()
@@ -172,15 +171,6 @@ class MainActivity : AppCompatActivity() {
         }
         val dustContainer = findViewById<android.widget.FrameLayout>(R.id.dustContainer)
         dustContainer?.addView(dustView)
-
-        // Crack-flash overlay, on top of the dust (Phase 7 #2)
-        crackView = CrackFlashView(this).apply {
-            layoutParams = android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-        dustContainer?.addView(crackView)
 
         // Pre-load the app list in background so the Shortcuts screen opens instantly.
         preloadApps()
@@ -443,7 +433,7 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────
 
     /**
-     * Press animation + haptic + dust/crack burst, shared by every tappable slab.
+     * Press animation + haptic + dust burst, shared by every tappable slab.
      *
      * Generic over [View] rather than typed to [Button]: the Credits screen's Seal is a
      * FrameLayout wrapping an ImageView, and it must feel identical to the stone buttons.
@@ -458,12 +448,6 @@ class MainActivity : AppCompatActivity() {
                         .start()
                     triggerHaptic(30, 255)
                     dustView?.burst(6)
-                    // Fracture the slab at the touch point (Phase 7 #2)
-                    crackView?.let { cv ->
-                        val loc = IntArray(2)
-                        cv.getLocationOnScreen(loc)
-                        cv.crackAt(event.rawX - loc[0], event.rawY - loc[1])
-                    }
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     v.animate()

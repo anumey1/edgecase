@@ -5,8 +5,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.SystemClock
 import android.view.View
 import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.random.Random
 
@@ -31,6 +33,7 @@ class DustParticleView(context: Context) : View(context) {
 
     private var animator: ValueAnimator? = null
     private var isRunning = false
+    private var lastFrameMs = 0L
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -61,20 +64,27 @@ class DustParticleView(context: Context) : View(context) {
     private fun startIfNeeded() {
         if (isRunning) return
         isRunning = true
+        lastFrameMs = SystemClock.uptimeMillis()
         animator = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 600
             repeatCount = ValueAnimator.INFINITE
             addUpdateListener {
-                val dt = 0.016f
+                // The motion constants were tuned as "per frame at 60 fps". Scale them by the real
+                // elapsed time so the burst looks the same on a 120 Hz panel instead of running
+                // twice as fast (Docs/RAMIssuePDP.md Phase 3).
+                val now = SystemClock.uptimeMillis()
+                val k = ((now - lastFrameMs).coerceIn(0L, 100L)) / 16.667f
+                lastFrameMs = now
+                val decay = 0.98f.pow(k)
                 val iter = this@DustParticleView.particles.iterator()
                 while (iter.hasNext()) {
                     val p = iter.next()
-                    p.x += p.vx
-                    p.y += p.vy
-                    p.vy += 0.5f
-                    p.life -= dt
+                    p.x += p.vx * k
+                    p.y += p.vy * k
+                    p.vy += 0.5f * k
+                    p.life -= 0.016f * k
                     p.alpha = (p.life / 0.7f).coerceIn(0f, 1f) * 0.8f
-                    p.radius *= 0.98f
+                    p.radius *= decay
                     if (p.life <= 0f) iter.remove()
                 }
                 if (this@DustParticleView.particles.isEmpty()) {

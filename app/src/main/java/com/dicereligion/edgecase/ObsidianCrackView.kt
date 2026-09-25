@@ -1,6 +1,5 @@
 package com.dicereligion.edgecase
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -10,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RadialGradient
 import android.graphics.Shader
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -22,6 +22,10 @@ import kotlin.random.Random
  * Static layers (obsidian facets, vignette, speckles, crack lines) are rasterised ONCE into
  * [staticLayer] on size change. Only the gem glow pulses per-frame — a handful of
  * hardware-accelerated radial-gradient circles + tiny paths. See Docs/NewTheme.md §6.
+ *
+ * The pulse is redrawn by the shared 12 fps [TempleClock], only while this view is actually on
+ * screen, and every gem's path, shader and colours are built once per layout rather than per frame
+ * (Docs/RAMIssuePDP.md Phase 3).
  */
 class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(context, attrs) {
 
@@ -39,10 +43,31 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
     private class Gem(
         val x: Float, val y: Float, val size: Float,
         val phase: Float, val periodMs: Float, val angleDeg: Float
-    )
+    ) {
+        /** The emerald-cut outline, already rotated and placed: static, so built once. */
+        val path = Path()
+
+        /**
+         * The halo at full strength and unit radius. Each frame only scales it (local matrix) and
+         * sets the paint's alpha, which multiplies the shader's — the same pixels as building a new
+         * gradient with the alpha baked in, without the allocation.
+         */
+        val halo = RadialGradient(
+            0f, 0f, 1f,
+            intArrayOf(
+                Color.argb(255, 0x50, 0xC8, 0x78),                // emerald_bright core
+                Color.argb(102, 0x2E, 0x8B, 0x57),                // 40 % of the core's alpha
+                Color.TRANSPARENT
+            ),
+            floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
+        )
+    }
     private val gems = mutableListOf<Gem>()
-    private val gemPath = Path()
     private val gemMatrix = Matrix()
+    private val haloMatrix = Matrix()
+
+    private val emeraldDeep = ContextCompat.getColor(context, R.color.emerald_deep)
+    private val emeraldGem = ContextCompat.getColor(context, R.color.emerald_gem)
 
     // ── Paints ──────────────────────────────────────────────────────
     private val basePaint = Paint()
@@ -67,9 +92,7 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
         color = Color.parseColor("#66A9F5C8")    // emerald_core @ 40%
     }
 
-    // ── Animation clock ─────────────────────────────────────────────
-    private var animator: ValueAnimator? = null
-    private var nowMs = 0f
+    private var subscribed = false
 
     // ── Lifecycle ───────────────────────────────────────────────────
 
@@ -78,27 +101,26 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
         if (w > 0 && h > 0) regenerate(w, h)
     }
 
-    override fun onAttachedToWindow() { super.onAttachedToWindow(); startPulse() }
-    override fun onDetachedFromWindow() { stopPulse(); super.onDetachedFromWindow() }
+    override fun onAttachedToWindow() { super.onAttachedToWindow(); updatePulse() }
+    override fun onDetachedFromWindow() { super.onDetachedFromWindow(); updatePulse() }
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        if (visibility == VISIBLE) startPulse() else stopPulse()
+        updatePulse()
     }
 
-    private fun startPulse() {
-        if (animator != null || !isAttachedToWindow) return
-        animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 10_000L
-            repeatCount = ValueAnimator.INFINITE
-            addUpdateListener {
-                nowMs = (nowMs + 16f)   // monotonic-enough clock for sine phases
-                invalidate()
-            }
-            start()
-        }
+    /** Called when the Activity is stopped or started: a hidden window must not keep ticking. */
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        updatePulse()
     }
 
-    private fun stopPulse() { animator?.cancel(); animator = null }
+    /** Pulse only while really on screen: attached, shown (self and ancestors) and window visible. */
+    private fun updatePulse() {
+        val shouldPulse = isAttachedToWindow && isShown && windowVisibility == VISIBLE
+        if (shouldPulse == subscribed) return
+        subscribed = shouldPulse
+        if (shouldPulse) TempleClock.subscribe(this) else TempleClock.unsubscribe(this)
+    }
 
     // ── Generation (runs once per size) ─────────────────────────────
 
@@ -198,15 +220,15 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
             // Keep gems on-screen with margin
             val gx = pos[0].coerceIn(w * 0.06f, w * 0.94f)
             val gy = pos[1].coerceIn(h * 0.06f, h * 0.94f)
-            gems.add(
-                Gem(
-                    x = gx, y = gy,
-                    size = (4f + rnd.nextFloat() * 5f) * density,
-                    phase = rnd.nextFloat(),
-                    periodMs = 2400f + rnd.nextFloat() * 2400f,
-                    angleDeg = rnd.nextFloat() * 180f
-                )
+            val gem = Gem(
+                x = gx, y = gy,
+                size = (4f + rnd.nextFloat() * 5f) * density,
+                phase = rnd.nextFloat(),
+                periodMs = 2400f + rnd.nextFloat() * 2400f,
+                angleDeg = rnd.nextFloat() * 180f
             )
+            buildGemPath(gem)
+            gems.add(gem)
         }
     }
 
@@ -216,31 +238,27 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
         super.onDraw(canvas)
         staticLayer?.let { canvas.drawBitmap(it, 0f, 0f, null) }
 
+        // Wall time, so the pulse keeps its period at any redraw rate. Double: uptime in ms has
+        // outgrown a Float's precision.
+        val now = SystemClock.uptimeMillis().toDouble()
         for (g in gems) {
             // pulse ∈ [0,1], sinusoidal, per-gem phase & period
-            val pulse = 0.5f + 0.5f * sin((nowMs / g.periodMs + g.phase) * 2f * Math.PI.toFloat())
+            val pulse = (0.5 + 0.5 * sin((now / g.periodMs + g.phase) * 2.0 * Math.PI)).toFloat()
             val glowAlpha = (pulse * maxGlowAlpha * 255).toInt()
             val glowRadius = g.size * (2.6f + 1.8f * pulse)
 
             // Halo (RadialGradient — fully hardware accelerated; never BlurMaskFilter)
-            glowPaint.shader = RadialGradient(
-                g.x, g.y, glowRadius,
-                intArrayOf(
-                    Color.argb(glowAlpha, 0x50, 0xC8, 0x78),          // emerald_bright core
-                    Color.argb((glowAlpha * 0.4f).toInt(), 0x2E, 0x8B, 0x57),
-                    Color.TRANSPARENT
-                ),
-                floatArrayOf(0f, 0.45f, 1f), Shader.TileMode.CLAMP
-            )
+            haloMatrix.setScale(glowRadius, glowRadius)
+            haloMatrix.postTranslate(g.x, g.y)
+            g.halo.setLocalMatrix(haloMatrix)
+            glowPaint.shader = g.halo
+            glowPaint.alpha = glowAlpha
             canvas.drawCircle(g.x, g.y, glowRadius, glowPaint)
 
-            // Emerald-cut gem body: elongated octagon
-            buildGemPath(g)
-            gemBodyPaint.color = lerpColor(pulse,
-                ContextCompat.getColor(context, R.color.emerald_deep),   // emerald_deep (trough)
-                ContextCompat.getColor(context, R.color.emerald_gem))   // emerald_gem (peak)
-            canvas.drawPath(gemPath, gemBodyPaint)
-            canvas.drawPath(gemPath, gemFacetPaint)
+            // Emerald-cut gem body: elongated octagon, trough emerald_deep → peak emerald_gem
+            gemBodyPaint.color = lerpColor(pulse, emeraldDeep, emeraldGem)
+            canvas.drawPath(g.path, gemBodyPaint)
+            canvas.drawPath(g.path, gemFacetPaint)
 
             // Hot core pixel at peak
             if (pulse > 0.75f) {
@@ -254,6 +272,7 @@ class ObsidianCrackView(context: Context, attrs: AttributeSet? = null) : View(co
     /** Elongated octagon = classic emerald cut, rotated by the gem's resting angle. */
     private fun buildGemPath(g: Gem) {
         val w = g.size; val h = g.size * 1.5f; val c = 0.30f  // corner cut fraction
+        val gemPath = g.path
         gemPath.reset()
         gemPath.moveTo(-w / 2 + w * c, -h / 2)
         gemPath.lineTo(w / 2 - w * c, -h / 2)

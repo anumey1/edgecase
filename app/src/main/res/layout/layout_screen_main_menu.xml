@@ -144,7 +144,7 @@
 
     </LinearLayout>
 
-    <!-- Dust + crack overlay container.
+    <!-- Dust overlay container.
          Declared last AND given an elevation above the slab buttons' 8dp: draw order inside a
          FrameLayout is decided by elevation first and child order second, so at elevation 0 these
          effects rendered *behind* the very button that triggered them. -->

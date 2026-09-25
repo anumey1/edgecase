@@ -1,7 +1,8 @@
 # RAM Issue — Phased Development Plan
 
 > **Target release:** EdgeCase **1.6.1** (versionCode **7**)
-> **Written:** 2026-09-25 · **Status:** 📝 **AWAITING REVIEW** — nothing below has been implemented
+> **Written:** 2026-09-25 · **Status:** ⏸ **PAUSED after Phase 3 (maintainer's request, 2026-09-25 ~19:45 IST).** Phases 0–3 done and
+> approved; Phase 4 is next. **Start with "▶ Resume here" below.**
 > **Device of record:** Pixel 9 Pro XL (`komodo_beta`), Android 17, serial `46281FDAS008EG`
 > **Rules for this plan:** no `git commit` / `git push` at any point (the maintainer commits). Work
 > stops at the end of every phase for review, and the next phase starts only when the maintainer
@@ -15,13 +16,103 @@
 |---|---|---|---|
 | 0 | Pre-flight: device state, signing, baselines | ✅ Done | ⏸ Stop for review |
 | 1 | Spike: prove the cross-process mechanics on the device | ✅ Done: D5 change approved | ⏸ Stop for review — **decides Phase 2's design** |
-| 2 | Process split, state sync, restart bug | ✅ Done (V10 shake pending, a hand-only check) | ⏸ Stop for review |
-| 3 | Animations: tap cracks removed, everything else as light as possible | ⬜ Not started | ⏸ Stop for review — **visual sign-off** |
+| 2 | Process split, state sync, restart bug | ✅ Done | ⏸ Stop for review |
+| 3 | Animations: tap cracks removed, everything else as light as possible | ✅ Done: visual sign-off given | ⏸ Stop for review — **visual sign-off** |
 | 4 | Icon loading: labels up front, icons on demand | ⬜ Not started | ⏸ Stop for review |
 | 5 | Notification decision and privacy-policy correction | ⬜ Not started | ⏸ Stop for review — **you deploy the policy** |
 | 6 | 1.6.1 release candidate: build, full regression, docs | ⬜ Not started | ⏸ Stop for review — **you commit and upload** |
 
 Legend: ⬜ not started · 🟨 in progress · ✅ done · ❌ failed / blocked · ⏸ review gate
+
+---
+
+## ▶ Resume here (session handoff, 2026-09-25 ~19:45 IST)
+
+Work paused at the maintainer's request after Phase 3's sign-off. Everything needed to continue is
+in this section; the detailed evidence sits under each phase below.
+
+### Where things stand
+
+| | State |
+|---|---|
+| **Phases 0–2** | ✅ Done, reviewed, and **committed by the maintainer** as `1b01f6a` *"Memory Bug Fixes Phases 0 to 2"* (on top of `4206412`) |
+| **Phase 3** | ✅ Done and **approved**, **not committed**. Working tree: `D CrackFlashView.kt` (staged by `git rm`), `M DustParticleView.kt`, `M MainActivity.kt`, `M ObsidianCrackView.kt`, `M ServiceEyeView.kt`, `M layout_screen_main_menu.xml`, `?? TempleClock.kt`, `M Docs/RAMIssuePDP.md` |
+| **Phase 4** | ⬜ **Next.** Icon loading (labels up front, icons on demand, bounded cache). Design and tasks are in the Phase 4 section; the cache size is already computed from the measured density (0.4: 108 px icons, 64-icon cache ≈ 2.99 MB) |
+| **Phases 5–6** | ⬜ Not started. Phase 5's device fact is already known (see "Facts gathered early" below) |
+| **Version** | Still `versionCode 6 / 1.5.2` in `app/build.gradle.kts`. The bump to **7 / 1.6.1** is Phase 6's first task, deliberately not done yet |
+| **Phone** | Running the **Phase 3 build** (release, upload-key signed, installed 19:15 with `adb install -r`; still reports versionName 1.5.2). Sliver running, app closed, all settings as recorded in Phase 0.6 |
+| **Emulator** | Stopped. Start it headless (`emulator -avd Pixel_9_Pro_XL -no-window -no-audio -no-boot-anim -no-snapshot-save`) only for instrumented tests |
+| **Play** | 1.5.2 live. Nothing uploaded from this plan yet |
+| **Anumey's Lair** | Untouched so far (Phase 5 edits it) |
+
+### What 1.6.1 already contains (Phases 2 + 3), in one paragraph
+
+`SidebarService` runs in its own `:overlay` process (~26 MB, always resident); the main process
+(settings UI, ads SDK, Chromium) becomes a cached, freezable, reclaimable process once the user
+leaves. Settings reach the overlay as an `OverlaySnapshot` inside every Intent. The Activity binds
+without `BIND_AUTO_CREATE` while resumed, which keeps the sliver hidden over the settings screens
+(and through restarts), and a guarded `syncOverlay()` means saving settings never restarts a
+stopped sliver (the 1.5.2 bug). All overlay windows are tracked by explicit flags (the fix for the
+leaked-window bug found in V4). The tap crack flash is gone; the gem background and the eyes'
+breathing share a 12 fps `TempleClock` that stops when the app is hidden; dust is time-based.
+Measured: always-resident memory **182 MB → 25.9 MB**; idle settings-screen CPU **28–35 % → 10–12 %**
+of one core with the ad quiet; **23/23** instrumented tests pass.
+
+### Facts gathered early for later phases
+
+- **Phase 5 (5.3):** on Android 17 the running service appears in Quick Settings → **"N apps are
+  active"** → a dialog titled **"Active apps"** (*"These apps are active and running, even when
+  you're not using them…"*) listing **EdgeCase** with a **Stop** button. Pressing Stop ends every
+  EdgeCase process (verified in V8). Use this wording for the policy.
+- **Possible follow-up (not in scope, not verified):** the banner was serving a **video** creative
+  during Phase 3, which alone drives the window at 22–56 fps and up to ~72 % of a core. Check
+  whether the AdMob banner unit can exclude video ads.
+- **Not yet covered by any phase:** the app-open memory is a little higher than 1.5.2 (the extra
+  `:overlay` process, 17.5–25.9 MB), and the cached main process freezes before its GC runs, so it
+  holds ~219 MB (reclaimable) until Android needs the memory. Phase 4 removes the ~79 MB of icons
+  that make up much of that.
+
+### Device-testing lessons (read before touching the phone)
+
+1. **Always set `ANDROID_SERIAL=46281FDAS008EG`** once the emulator is running, or adb/gradle may
+   hit the wrong device. **Never install a debug build or run `connected*` tests on the phone:** the
+   signature differs from the upload-key build, and the only way round it (uninstall) wipes the
+   maintainer's settings.
+2. **Install with `./gradlew assembleRelease` + `adb install -r`**, then launch and check logcat
+   (`AndroidRuntime|FATAL`). A green build proves nothing about launching.
+3. **"Is the service running?"** Use `state.sh` (Appendix D). The record has
+   `app=ProcessRecord`. **Don't** grep-count `/.SidebarService` in `dumpsys activity services`: the
+   binding creates a record even for a stopped service, so that count is meaningless.
+4. **Sliver window check:** `dumpsys window windows | grep -cE 'Window\{[0-9a-f]+ u0 com.dicereligion.edgecase\}'`
+   counts only the overlay windows (the Activity window has `/…MainActivity` in its name).
+5. **Crash tests:** space `am crash` calls **≥ 3 minutes apart** and leave the app in the background
+   when possible. Repeated crashes trigger Android's crash-loop protection (the service isn't
+   restarted), and a crash while the app is in front shows a dialog that a Home press dismisses as
+   "close app". To kill the main process, use `am kill com.dicereligion.edgecase` with the app
+   closed (a background kill), not `am crash`.
+6. **Navigation traps:** `am start` of an existing task returns to the *last screen shown*, not the
+   main menu; check `topResumedActivity` and the visible ids (`uiautomator dump`) before tapping. A
+   BACK press on the main menu leaves the app.
+7. **CPU samples must be classified by the ad:** a video creative redraws the whole window. Use
+   `quiet.sh` (Appendix D); only `QUIET` samples (`Chrome_InProcGp` < 20 ticks) show the app's own
+   cost.
+8. **Cached processes freeze:** `meminfo` then shows `Act=- WV=-`, and PSS stays constant. That's
+   expected, not a hang.
+9. **Restoring the maintainer's settings:** style → Customize → RESET → APPLY (they're on defaults);
+   shortcuts → only add/remove the *last* entry so the order is preserved; position → drag the green
+   arrow horizontally at the same height (restored to the identical pixel frame
+   `[948,1649][1008,1734]` in Phase 2).
+10. The session scratchpad (raw dumps, screenshots, recordings) is **not permanent**; the scripts
+    that matter are reproduced in Appendices B–D.
+
+### To resume
+
+1. Connect the phone; `adb devices -l` shows `46281FDAS008EG`; check that the installed build is
+   still the Phase 3 build (`dumpsys package com.dicereligion.edgecase | grep lastUpdateTime` →
+   2026-09-25 19:15:15), or rebuild the working tree and `install -r`.
+2. Recreate the helper scripts from Appendices B–D in a scratch folder; `chmod +x`.
+3. Ask the maintainer whether to commit Phase 3 first (their call; Claude never commits).
+4. Start **Phase 4** at task 4.1.
 
 ---
 
@@ -528,7 +619,7 @@ Re-verified below.
 | V7 | ✅ | `am kill` with the app closed → main and renderer gone; overlay PID 7572 unchanged, still showing |
 | V8 | ✅ | Eyes **open** with the service running (screenshot); stopped via Quick Settings → *Active apps* → EdgeCase **Stop** → every EdgeCase process ended → reopen → eyes are **closed slits** (screenshot) |
 | V9 | ✅ | Table below |
-| V10 | ◐ | Banner loads (`Plinth banner loaded (411×128dp)`, 18:55:05); `DISABLE_AD_INSPECTOR` in the merged manifest. **The shake-over-another-app check needs a physical shake**, which adb can't do; it's queued for the Phase 6 regression with the maintainer's hand. With the split, the main process is also frozen once cached (V9), so its gesture listener can't run then anyway |
+| V10 | ✅ | **Shake over another app does not open the ad inspector: checked by the maintainer by hand, 2026-09-25.** Banner loads (`Plinth banner loaded (411×128dp)`, 18:55:05); `DISABLE_AD_INSPECTOR` in the merged manifest. With the split, the main process is also frozen once cached (V9), so its gesture listener can't run then anyway |
 | V11 | ✅ | Overlay grep empty; `AdHost` referenced only from `MainActivity`; no `WebView` anywhere in app code; overlay-side classes mention `MainActivity` only in comments |
 | V12 | ✅ | App open: STOP / START / STOP / START → `0/0, 1/0, 0/0, 1/0` (running / windows); Home → `1/1`. The rebind after each STOP works; the sliver was never drawn over the app; no exceptions |
 | V13 | ✅ | App open and bound, `am crash` of `:overlay` (PID 10227 → 10313, restart in 1.1 s): restarted service stayed **hidden** (`1/0`); Home → `1/1`. **K3 resolved.** *(A first attempt 2 min after V6 triggered Android's repeated-crash dialog, which Home dismissed as "close app"; retried with a 3-minute gap.)* |
@@ -571,7 +662,7 @@ How to read it:
 
 ---
 
-### Phase 3 — Animations: tap cracks removed, everything else as light as possible ⬜
+### Phase 3 — Animations: tap cracks removed, everything else as light as possible ✅
 
 **Purpose:** goal G3, under decision D1 as amended on 2026-09-25: remove the tap crack effect, and
 make every remaining animation as light as possible without visibly changing the look and feel.
@@ -640,29 +731,91 @@ faces (`ic_texture_cracks.xml`) is a drawable, not an animation, and **stays**.
    life (0.4–0.7 s) and look are unchanged.
 
 #### Tasks
-- [ ] **3.1** Before changing anything, record 10 s screen captures (`adb shell screenrecord`) of
+- [x] **3.1** Before changing anything, record 10 s screen captures (`adb shell screenrecord`) of
       the main menu with the eyes open and with them closed, and one slow-motion capture of a slab
       press (dust + cracks), for the before/after record.
-- [ ] **3.2** Remove the crack flash (point 7); build; launch; press every slab once. No crash,
+- [x] **3.2** Remove the crack flash (point 7); build; launch; press every slab once. No crash,
       and the dust still shows above the button.
-- [ ] **3.3** Implement `TempleClock`; convert `ObsidianCrackView` and `ServiceEyeView` (points 1–6);
+- [x] **3.3** Implement `TempleClock`; convert `ObsidianCrackView` and `ServiceEyeView` (points 1–6);
       convert `DustParticleView` (point 8).
 - [ ] **3.4** *(Frame-rate comparison dropped: the maintainer chose 12 fps on 2026-09-25.)*
-- [ ] **3.5** At 12 fps, measure on the phone (Appendix A, CPU part):
+- [x] **3.5** At 12 fps, measure on the phone (Appendix A, CPU part):
   - Main menu idle, eyes open and eyes closed: 3 × 20 s per thread each
   - `gfxinfo` frames over 30 s (≈ 12/s expected when the ad isn't redrawing)
   - Each sub-screen for 20 s, since all four screens carry an `ObsidianCrackView`
   - Closed-app CPU after Home: 60 s, must stay ≤ baseline (0.12–0.23 %)
   - Cost of one slab press (dust only now): process CPU over the 1 s after a single tap, before
     vs after
-- [ ] **3.6** Record the same captures after the change; hand both sets to the maintainer for a
+- [x] **3.6** Record the same captures after the change; hand both sets to the maintainer for a
       side-by-side check.
-- [ ] **3.7** Check:
+- [x] **3.7** Check:
   - Gems still pulse at their own periods (2.4–4.8 s)
   - Eyes open and close smoothly, and still stop when closed
   - Dust looks the same as the 60 fps "before" capture
   - No animation runs after Home (CPU check)
   - Stats.md's 14 instrumented tests still pass (emulator)
+
+#### Phase 3 results (2026-09-25, 19:11–19:40 IST, release build, Pixel 9 Pro XL)
+
+*(Phases 0–2 were committed by the maintainer as `1b01f6a` before this phase started; the working tree
+now holds only Phase 3.)*
+
+**Code** (no commit):
+- `CrackFlashView.kt` deleted (`git rm`); its field, construction and `crackAt` block removed from
+  `MainActivity`; KDoc and the `dustContainer` layout comment reworded.
+- New `TempleClock.kt`: a main-thread 12 fps ticker, running only while something is subscribed; a
+  tick allocates nothing.
+- `ObsidianCrackView`: subscribes only while attached, shown and window-visible; wall-time phases
+  (Double); gem path and halo `RadialGradient` built once per layout, with per-frame local matrix and
+  paint alpha; colours resolved once.
+- `ServiceEyeView`: lid open/close eased by elapsed time at display rate; steady breathing on the
+  clock; closed = no animation; halo shader and colours cached.
+- `DustParticleView`: physics scaled by elapsed time (was per frame), same constants, count and life.
+- Remaining per-frame `getColor` / `RadialGradient` calls: none (the ones left in `drawBase` run once
+  per size).
+
+**CPU and frames, main menu and sub-screens** (20 s samples, per thread, frames in the same window).
+A **video** ad creative was being served during this phase, and while it plays it drives the window
+at 22–56 fps whatever the app does. So samples are classified by the ad's GPU thread
+(`Chrome_InProcGp` < 20 ticks = QUIET). The 1.5.2 comparison uses Phase 0's samples in which that
+thread was also idle.
+
+| Screen | 1.5.2, ad quiet | **1.6.1-wip, ad quiet** | 1.6.1-wip, ad playing video |
+|---|---|---|---|
+| Main menu, eyes open | 28 % (Render 258, UI 157); **61.5 fps** | **10 %, 10 %** (Render 81–100, UI 51–59); **12.2 fps** | 33–57 %, 27–46 fps |
+| Main menu, eyes closed | 29–35 % (Phase 0 of the first session) | **12 %** (Render 93, UI 59) | 40–53 % |
+| Shortcuts | not sampled | **12 %, 12 %**; 12.2 fps | 23–63 %, 22–51 fps |
+| Credits | not sampled | **11 %**; 12.2 fps | 34–55 % |
+| Position | not sampled | **8 %, 12 %**; 12.2 fps | 72 %, 56 fps |
+
+- **The app's own idle cost fell from ~28–35 % to ~10–12 % of one core, and its redraw rate from
+  61.5 to 12.2 fps**, identical on all four screens (they share the clock).
+- **What remains is mostly the ad.** A playing video creative keeps the window redrawing at up to
+  56 fps and costs up to ~72 %. That's outside this app's code. *Possible follow-up, not verified:*
+  check whether the AdMob unit's settings can exclude video creatives for this banner.
+- **Presses:** in the one quiet pair, 5 s idle = 13 %, 5 s with 3 slab presses (dust only; pressed
+  then slid off so nothing activated) = 26 %, so about **0.2 CPU-seconds per press**. The other two
+  pairs overlapped a video ad and are discarded. No "before" figure: the pre-Phase-3 build isn't
+  installed, and the crack flash it had was an extra full-screen redraw on top of this.
+- **The clock stops when the app is hidden (K6), verified per thread:** after Home the UI thread used
+  2, 0, 1, 0 ticks in four 20 s windows; the closed-app total (21 ticks in the first minute) was
+  Chromium `MemoryInfra` and the garbage collector winding down, then **0** once cached
+  (`cch … previous-expired`).
+
+**Look (3.6 / 3.7):**
+- Recordings for the maintainer's side-by-side check are in the session scratchpad `p3/`:
+  `before-menu-eyes-open.mp4`, `before-menu-eyes-closed.mp4`, `before-press.mp4`,
+  `after-menu-eyes-open.mp4`, `after-menu-eyes-closed.mp4`, `after-press.mp4`,
+  `after-eyes-opening-on-START.mp4`, `after-eyes-closing-on-STOP.mp4`.
+- Checked by screenshots: the same gem 1.3 s apart goes from a full halo with hot core to a dim
+  trough, so the pulse and the cached-shader halo render correctly; the eyes open with the iris and
+  core; the closed eyes are a slit. Lid smoothness can only be judged from the videos (a screenshot is
+  slower than the transition).
+- **23/23 instrumented tests pass** on the emulator; the phone was untouched by the test run.
+- Phone left with the sliver running, the app closed, settings untouched (only START/STOP were used).
+
+**✅ Visual sign-off (maintainer, 2026-09-25):** *"Looks good, I literally can't even tell any
+difference. Even side by side."*
 
 **Exit criteria:** crack flash gone; CPU and frame numbers recorded and clearly below baseline;
 closed-app CPU not worse; **maintainer approves the look**.
@@ -909,4 +1062,109 @@ rows = sorted(((b[t][1] - a[t][1], b[t][0]) for t in b if t in a), reverse=True)
 tot = sum(x for x, _ in rows)
 print(f"total {tot} ticks in {secs:.0f}s = {tot/secs:.0f}% of one core |",
       ", ".join(f"{n}={x}" for x, n in rows[:6] if x > 0))
+```
+
+## Appendix D — Device helper scripts
+
+All take no device argument; set `ANDROID_SERIAL` first. They sit together in one folder with
+`measure.sh` (Appendix B) and `threads.py` (Appendix C), and `S=${0:h}` means "this folder".
+
+### `tapid.sh` — tap a view by resource id
+
+```zsh
+#!/bin/zsh
+# tapid.sh <resource-id-suffix> : taps the centre of the first view with that id
+adb shell uiautomator dump /sdcard/ec.xml >/dev/null 2>&1
+xy=$(adb shell cat /sdcard/ec.xml | tr '>' '\n' | grep "id/$1\"" | grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | head -1 | tr -c '0-9\n' ' ' | awk '{print int(($1+$3)/2), int(($2+$4)/2)}')
+[ -z "$xy" ] && { echo "NOT FOUND: $1"; exit 1; }
+adb shell input tap ${=xy}; echo "tapped $1 at $xy"
+```
+
+### `state.sh` — is the service running, how many overlay windows
+
+```zsh
+#!/bin/zsh
+# state.sh <label>: service running? (record has a live process) + EdgeCase overlay windows
+run=$(adb shell dumpsys activity services com.dicereligion.edgecase | grep -A12 "ServiceRecord{.*/.SidebarService" | grep -c "app=ProcessRecord")
+win=$(adb shell dumpsys window windows | grep -cE 'Window\{[0-9a-f]+ u0 com.dicereligion.edgecase\}')
+echo "$1: service_running=$run overlay_windows=$win"
+```
+
+### `baseline.sh` — the full Appendix A protocol in one pass (~12 min)
+
+```zsh
+#!/bin/zsh
+# Appendix A protocol, one pass. Usage: baseline.sh <prefix>
+S=${0:h}; P=$1
+pid_main(){ adb shell ps -A -o PID,NAME | awk '$2=="com.dicereligion.edgecase"{print $1}'; }
+cpu_threads(){ # $1=label $2=secs
+  local p=$(pid_main)
+  adb shell "cat /proc/$p/task/*/stat" > $S/t0.txt; adb shell sleep $2; adb shell "cat /proc/$p/task/*/stat" > $S/t1.txt
+  echo "$1: $(python3 $S/threads.py $S $2)"
+}
+echo "== $P  $(date)"
+adb shell am force-stop com.dicereligion.edgecase; sleep 2; adb logcat -c
+adb shell am start -W -n com.dicereligion.edgecase/.MainActivity | grep TotalTime
+for i in $(seq 1 40); do adb logcat -d -s EdgeCaseAds | grep -q "banner loaded" && break; sleep 1; done
+adb logcat -d -s EdgeCaseAds | grep "banner loaded"
+sleep 10
+for i in 1 2 3; do $S/measure.sh $P-1fg-s$i; sleep 10; done
+$S/tapid.sh btnStartService; sleep 5
+$S/state.sh "after START"
+$S/measure.sh $P-2fg-svc
+adb shell dumpsys gfxinfo com.dicereligion.edgecase reset >/dev/null
+for i in 1 2 3; do cpu_threads "$P-cpu-menu-eyesopen-$i" 20; done
+echo "gfx frames over the 60s above: $(adb shell dumpsys gfxinfo com.dicereligion.edgecase | grep 'Total frames rendered')"
+adb shell input keyevent KEYCODE_HOME
+sleep 30; $S/measure.sh $P-3home-30s
+sleep 30; $S/measure.sh $P-3home-60s
+sleep 60; $S/measure.sh $P-3home-120s
+p=$(pid_main); a=$(adb shell "cat /proc/$p/stat" | awk '{print $14+$15}'); adb shell sleep 60; b=$(adb shell "cat /proc/$p/stat" | awk '{print $14+$15}')
+echo "$P-cpu-closed-activity-alive: $((b-a)) ticks/60s"
+T=$(adb shell dumpsys activity recents | grep -oE 'Recent #[0-9]+: Task\{[0-9a-f]+ #[0-9]+ type=standard A=10520:com.dicereligion.edgecase' | grep -oE '#[0-9]+ type' | grep -oE '[0-9]+')
+echo "removing task $T"; adb shell am stack remove $T; sleep 3
+echo "activities: $(adb shell dumpsys activity activities | grep -c 'com.dicereligion.edgecase/.MainActivity')"
+sleep 27; $S/measure.sh $P-4noact-30s
+sleep 90; $S/measure.sh $P-4noact-2m
+sleep 180; $S/measure.sh $P-4noact-5m
+adb shell dumpsys activity oom | grep -i edgecase
+p=$(pid_main); out=$(adb shell am send-trim-memory $p COMPLETE 2>&1)
+if echo "$out" | grep -q "Unable"; then echo "trim on main $p: REFUSED ($(echo "$out" | grep -o 'Unable[^.]*'))"; else echo "trim on main $p: accepted"; fi
+a=$(adb shell "cat /proc/$p/stat" | awk '{print $14+$15}'); adb shell sleep 60; b=$(adb shell "cat /proc/$p/stat" | awk '{print $14+$15}')
+echo "$P-cpu-closed-noact: $((b-a)) ticks/60s"
+$S/state.sh "end"
+echo "== done $(date)"
+```
+
+### `quiet.sh` — CPU + frames per 20 s, classified by whether the ad was redrawing
+
+```zsh
+#!/bin/zsh
+# quiet.sh <label> <n>: n x 20 s samples on the current screen: CPU% of one core, our two threads,
+# the ad's GPU thread, and frames rendered in the same 20 s. "ad=" > ~20 ticks means the ad redrew.
+S=${0:h}; L=$1; N=$2
+P=$(adb shell ps -A -o PID,NAME | awk '$2=="com.dicereligion.edgecase"{print $1}')
+for i in $(seq 1 $N); do
+  adb shell dumpsys gfxinfo com.dicereligion.edgecase reset >/dev/null
+  adb shell "cat /proc/$P/task/*/stat" > $S/t0.txt; adb shell sleep 20; adb shell "cat /proc/$P/task/*/stat" > $S/t1.txt
+  f=$(adb shell dumpsys gfxinfo com.dicereligion.edgecase | grep 'Total frames rendered' | grep -oE '[0-9]+$')
+  python3 - $S $L $i $f <<'EOF'
+import sys,re
+d,L,i,f=sys.argv[1],sys.argv[2],sys.argv[3],int(sys.argv[4])
+def load(fn):
+    r={}
+    for l in open(f"{d}/{fn}"):
+        m=re.match(r'(\d+) \((.*)\) (.*)',l.strip())
+        if m: rest=m.group(3).split(); r[m.group(1)]=(m.group(2),int(rest[11])+int(rest[12]))
+    return r
+a,b=load('t0.txt'),load('t1.txt')
+by={}
+for t in b:
+    if t in a: by[b[t][0]]=by.get(b[t][0],0)+b[t][1]-a[t][1]
+tot=sum(by.values())
+ad=by.get('Chrome_InProcGp',0)
+tag='QUIET' if ad<20 else 'AD-ACTIVE'
+print(f"{L}-{i}: {tot/20:.0f}% core | Render={by.get('RenderThread',0)} UI={by.get('ligion.edgecase',0)} adGPU={ad} | frames={f} ({f/20:.1f}/s) {tag}")
+EOF
+done
 ```
